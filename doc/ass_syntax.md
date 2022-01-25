@@ -124,7 +124,8 @@ Example :
 
 # Substitutions list
 
-
+ - `LABEL_REL()` compute a relative jump from a label in 2's complement. -1 jump means stay where it is, and 0 means go to next instruction, truncated to length
+ - `IMMEDIATE()` expecte an immediate value, trucated to length
 
 
 # Parameters list
