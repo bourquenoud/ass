@@ -3,8 +3,8 @@ This file list everything that has to be done
 
 ## `.ass` file syntax
 
-- [ ] Opcode format
-- [ ] Menemonic declaration
+- [X] Opcode format
+- [X] Menemonic declaration
 - [ ] Register declaration
 - [ ] Section declaration
 - [ ] Built-in macro
@@ -19,6 +19,6 @@ This file list everything that has to be done
 - [ ] (More)
 
 ## Assembly syntax
-- [ ] Opcode
+- [X] Opcode
 - [ ] Label
 - [ ] Macro
