@@ -8,6 +8,8 @@
 
 <u>*Comments*</u> are in the form of ` //<comment> ` for single lines and ` /*<comment>*/ ` for multi-lines.
 
+<u>*Documentation comments*</u> are in the form of ` ///<comment> `
+
 <u>*Integers*</u> are constants used outside of bit patterns. They are in base 10 (decimal). Example : `10 423 -84`
 
 <u>*Strings*</u> are constants used outside of bit patterns. They are enclosed in double quotes `""`, which can be escaped with a backslash `\`. Example : `"This is a string" "ab" "" "\"escaped quote"`
@@ -65,8 +67,8 @@ Example:
 
 Examples :
 ```
-%format cmp_ld_type [$0010,reg,reg,IMMEDIATE(8)]    // opcode using this format will produce a word starting with 0010, then two registers and an imediate
-%format jmp_format [$001,LABEL_ABS(16),...]         // 
+%format cmp_ld_type [$0010,reg,reg,IMMEDIATE(8)]    // Opcode using this format will produce a word starting with 0010, then two registers and an imediate
+%format jmp_format [$001,LABEL_ABS(16),...]         // The remaining bits will be replaced with zeros
 ```
 
 <u>*Opcode formats*</u> are declared using the directive `%format`.
