@@ -132,13 +132,13 @@ Example :
 Parameter for ASS are declared like this :
 
 ```
-%param <parameter-name> <parameter-argument> <parameter-argument> ...
+%param <parameter name> <parameter argument> <parameter argument> ...
 ```
 
 List of parameters :
 
 | Mandatory | Name                           | Argument                         | Description                    |
 | :-------: | ------------------------------ | -------------------------------- | ------------------------------ |
-|    YES    | `opcode-width <width>`         | width (integer)                  | Configure the width of the opcodes in bits. This value is fixed, meaning you can not have variable lenght opcodes|
-|    YES    | `address-width <width>`        | width (integer)                  | Configure the width of the address bus. |
+|    YES    | `opcode_width <width>`         | width (integer)                  | Configure the width of the opcodes in bits. This value is fixed, meaning you can not have variable lenght opcodes|
+|    YES    | `address_width <width>`        | width (integer)                  | Configure the width of the address bus. |
 |    NO    | `separators <seprator list>`   | separator list (string)          | Define the separtor used betweem arguments for mnemonics. By default they are separated by a space. You can define multiple separators.
