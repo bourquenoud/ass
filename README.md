@@ -1,2 +1,2 @@
-# ass
-Assembly Syntax Sythetiser
+# Assembly Syntax Sythetiser
+Or ASS for short
