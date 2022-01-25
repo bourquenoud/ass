@@ -93,6 +93,6 @@ List of parameters :
 
 | Mandatory | Name                           | Argument                         | Description                    |
 | :-------: | ------------------------------ | -------------------------------- | ------------------------------ |
-|    [X]    | `opcode-width <width>`         | width (integer)                  | Configure the width of the opcodes in bits. This value is fixed, meaning you can not have variable lenght opcodes|
-|    [X]    | `address-width <width>`        | width (integer)                  | Configure the width of the address bus. |
-|    [ ]    | `separators <seprator list>`   | separator list (string)          | Define the separtor used betweem arguments for mnemonics. By default they are separated by a space. You can define multiple separators.
+|    - [X]    | `opcode-width <width>`         | width (integer)                  | Configure the width of the opcodes in bits. This value is fixed, meaning you can not have variable lenght opcodes|
+|    - [X]    | `address-width <width>`        | width (integer)                  | Configure the width of the address bus. |
+|    - [ ]    | `separators <seprator list>`   | separator list (string)          | Define the separtor used betweem arguments for mnemonics. By default they are separated by a space. You can define multiple separators.
