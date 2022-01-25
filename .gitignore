@@ -1,6 +1,12 @@
 # Test directory
 test/
 
+# Build directory
+build/
+
+# Generated files
+src/generated/
+
 # Prerequisites
 *.d
 
