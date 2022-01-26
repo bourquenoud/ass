@@ -6,11 +6,20 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+typedef struct
+{
+    uint64_t val;
+    uint8_t width;
+} bit_const_t;
+
+
 typedef union
 {
     char *strVal;
-    uint64_t iVal;
+    int64_t iVal;
+    uint64_t uVal;
     double dVal;
+    bit_const_t bVal;
 } data_t;
 
 typedef struct node_s node_t;
