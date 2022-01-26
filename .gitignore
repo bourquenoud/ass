@@ -4,9 +4,6 @@ test/
 # Build directory
 build/
 
-# Generated files
-src/generated/
-
 # vscode
 .vscode/
 
