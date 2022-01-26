@@ -1,4 +1,4 @@
-CFLAGS = -O3 -flto
+CFLAGS = -Og
 LDFLAGS = -lm
 output_file = ass
 output_dir = build/bin/
