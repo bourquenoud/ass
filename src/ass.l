@@ -2,6 +2,7 @@
     #include "ass.tab.h"
     #include "../macro.h"
     #include "../xmalloc.h"
+    #include "../ast_node.h"
 
     #include <unistd.h>
     #include <stdio.h>
@@ -16,11 +17,11 @@
 
     void yyerror(const char* s);
 
-    static char* get_string(char*);
-    static char* get_id(char*);
-    static char* get_const(char*);
-    static uint64_t get_bits(char*);
-    static int64_t get_int(char*);
+    static data_t* get_string(char*);
+    static data_t* get_id(char*);
+    static data_t* get_const(char*);
+    static data_t* get_bits(char*);
+    static data_t* get_int(char*);
 
     static void xmalloc_callback(int err);
 %}
@@ -48,7 +49,7 @@ L_UNKNOWN_CMD           %[a-zA-Z0-9_]*
 /* Constant */
 L_INTEGER               -?[0-9]+
 L_BIT_CONSTANT          "$"[a-z][a-z0-9_]*
-L_BIT_LIT               "$"[0-9]*(h|d|o|b)?
+L_BIT_LIT               "$"[0-9a-fA-F]*(h|o|b)?
 L_STRING                \".*?\"
 
 /* Identifier */
@@ -85,76 +86,113 @@ L_COMMA                 ","
 {L_ELIPSIS}                                     { printf("T_ELIPSIS : %s\n", yytext); return T_ELIPSIS; }
 {L_COMMA}                                       { printf("T_COMMA : %s\n", yytext); return T_COMMA; }
 
-{L_INTEGER}                                     { printf("T_INTEGER : %s\n", yytext); yylval.iVal = get_int(yytext); return T_INTEGER; }
-{L_BIT_CONSTANT}                                { printf("T_BIT_CONSTANT : %s\n", yytext); yylval.strVal = get_const(yytext); return T_BIT_CONSTANT; }
-{L_BIT_LIT}                                     { printf("T_BIT_LIT : %s\n", yytext); yylval.uVal = get_bits(yytext); return T_BIT_LIT; }
-{L_STRING}                                      { printf("T_STRING : %s\n", yytext); yylval.strVal = get_string(yytext); return T_STRING; }
+{L_INTEGER}                                     { printf("T_INTEGER : %s\n", yytext); yylval.dVal = get_int(yytext); return T_INTEGER; }
+{L_BIT_LIT}                                     { printf("T_BIT_LIT : %s\n", yytext); yylval.dVal = get_bits(yytext); return T_BIT_LIT; }
+{L_BIT_CONSTANT}                                { printf("T_BIT_CONSTANT : %s\n", yytext); yylval.dVal = get_const(yytext); return T_BIT_CONSTANT; }
+{L_STRING}                                      { printf("T_STRING : %s\n", yytext); yylval.dVal = get_string(yytext); return T_STRING; }
 
 {L_DS_COMMENT}|{L_DM_COMMENT}                   { printf("T_DS_COMMENT : %s\n", yytext); return T_DS_COMMENT;}
 {L_S_COMMENT}|{L_M_COMMENT}                     { printf("T_S_COMMENT : %s\n", yytext); return T_S_COMMENT;}
 
-{L_IDENTIFIER}                                  { printf("T_IDENTIFIER : %s\n", yytext); yylval.strVal = get_id(yytext); return T_IDENTIFIER; }
+{L_IDENTIFIER}                                  { printf("T_IDENTIFIER : %s\n", yytext); yylval.dVal = get_id(yytext); return T_IDENTIFIER; }
 
-{L_LINE}                                        { printf("T_LINE : %s\n", yytext); return T_LINE; }
+{L_LINE}                                        { return T_LINE; }
 {L_WHITESPACE}                                  {/* Ignore blank spaces */}
 
 .                                               {printf("WARNING : uknown character %s\n", yytext);}
 
 %%
 
-char* get_string(char* in)
+data_t* get_string(char* in) //Return a string
 {
+    data_t* data;
+
     char* str;
     int len = strlen(in);
 
     xmalloc_set_handler(xmalloc_callback);
-    str = xmalloc(len - 1);
+    str = xmalloc(len - 1); //FIXME: <---THIS IS A DATA LEAK, STR IS NEVER FREED
     strncpy(str, in + 1, len - 1); //Remove the leading and trailing "
-    return str;
+    data = xmalloc(sizeof(data_t));
+    data->strVal = str;
+    return data;
 }
 
-char* get_id(char* in)
+data_t* get_id(char* in) //Return a string
 {
+    data_t* data;
+
     char* str;
     int len = strlen(in);
 
     xmalloc_set_handler(xmalloc_callback);
-    str = xmalloc(len + 1);
+    str = xmalloc(len + 1); //FIXME: <---THIS IS A DATA LEAK, STR IS NEVER FREED
     strncpy(str, in, len + 1); //Keep everything
-    return str;
+    data = xmalloc(sizeof(data_t));
+    data->strVal = str;
+    return data;
 }
 
-char* get_const(char* in)
+data_t* get_const(char* in) //Return a string
 {
+    data_t* data;
+
     char* str;
     int len = strlen(in);
 
     xmalloc_set_handler(xmalloc_callback);
-    str = xmalloc(len);
+    str = xmalloc(len); //FIXME: <---THIS IS A DATA LEAK, STR IS NEVER FREED
     strncpy(str, in + 1, len + 1); //Remove the leading $
-    return str;
+    data = xmalloc(sizeof(data_t));
+    data->strVal = str;
+    return data;
 }
 
-uint64_t get_bits(char* in)
+data_t* get_bits(char* in) //Return an unsigned int64
 {
+    data_t* data;
+
     int len = strlen(in);
     char lastChar = in[len-1];
 
-    if( '0' == lastChar && '1' == lastChar || 'b' == lastChar)
-        return strtoull(in + 1, NULL, 2);
-    if('o' == lastChar)
-        return strtoull(in + 1, NULL, 8);
-    if('d' == lastChar)
-        return strtoull(in + 1, NULL, 10);
-    if('h' == lastChar)
-        return strtoull(in + 1, NULL, 16);
+    xmalloc_set_handler(xmalloc_callback);
+    data = xmalloc(sizeof(data_t));
+    data->bVal.width = 0;
+
+    if( '0' == lastChar || '1' == lastChar)
+    {
+        data->bVal.val = strtoull(in + 1, NULL, 2);
+        data->bVal.width = len - 1; //Example $110101, length of 7 and 6 bits
+    }
+    else if('b' == lastChar)
+    {
+        data->bVal.val = strtoull(in + 1, NULL, 2);
+        data->bVal.width = len - 2; //Example $110101b, length of 8 and 6 bits
+    }
+    else if('o' == lastChar)
+    {
+        data->bVal.val = strtoull(in + 1, NULL, 8); 
+        data->bVal.width = (len - 2)*3; //Example $054o, length of 5 and 9 bits
+    }
+    else if('h' == lastChar)
+    {
+        data->bVal.val = strtoull(in + 1, NULL, 16);
+        data->bVal.width = (len - 2)*4; //Example $054Fh, length of 6 and 16 bits
+    }
     
-    return 0;
+    return data;
 }
 
-int64_t get_int(char* in)
+data_t* get_int(char* in) //Return an signed int
 {
-    return strtoll(in, NULL, 10);
+    data_t* data;
+
+    xmalloc_set_handler(xmalloc_callback);
+    data = xmalloc(sizeof(data_t));
+
+    data->iVal = strtoll(in, NULL, 10);
+
+    return data;
 }
 
 void xmalloc_callback(int err)
