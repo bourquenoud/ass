@@ -1,7 +1,17 @@
 // Example syntax for a basic assembly with a few instructions
 
-%param opcode_width 16
-%param address_width 14
+//Memory parameters
+%param opcode_width    16
+%param memory_width    16
+%param alignment       16
+%param address_width   14
+%param address_start   0
+%param address_stop    65535
+%param endianness      "big"
+
+//Syntax parameters
+%param args_separator  ","
+%param label_pattern   "[a-z][a-z0-9_]:"
 
 // Constants for opcode prefix
 %constant rr_p $00001
