@@ -8,7 +8,7 @@
     #include <stdlib.h>
     #include <stdbool.h>
     #include <stdint.h>
-
+    #include "../linked_list.h"
     #include "../ast_node.h"
 
     int build_ast(int argc, char** argv);
@@ -22,6 +22,10 @@
     #include <stdbool.h>
     #include <stdint.h>
 
+    #include "../parameters.h"
+    #include "../constants.h"
+    #include "../enumerations.h"
+
     extern int yylex();
     extern int yyparse();
     extern FILE* yyin;
@@ -30,16 +34,15 @@
 }
 
 %union {
-    char*       strVal;
-	int64_t     iVal;
-	uint64_t    uVal;
-	double      dVal;
-    node_t*     nVal;
+    data_t*         dVal;
+    node_t*         nVal;
+    linked_list_t*  lVal;
 }
 
 %code{
     //NULL until tree is completely built
     node_t* topNode = NULL;
+    linked_list_t* top_list = NULL;
 }
 
 /********************************************************************************************************/
@@ -67,16 +70,16 @@
 %token T_UNKNOWN_CMD
 
 /* Constant */
-%token<iVal> T_INTEGER
-%token<strVal> T_BIT_CONSTANT
-%token<uVal> T_BIT_LIT
-%token<strVal> T_STRING
+%token<dVal> T_INTEGER
+%token<dVal> T_BIT_CONSTANT
+%token<dVal> T_BIT_LIT
+%token<dVal> T_STRING
 
 /* Identifier */
-%token<strVal> T_IDENTIFIER
+%token<dVal> T_IDENTIFIER
 
 /* Substitution */
-%token<strVal> T_SUBST
+%token<dVal> T_SUBST
 
 /* Punctuation */
 %token T_LEFTPAR             
@@ -90,22 +93,23 @@
 
 
 /* Types */
-%type<nVal> param_args
-%type<nVal> param
-%type<nVal> constant
-%type<nVal> enum
-%type<nVal> pattern
-%type<nVal> order_args
-%type<nVal> order
-%type<nVal> opcode
-%type<nVal> expr
-%type<nVal> subst
-%type<nVal> format
-%type<nVal> bit_pattern
-%type<nVal> bit_pattern_args
-%type<nVal> bit_elem
-%type<nVal> command
-%type<nVal> page
+%type<lVal> param_args
+
+%type page
+%type param
+%type constant
+%type enum
+%type pattern
+%type order_args
+%type order
+%type opcode
+%type expr
+%type subst
+%type format
+%type bit_pattern
+%type bit_pattern_args
+%type bit_elem
+%type command
 
 %%
 
@@ -118,21 +122,21 @@ endline:              T_M_COMMENT
                     | T_LINE
                     | YYEOF
 
-param_args:           T_IDENTIFIER                              { $$ = node_init(T_IDENTIFIER,   (data_t){.strVal=$1}, NULL, NULL, NULL); }
-                    | param_args T_IDENTIFIER                   { $$ = node_init(T_IDENTIFIER,   (data_t){.strVal=$2}, $1,   NULL, NULL); }
-                    | param_args T_INTEGER                      { $$ = node_init(T_INTEGER,      (data_t){.iVal=$2},   $1,   NULL, NULL); }
-                    | param_args T_STRING                       { $$ = node_init(T_STRING,       (data_t){.strVal=$2}, $1,   NULL, NULL); }
-                    | param_args T_BIT_LIT                      { $$ = node_init(T_BIT_LIT,      (data_t){.iVal=$2},   $1,   NULL, NULL); }
-                    | param_args T_BIT_CONSTANT                 { $$ = node_init(T_BIT_CONSTANT, (data_t){.strVal=$2}, $1,   NULL, NULL); }
+param_args:           T_IDENTIFIER                              { $$ = list_init(YYSYMBOL_T_IDENTIFIER, $1, eDATA); }
+                    | param_args T_IDENTIFIER                   { $$ = $1; list_append($1, list_init(YYSYMBOL_T_IDENTIFIER, $2, eDATA)); }
+                    | param_args T_INTEGER                      { $$ = $1; list_append($1, list_init(YYSYMBOL_T_INTEGER, $2, eDATA)); }
+                    | param_args T_STRING                       { $$ = $1; list_append($1, list_init(YYSYMBOL_T_STRING, $2, eDATA)); }
+                    | param_args T_BIT_LIT                      { $$ = $1; list_append($1, list_init(YYSYMBOL_T_BIT_LIT, $2, eDATA)); }
+                    | param_args T_BIT_CONSTANT                 { $$ = $1; list_append($1, list_init(YYSYMBOL_T_BIT_CONSTANT, $2, eDATA)); }
 ;
 
-param:                T_PARAM param_args endline                { $$ = node_init(T_PARAM, (data_t){.iVal=0}, $2, NULL, NULL); }
+param:                T_PARAM param_args endline                { command_param($2); }
 ;
 
-constant:             T_CONSTANT T_IDENTIFIER T_BIT_LIT endline { $$ = node_init(T_PARAM, (data_t){.iVal=0}, $2, NULL, NULL); }
+constant:             T_CONSTANT T_IDENTIFIER T_BIT_LIT endline { command_const($2, $3); }
 ;
 
-enum:                 T_ENUM T_IDENTIFIER T_INTEGER endline     { $$ = node_init(T_PARAM, (data_t){.iVal=0}, $2, NULL, NULL); }
+enum:                 T_ENUM T_IDENTIFIER T_INTEGER endline     { command_enum($2, $3); }
 ;
 
 pattern:              T_PATTERN T_IDENTIFIER T_STRING T_BIT_CONSTANT endline
@@ -181,10 +185,12 @@ command:              param
                     | order
                     | opcode
                     | format
+;
 
-page:                 %empty
-                    | page command
-                    | page endline
+page:                 %empty 
+                    | page command 
+                    | page endline 
+;
 
 %%
 
@@ -249,5 +255,5 @@ void yyerror(const char* s) {
 
 const char *getTypeName(int type)
 {
-    return "";
+    return yysymbol_name(type);
 }
