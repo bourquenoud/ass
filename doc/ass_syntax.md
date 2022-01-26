@@ -57,7 +57,7 @@ Example:
 
 ## Bit constant
 
-Bit constants start with an `$`. With no postfix the value is considered to be in base 2, postfixes of 'h', 'd', 'o', 'b' respectively mean hexadecimal, decimal, octal, binary. You can either use a numerical value, or define a constant using the directive `%constant`. Defined constants have to be written in small caps and cannot include numbers or symbols except underscodes `_`, but they cannot start with an underscore. They are defined without a leading dollars `$` but needs it when used.
+Bit constants start with an `$`. With no postfix the value is considered to be in base 2, postfixes of 'h', 'o', 'b' respectively mean hexadecimal, octal, binary. You can either use a numerical value, or define a constant using the directive `%constant`. Defined constants have to be written in small caps and cannot include numbers or symbols except underscodes `_`, but they cannot start with an underscore. They are defined without a leading dollars `$` but needs it when used.
 
 Example:
 
