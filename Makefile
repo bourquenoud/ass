@@ -54,7 +54,7 @@ $(output_dir):
 $(src_dir)/$(gen_dir)/ass.tab.c $(src_dir)/$(gen_dir)/ass.tab.h: $(src_dir)/$(parse_file) | $(src_dir)/$(gen_dir)
 		bison -t -v --defines=$(src_dir)/$(gen_dir)/ass.tab.h --output=$(src_dir)/$(gen_dir)/ass.tab.c $(src_dir)/$(parse_file)
 	
-$(src_dir)/$(gen_dir)/ass.yy.c: $(src_dir)/$(lex_file) | $(src_dir)/$(gen_dir)
+$(src_dir)/$(gen_dir)/ass.yy.c: $(src_dir)/$(lex_file) $(src_dir)/$(gen_dir)/ass.tab.h | $(src_dir)/$(gen_dir)
 		flex --outfile=$(src_dir)/$(gen_dir)/ass.yy.c $(src_dir)/$(lex_file)
 
 #TODO: make it not ugly af
