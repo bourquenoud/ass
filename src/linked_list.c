@@ -1,16 +1,20 @@
 #include "linked_list.h"
+
+#include "ast_node.h"
 #include "xmalloc.h"
 #include "macro.h"
+#include "generated/ass.tab.h"
 
 static void xmalloc_callback(int err);
 
-linked_list_t* list_init(int type, void* user_data)
+linked_list_t* list_init(int type, void* user_data, int data_type)
 {    
     linked_list_t* new_list;
     xmalloc_set_handler(xmalloc_callback);
     new_list = xmalloc(sizeof(linked_list_t));
     new_list->type = type;
     new_list->user_data = user_data;
+    new_list->data_type = data_type;
     new_list->next = NULL;
     return new_list;
 }
@@ -70,7 +74,7 @@ linked_list_t* list_get_at(linked_list_t* self, int index)
     {
         linked_list_t* current = self->next; //Skip the first
         index--;
-        while(current && 0 <= index--) //Stop when current is NULL or index has been reached
+        while(current && 0 < index--) //Stop when current is NULL or index has been reached
         {
             current = current->next;
         }
@@ -96,6 +100,39 @@ linked_list_t* list_get_last(linked_list_t* self)
     }
     return current;
 }
+
+int list_get_lenght(linked_list_t* self)
+{
+    int i = 0;
+    linked_list_t* current = self;
+    while(current->next)
+    {
+        current = current->next;
+        i++;
+    }
+    return i + 1;
+}
+
+void print_list(linked_list_t* self)
+{
+    linked_list_t* current = self;
+    while(current)
+    {
+        if(current->data_type == eNODE)
+        {
+            printf("Type %s\n", getTypeName(current->type));
+            node_print((node_t*)current->user_data, 0, 0);
+        }
+        else
+        {
+            printf("Type %s with data\n", getTypeName(current->type));
+        }
+
+        current = current->next;
+    }
+}
+
+
 
 
 void xmalloc_callback(int err)
