@@ -4,13 +4,13 @@
 
 static void xmalloc_callback(int err);
 
-linked_list_t* list_init(int type, data_t data)
+linked_list_t* list_init(int type, void* user_data)
 {    
     linked_list_t* new_list;
     xmalloc_set_handler(xmalloc_callback);
     new_list = xmalloc(sizeof(linked_list_t));
     new_list->type = type;
-    new_list->data = data;
+    new_list->user_data = user_data;
     new_list->next = NULL;
     return new_list;
 }
