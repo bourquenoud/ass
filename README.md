@@ -78,7 +78,7 @@ basic_assembler -o output.elf ../ass/examples/basic_assembler.asm
 
 ## ASS documentation
 
-***!!!*** [DOCUMENTATION WEBSITE] ***!!!***
+A syntax summary is available here : <https://github.com/elzaidir/ass/blob/master/doc/ass_syntax.md>
 
 ## Assembler documentation
 
