@@ -67,16 +67,16 @@
 %token T_UNKNOWN_CMD
 
 /* Constant */
-%token T_INTEGER
-%token T_BIT_CONSTANT
-%token T_BIT_LIT
-%token T_STRING
+%token<iVal> T_INTEGER
+%token<strVal> T_BIT_CONSTANT
+%token<uVal> T_BIT_LIT
+%token<strVal> T_STRING
 
 /* Identifier */
-%token T_IDENTIFIER
+%token<strVal> T_IDENTIFIER
 
 /* Substitution */
-%token T_SUBST
+%token<strVal> T_SUBST
 
 /* Punctuation */
 %token T_LEFTPAR             
@@ -87,6 +87,25 @@
 %token T_COMMA  
 
 %start page
+
+
+/* Types */
+%type<nVal> param_args
+%type<nVal> param
+%type<nVal> constant
+%type<nVal> enum
+%type<nVal> pattern
+%type<nVal> order_args
+%type<nVal> order
+%type<nVal> opcode
+%type<nVal> expr
+%type<nVal> subst
+%type<nVal> format
+%type<nVal> bit_pattern
+%type<nVal> bit_pattern_args
+%type<nVal> bit_elem
+%type<nVal> command
+%type<nVal> page
 
 %%
 
@@ -99,21 +118,21 @@ endline:              T_M_COMMENT
                     | T_LINE
                     | YYEOF
 
-param_args:           T_IDENTIFIER                      
-                    | param_args T_IDENTIFIER
-                    | param_args T_INTEGER
-                    | param_args T_STRING
-                    | param_args T_BIT_LIT
-                    | param_args T_BIT_CONSTANT
+param_args:           T_IDENTIFIER                              { $$ = node_init(T_IDENTIFIER,   (data_t){.strVal=$1}, NULL, NULL, NULL); }
+                    | param_args T_IDENTIFIER                   { $$ = node_init(T_IDENTIFIER,   (data_t){.strVal=$2}, $1,   NULL, NULL); }
+                    | param_args T_INTEGER                      { $$ = node_init(T_INTEGER,      (data_t){.iVal=$2},   $1,   NULL, NULL); }
+                    | param_args T_STRING                       { $$ = node_init(T_STRING,       (data_t){.strVal=$2}, $1,   NULL, NULL); }
+                    | param_args T_BIT_LIT                      { $$ = node_init(T_BIT_LIT,      (data_t){.iVal=$2},   $1,   NULL, NULL); }
+                    | param_args T_BIT_CONSTANT                 { $$ = node_init(T_BIT_CONSTANT, (data_t){.strVal=$2}, $1,   NULL, NULL); }
 ;
 
-param:                T_PARAM param_args endline
+param:                T_PARAM param_args endline                { $$ = node_init(T_PARAM, (data_t){.iVal=0}, $2, NULL, NULL); }
 ;
 
-constant:             T_CONSTANT T_IDENTIFIER T_BIT_LIT endline
+constant:             T_CONSTANT T_IDENTIFIER T_BIT_LIT endline { $$ = node_init(T_PARAM, (data_t){.iVal=0}, $2, NULL, NULL); }
 ;
 
-enum:                 T_ENUM T_IDENTIFIER T_INTEGER endline
+enum:                 T_ENUM T_IDENTIFIER T_INTEGER endline     { $$ = node_init(T_PARAM, (data_t){.iVal=0}, $2, NULL, NULL); }
 ;
 
 pattern:              T_PATTERN T_IDENTIFIER T_STRING T_BIT_CONSTANT endline
