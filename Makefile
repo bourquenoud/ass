@@ -1,4 +1,4 @@
-CFLAGS = -Og
+CFLAGS = -O3 -flto
 LDFLAGS = -lm
 output_file = ass
 output_dir = build/bin/
@@ -28,7 +28,7 @@ define uniq =
   ${seen}
 endef
 
-all: $(output_file)
+all: $(output_dir)$(output_file)
 
 ########################################################################
 #                            DIRECTORIES                               #
@@ -77,7 +77,7 @@ $(OBJS): $(SRCS) $(src_dir)/$(gen_dir)/ass.tab.h | $(OBJSDIRS)
 		)
 
 #Link
-$(output_file): $(OBJS) $(obj_dir)/$(gen_dir)/ass.yy.o $(obj_dir)/$(gen_dir)/ass.tab.o | $(output_dir)
+$(output_dir)$(output_file): $(OBJS) $(obj_dir)/$(gen_dir)/ass.yy.o $(obj_dir)/$(gen_dir)/ass.tab.o | $(output_dir)
 	gcc -o $(output_dir)/$(output_file) $(LDFLAGS) $(shell find $(obj_dir) -name *.o)
 
 ########################################################################
