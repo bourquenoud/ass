@@ -52,14 +52,13 @@ extern int yydebug;
     #include <stdlib.h>
     #include <stdbool.h>
     #include <stdint.h>
-
     #include "../linked_list.h"
     #include "../ast_node.h"
 
     int build_ast(int argc, char** argv);
     const char *getTypeName(int type);
 
-#line 63 "src/generated/ass.tab.h"
+#line 62 "src/generated/ass.tab.h"
 
 /* Token kinds.  */
 #ifndef YYTOKENTYPE
@@ -104,13 +103,13 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 33 "src/ass.y"
+#line 36 "src/ass.y"
 
     data_t*         dVal;
     node_t*         nVal;
     linked_list_t*  lVal;
 
-#line 114 "src/generated/ass.tab.h"
+#line 113 "src/generated/ass.tab.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

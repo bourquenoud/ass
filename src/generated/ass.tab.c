@@ -64,7 +64,7 @@
 #define YYPULL 1
 
 /* "%code top" blocks.  */
-#line 19 "src/ass.y"
+#line 18 "src/ass.y"
 
     #include <unistd.h>
     #include <stdio.h>
@@ -72,13 +72,17 @@
     #include <stdbool.h>
     #include <stdint.h>
 
+    #include "../parameters.h"
+    #include "../constants.h"
+    #include "../enumerations.h"
+
     extern int yylex();
     extern int yyparse();
     extern FILE* yyin;
 
     void yyerror(const char* s);
 
-#line 82 "src/generated/ass.tab.c"
+#line 86 "src/generated/ass.tab.c"
 
 
 
@@ -162,13 +166,13 @@ typedef enum yysymbol_kind_t yysymbol_kind_t;
 
 
 /* Unqualified %code blocks.  */
-#line 39 "src/ass.y"
+#line 42 "src/ass.y"
 
     //NULL until tree is completely built
     node_t* topNode = NULL;
     linked_list_t* top_list = NULL;
 
-#line 172 "src/generated/ass.tab.c"
+#line 176 "src/generated/ass.tab.c"
 
 #ifdef short
 # undef short
@@ -508,11 +512,11 @@ union yyalloc
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,   113,   113,   114,   115,   116,   117,   118,   119,   120,
-     122,   123,   124,   125,   126,   127,   130,   133,   136,   139,
-     140,   143,   144,   147,   150,   151,   152,   155,   156,   159,
-     162,   164,   167,   168,   171,   172,   173,   174,   175,   178,
-     179,   180,   181,   182,   183,   184,   187,   188,   202
+       0,   116,   116,   117,   118,   119,   120,   121,   122,   123,
+     125,   126,   127,   128,   129,   130,   133,   136,   139,   142,
+     143,   146,   147,   150,   153,   154,   155,   158,   159,   162,
+     165,   167,   170,   171,   174,   175,   176,   177,   178,   181,
+     182,   183,   184,   185,   186,   187,   190,   191,   192
 };
 #endif
 
@@ -1361,92 +1365,61 @@ yyreduce:
   switch (yyn)
     {
   case 10: /* param_args: T_IDENTIFIER  */
-#line 122 "src/ass.y"
+#line 125 "src/ass.y"
                                                                 { (yyval.lVal) = list_init(YYSYMBOL_T_IDENTIFIER, (yyvsp[0].dVal), eDATA); }
-#line 1367 "src/generated/ass.tab.c"
+#line 1371 "src/generated/ass.tab.c"
     break;
 
   case 11: /* param_args: param_args T_IDENTIFIER  */
-#line 123 "src/ass.y"
+#line 126 "src/ass.y"
                                                                 { (yyval.lVal) = (yyvsp[-1].lVal); list_append((yyvsp[-1].lVal), list_init(YYSYMBOL_T_IDENTIFIER, (yyvsp[0].dVal), eDATA)); }
-#line 1373 "src/generated/ass.tab.c"
+#line 1377 "src/generated/ass.tab.c"
     break;
 
   case 12: /* param_args: param_args T_INTEGER  */
-#line 124 "src/ass.y"
+#line 127 "src/ass.y"
                                                                 { (yyval.lVal) = (yyvsp[-1].lVal); list_append((yyvsp[-1].lVal), list_init(YYSYMBOL_T_INTEGER, (yyvsp[0].dVal), eDATA)); }
-#line 1379 "src/generated/ass.tab.c"
+#line 1383 "src/generated/ass.tab.c"
     break;
 
   case 13: /* param_args: param_args T_STRING  */
-#line 125 "src/ass.y"
+#line 128 "src/ass.y"
                                                                 { (yyval.lVal) = (yyvsp[-1].lVal); list_append((yyvsp[-1].lVal), list_init(YYSYMBOL_T_STRING, (yyvsp[0].dVal), eDATA)); }
-#line 1385 "src/generated/ass.tab.c"
+#line 1389 "src/generated/ass.tab.c"
     break;
 
   case 14: /* param_args: param_args T_BIT_LIT  */
-#line 126 "src/ass.y"
+#line 129 "src/ass.y"
                                                                 { (yyval.lVal) = (yyvsp[-1].lVal); list_append((yyvsp[-1].lVal), list_init(YYSYMBOL_T_BIT_LIT, (yyvsp[0].dVal), eDATA)); }
-#line 1391 "src/generated/ass.tab.c"
+#line 1395 "src/generated/ass.tab.c"
     break;
 
   case 15: /* param_args: param_args T_BIT_CONSTANT  */
-#line 127 "src/ass.y"
+#line 130 "src/ass.y"
                                                                 { (yyval.lVal) = (yyvsp[-1].lVal); list_append((yyvsp[-1].lVal), list_init(YYSYMBOL_T_BIT_CONSTANT, (yyvsp[0].dVal), eDATA)); }
-#line 1397 "src/generated/ass.tab.c"
+#line 1401 "src/generated/ass.tab.c"
     break;
 
   case 16: /* param: T_PARAM param_args endline  */
-#line 130 "src/ass.y"
-                                                                { (yyval.nVal) = node_init(YYSYMBOL_T_PARAM, (data_t){.iVal=0}, NULL, NULL, NULL); }
-#line 1403 "src/generated/ass.tab.c"
+#line 133 "src/ass.y"
+                                                                { command_param((yyvsp[-1].lVal)); }
+#line 1407 "src/generated/ass.tab.c"
     break;
 
   case 17: /* constant: T_CONSTANT T_IDENTIFIER T_BIT_LIT endline  */
-#line 133 "src/ass.y"
-                                                                { (yyval.nVal) = node_init(YYSYMBOL_T_PARAM, (data_t){.iVal=0}, NULL, NULL, NULL); }
-#line 1409 "src/generated/ass.tab.c"
+#line 136 "src/ass.y"
+                                                                { command_const((yyvsp[-2].dVal), (yyvsp[-1].dVal)); }
+#line 1413 "src/generated/ass.tab.c"
     break;
 
   case 18: /* enum: T_ENUM T_IDENTIFIER T_INTEGER endline  */
-#line 136 "src/ass.y"
-                                                                { (yyval.nVal) = node_init(YYSYMBOL_T_PARAM, (data_t){.iVal=0}, NULL, NULL, NULL); }
-#line 1415 "src/generated/ass.tab.c"
-    break;
-
-  case 46: /* page: %empty  */
-#line 187 "src/ass.y"
-                                                {(yyval.nVal)=NULL;}
-#line 1421 "src/generated/ass.tab.c"
-    break;
-
-  case 47: /* page: page command  */
-#line 188 "src/ass.y"
-                                                {
-                                                    linked_list_t* list = list_init(YYSYMBOL_command, (yyvsp[-1].nVal), eNODE);
-                                                    if(!(yyvsp[-1].nVal)) // If no list exists create one
-                                                    {
-                                                        puts("Init list");
-                                                        top_list = list; // Create the top list
-                                                        (yyval.nVal) = list;
-                                                    }
-                                                    else // Otherwise append to the existing list of command
-                                                    {
-                                                        list_append((yyval.nVal), list_init(YYSYMBOL_command, (yyvsp[0].nVal), eNODE));
-                                                        (yyval.nVal) = (yyvsp[-1].nVal); // Pass the list up
-                                                    }
-                                                }
-#line 1440 "src/generated/ass.tab.c"
-    break;
-
-  case 48: /* page: page endline  */
-#line 202 "src/ass.y"
-                                                {(yyval.nVal) = (yyvsp[-1].nVal); /* Pass the list up */}
-#line 1446 "src/generated/ass.tab.c"
+#line 139 "src/ass.y"
+                                                                { command_enum((yyvsp[-2].dVal), (yyvsp[-1].dVal)); }
+#line 1419 "src/generated/ass.tab.c"
     break;
 
 
-#line 1450 "src/generated/ass.tab.c"
+#line 1423 "src/generated/ass.tab.c"
 
       default: break;
     }
@@ -1671,7 +1644,7 @@ yyreturn:
   return yyresult;
 }
 
-#line 205 "src/ass.y"
+#line 195 "src/ass.y"
 
 
 
@@ -1722,7 +1695,6 @@ int build_ast(int argc, char** argv)
     while(!feof(yyin));
 
     printf("DONE\n");
-    print_list(top_list);
 
     free(files);
     return 0;
