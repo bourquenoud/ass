@@ -1,4 +1,4 @@
-CFLAGS = -Og
+CFLAGS = -O0 -ggdb3
 LDFLAGS = -lm
 output_file = ass
 output_dir = build/bin/
