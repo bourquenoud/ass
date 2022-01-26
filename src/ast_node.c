@@ -8,7 +8,7 @@
 
 #include "macro.h"
 
-void xmalloc_callback(int err)
+static void xmalloc_callback(int err)
 {
     fputs("Error in " STR_EXPAND(__FILE__) " : ", stderr);
     if(0 == err)
