@@ -4,6 +4,7 @@
 #include "constants.h"
 #include "enumerations.h"
 #include "hash_array.h"
+#include "parameters.h"
 
 
 #define TABLE_SIZE 1024
@@ -16,6 +17,18 @@ int main(int argc, char** argv)
 
     size_t count = hash_count(enum_array);
     bucket_t** csnt = hash_serialise(enum_array);
+
+    puts("****PARAM****");
+
+    printf("opcode_width : %i\n", parameters.opcode_width);  
+    printf("memory_width : %i\n", parameters.memory_width);  
+    printf("alignment : %i\n", parameters.alignment);     
+    printf("address_width : %i\n", parameters.address_width); 
+    printf("address_start : %i\n", parameters.address_start); 
+    printf("address_stop : %i\n", parameters.address_stop);  
+    printf("endianness : %s\n", (parameters.endianness == 0)?"UNDEF?":((parameters.endianness == 1)?"LITTLE":"BIG"));
+    printf("args_separator : %c\n", parameters.args_separator); 
+    printf("*label_pattern : %s\n", parameters.label_pattern); 
 
     puts("****ENUM****");
     for(int i = 0; i < count; i++)
