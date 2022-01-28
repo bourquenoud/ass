@@ -10,6 +10,8 @@
 
 #define MAX_STRING_LENGTH 128
 
+parameters_t parameters;
+
 static const char *const param_names[] =
     {
         [ePARAM_OPCODE_WIDTH] = "opcode_width",
@@ -20,25 +22,8 @@ static const char *const param_names[] =
         [ePARAM_ADRRESS_STOP] = "address_stop",
         [ePARAM_ENDIANNESS] = "endianness",
         [ePARAM_ARGS_SEPARATOR] = "args_separator",
-        [ePARAM_LABEL_PATTERN] = "label_pattern"};
-
-typedef struct
-{
-    // Memory parameters, all mandatory
-    int64_t opcode_width;  // The width of the opcode
-    int64_t memory_width;  // The width of the memory
-    int64_t alignment;     // Memory alignment, if none specified it will align to the opcode width
-    int64_t address_width; // The address bus width
-    int64_t address_start; // Address where the memory starts. Inclusive
-    int64_t address_stop;  // Address where the memory stops. Inclusive
-    int endianness;        // Endianness. If little endian all bits are flipped
-
-    // Syntax parameters, all optional with default values
-    char args_separator; // The character used to separate the arguments of a mnemonic
-    char *label_pattern; // The regex pattern unsed to match object considered a label
-} parameters_t;
-
-parameters_t parameters;
+        [ePARAM_LABEL_PATTERN] = "label_pattern"
+    };
 
 typedef struct
 {
@@ -180,13 +165,28 @@ int command_param(linked_list_t *args)
             return -5; //Bad arguments
 
         arg_array[0] = list_get_at(args, 1);
-        if (arg_array[0]->type != T_INTEGER)
+        if (arg_array[0]->type != T_STRING)
             return -5; // Bad argument
 
         if (parameters.endianness > 0)
             return 1; //Warning, redeclaring opcode_width
 
-        parameters.endianness = ((data_t *)(arg_array[0]->user_data))->iVal;
+        char* str = ((data_t *)(arg_array[0]->user_data))->strVal;
+
+        if(strcmp(str, "little") == 0)
+        {
+            parameters.endianness = eLITTLE_ENDIAN;
+        }
+        else if(strcmp(str, "big") == 0)
+        {
+            parameters.endianness = eBIG_ENDIAN;
+        }
+        else
+        {
+            parameters.endianness = eUNDEF_ENDIAN;
+            return -1;
+        }
+
         return 0; //Success
         break;
 

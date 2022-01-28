@@ -27,5 +27,23 @@ enum
     eBIG_ENDIAN
 };
 
+typedef struct
+{
+    // Memory parameters, all mandatory
+    int64_t opcode_width;  // The width of the opcode
+    int64_t memory_width;  // The width of the memory
+    int64_t alignment;     // Memory alignment, if none specified it will align to the opcode width
+    int64_t address_width; // The address bus width
+    int64_t address_start; // Address where the memory starts. Inclusive
+    int64_t address_stop;  // Address where the memory stops. Inclusive
+    int endianness;        // Endianness. If little endian all bits are flipped
+
+    // Syntax parameters, all optional with default values
+    char args_separator; // The character used to separate the arguments of a mnemonic
+    char *label_pattern; // The regex pattern unsed to match object considered a label
+} parameters_t;
+
+extern parameters_t parameters;
+
 //Return negative value on error, positive on warnigs and 0 on success
 int command_param(linked_list_t* args);
