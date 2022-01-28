@@ -1,6 +1,7 @@
 // Example syntax for a basic assembly with a few instructions
 
 %constant var "pattern machin"
+%constant var 12
 
 //Memory parameters
 %param opcode_width    16
