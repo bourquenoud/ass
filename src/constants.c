@@ -2,6 +2,7 @@
 
 hash_t* bit_const_array;
 hash_t* int_const_array;
+hash_t* str_const_array;
 
 int command_bit_const(data_t *id, data_t *value)
 {
@@ -19,7 +20,7 @@ int command_bit_const(data_t *id, data_t *value)
 }
 
 
-int command_const(data_t *id, data_t *value)
+int command_int_const(data_t *id, data_t *value)
 {
     //Check if the constant already exists
     if (hash_check_key(int_const_array, id->strVal))
@@ -29,5 +30,18 @@ int command_const(data_t *id, data_t *value)
     }
 
     hash_add(int_const_array, id->strVal, (void*)value);
+    return 0; //Success
+}
+
+int command_str_const(data_t *id, data_t *value)
+{
+    //Check if the constant already exists
+    if (hash_check_key(str_const_array, id->strVal))
+    {
+        printf("'%s' redeclared. You can not declare a constant twice.\n", id->strVal);
+        return -1;
+    }
+
+    hash_add(str_const_array, id->strVal, (void*)value);
     return 0; //Success
 }

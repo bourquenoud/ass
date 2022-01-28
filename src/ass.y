@@ -134,7 +134,8 @@ param:                T_PARAM param_args endline                { command_param(
 ;
 
 constant:             T_CONSTANT T_IDENTIFIER T_BIT_LIT endline { command_bit_const($2, $3); }
-                    | T_CONSTANT T_IDENTIFIER T_INTEGER endline { command_const($2, $3); }
+                    | T_CONSTANT T_IDENTIFIER T_INTEGER endline { command_int_const($2, $3); }
+                    | T_CONSTANT T_IDENTIFIER T_STRING endline { command_str_const($2, $3); }
 ;
 
 enum:                 T_ENUM T_IDENTIFIER T_INTEGER endline     { command_enum($2, $3); }

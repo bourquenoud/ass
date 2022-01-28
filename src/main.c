@@ -14,6 +14,7 @@ int main(int argc, char** argv)
     enum_array = hash_init(TABLE_SIZE);
     bit_const_array = hash_init(TABLE_SIZE);
     int_const_array = hash_init(TABLE_SIZE);
+    str_const_array = hash_init(TABLE_SIZE);
     build_ast(argc,argv);
 
     size_t count = hash_count(enum_array);

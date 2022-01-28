@@ -41,6 +41,8 @@ linked_list_t *opcode_list;
 
 int search_match(const char *const string_list[], int n_strings, const char *pattern);
 bool try_get_integer(linked_list_t *, int64_t *);
+bool try_get_string(linked_list_t *, char**);
+bool try_get_string(linked_list_t *, char**);
 
 int command_param(linked_list_t *args)
 {
@@ -71,6 +73,7 @@ int command_param(linked_list_t *args)
     }
 
     int64_t val;
+    char* str;
 
     switch (param_number)
     {
@@ -169,13 +172,11 @@ int command_param(linked_list_t *args)
             return -5; //Bad arguments
 
         arg_array[0] = list_get_at(args, 1);
-        if (arg_array[0]->type != T_STRING)
-            return -5; // Bad argument
+        if (!try_get_string(arg_array[0], &str))
+            return -5;
 
         if (parameters.endianness > 0)
             return 1; //Warning, redeclaring opcode_width
-
-        char *str = ((data_t *)(arg_array[0]->user_data))->strVal;
 
         if (strcmp(str, "little") == 0)
         {
@@ -199,13 +200,13 @@ int command_param(linked_list_t *args)
             return -5; //Bad arguments
 
         arg_array[0] = list_get_at(args, 1);
-        if (arg_array[0]->type != T_STRING)
-            return -5; // Bad argument
+        if (!try_get_string(arg_array[0], &str))
+            return -5;
 
         if (parameters.args_separator > 0)
             return 1; //Warning, redeclaring opcode_width
 
-        parameters.args_separator = ((data_t *)(arg_array[0]->user_data))->strVal[0];
+        parameters.args_separator = str[0];
         return 0; //Success
         break;
 
@@ -214,13 +215,13 @@ int command_param(linked_list_t *args)
             return -5; //Bad arguments
 
         arg_array[0] = list_get_at(args, 1);
-        if (arg_array[0]->type != T_STRING)
-            return -5; // Bad argument
+        if (!try_get_string(arg_array[0], &str))
+            return -5;
 
         if (parameters.label_pattern > 0)
             return 1; //Warning, redeclaring opcode_width
 
-        parameters.label_pattern = ((data_t *)(arg_array[0]->user_data))->strVal;
+        parameters.label_pattern = str;
         return 0; //Success
         break;
 
@@ -256,6 +257,31 @@ bool try_get_integer(linked_list_t *element, int64_t *result)
         if (hash_check_key(int_const_array, key))
         {
             *result = ((data_t *)hash_get(int_const_array, key))->iVal;
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+    return false;
+}
+
+bool try_get_string(linked_list_t *element, char** result)
+{
+    if (element->type == T_STRING)
+    {
+        //Extract the data from the list element
+        *result = ((data_t *)(element->user_data))->strVal;
+        return true;
+    }
+    else if (element->type == T_IDENTIFIER)
+    {
+        //Extract the constant name from the list element
+        char *key = ((data_t *)(element->user_data))->strVal;
+        if (hash_check_key(str_const_array, key))
+        {
+            *result = ((data_t *)hash_get(str_const_array, key))->strVal;
             return true;
         }
         else
