@@ -113,6 +113,7 @@ data_t* get_string(char* in) //Return a string
     xmalloc_set_handler(xmalloc_callback);
     str = xmalloc(len - 1); //FIXME: <---THIS IS A DATA LEAK, STR IS NEVER FREED
     strncpy(str, in + 1, len - 1); //Remove the leading and trailing "
+    str[len - 2] = '\0'; //Null terminate the string
     data = xmalloc(sizeof(data_t));
     data->strVal = str;
     return data;
