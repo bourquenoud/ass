@@ -136,6 +136,7 @@ void hash_add(hash_t* self, char* key, void* data)
         bucket_add(self->buckets[hash_val], new_bucket);
 }
 
+//TODO: implement a try get
 void* hash_get(hash_t* self, char* key)
 {
     //Get the hash
@@ -149,7 +150,7 @@ void* hash_get(hash_t* self, char* key)
         return NULL;
 
     //Search the bucket list for a match, will return a NULL if nothing has been found
-    return bucket_find(current_bucket, key);
+    return bucket_find(current_bucket, key)->user_data;
 }
 
 bool hash_check_key(hash_t* self, char* key)

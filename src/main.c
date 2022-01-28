@@ -12,7 +12,8 @@
 int main(int argc, char** argv)
 {
     enum_array = hash_init(TABLE_SIZE);
-    const_array = hash_init(TABLE_SIZE);
+    bit_const_array = hash_init(TABLE_SIZE);
+    int_const_array = hash_init(TABLE_SIZE);
     build_ast(argc,argv);
 
     size_t count = hash_count(enum_array);
@@ -36,12 +37,21 @@ int main(int argc, char** argv)
         printf("%s = %i\n",csnt[i]->key, ((data_t *)(csnt[i]->user_data))->iVal);
     }
 
-    count = hash_count(const_array);
-    csnt = hash_serialise(const_array);
+    count = hash_count(bit_const_array);
+    csnt = hash_serialise(bit_const_array);
     
-    puts("****CONSTANTS****");
+    puts("****BIT CONSTANTS****");
     for(int i = 0; i < count; i++)
     {
         printf("%s = %#x:%i\n",csnt[i]->key, ((data_t *)(csnt[i]->user_data))->bVal.val, ((data_t *)(csnt[i]->user_data))->bVal.width);
+    }
+
+    count = hash_count(int_const_array);
+    csnt = hash_serialise(int_const_array);
+
+    puts("****CONSTANTS****");
+    for(int i = 0; i < count; i++)
+    {
+        printf("%s = %i\n",csnt[i]->key, ((data_t *)(csnt[i]->user_data))->iVal);
     }
 }

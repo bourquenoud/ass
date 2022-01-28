@@ -32,50 +32,51 @@ Grammar
    15 param: T_PARAM param_args endline
 
    16 constant: T_CONSTANT T_IDENTIFIER T_BIT_LIT endline
+   17         | T_CONSTANT T_IDENTIFIER T_INTEGER endline
 
-   17 enum: T_ENUM T_IDENTIFIER T_INTEGER endline
+   18 enum: T_ENUM T_IDENTIFIER T_INTEGER endline
 
-   18 pattern: T_PATTERN T_IDENTIFIER T_STRING T_BIT_CONSTANT endline
-   19        | T_PATTERN T_IDENTIFIER T_STRING T_BIT_LIT endline
+   19 pattern: T_PATTERN T_IDENTIFIER T_STRING T_BIT_CONSTANT endline
+   20        | T_PATTERN T_IDENTIFIER T_STRING T_BIT_LIT endline
 
-   20 order_args: T_INTEGER
-   21           | order_args T_INTEGER
+   21 order_args: T_INTEGER
+   22           | order_args T_INTEGER
 
-   22 order: T_ORDER T_IDENTIFIER order_args endline
+   23 order: T_ORDER T_IDENTIFIER order_args endline
 
-   23 opcode: T_OPCODE T_IDENTIFIER T_STRING T_BIT_LIT endline
-   24       | T_OPCODE T_IDENTIFIER T_STRING T_CONSTANT endline
-   25       | T_OPCODE T_IDENTIFIER T_STRING endline
+   24 opcode: T_OPCODE T_IDENTIFIER T_STRING T_BIT_LIT endline
+   25       | T_OPCODE T_IDENTIFIER T_STRING T_CONSTANT endline
+   26       | T_OPCODE T_IDENTIFIER T_STRING endline
 
-   26 expr: T_LEFTPAR T_INTEGER T_RIGHPAR
-   27     | T_LEFTPAR T_RIGHPAR
+   27 expr: T_LEFTPAR T_INTEGER T_RIGHPAR
+   28     | T_LEFTPAR T_RIGHPAR
 
-   28 subst: T_SUBST expr
+   29 subst: T_SUBST expr
 
-   29 format: T_FORMAT T_IDENTIFIER bit_pattern endline
+   30 format: T_FORMAT T_IDENTIFIER bit_pattern endline
 
-   30 bit_pattern: T_LEFTSQBRACK bit_pattern_args T_RIGHSQBRACK
+   31 bit_pattern: T_LEFTSQBRACK bit_pattern_args T_RIGHSQBRACK
 
-   31 bit_pattern_args: bit_elem
-   32                 | bit_pattern_args T_COMMA bit_elem
+   32 bit_pattern_args: bit_elem
+   33                 | bit_pattern_args T_COMMA bit_elem
 
-   33 bit_elem: T_BIT_LIT
-   34         | T_BIT_CONSTANT
-   35         | subst
-   36         | T_IDENTIFIER
-   37         | T_ELIPSIS
+   34 bit_elem: T_BIT_LIT
+   35         | T_BIT_CONSTANT
+   36         | subst
+   37         | T_IDENTIFIER
+   38         | T_ELIPSIS
 
-   38 command: param
-   39        | constant
-   40        | enum
-   41        | pattern
-   42        | order
-   43        | opcode
-   44        | format
+   39 command: param
+   40        | constant
+   41        | enum
+   42        | pattern
+   43        | order
+   44        | opcode
+   45        | format
 
-   45 page: %empty
-   46     | page command
-   47     | page endline
+   46 page: %empty
+   47     | page command
+   48     | page endline
 
 
 Terminals, with rules where they appear
@@ -89,25 +90,25 @@ Terminals, with rules where they appear
     T_DS_COMMENT (262) 5 6
     T_DM_COMMENT (263) 4
     T_PARAM (264) 15
-    T_CONSTANT (265) 16 24
-    T_ENUM (266) 17
-    T_PATTERN (267) 18 19
-    T_ORDER (268) 22
-    T_OPCODE (269) 23 24 25
-    T_FORMAT (270) 29
+    T_CONSTANT (265) 16 17 25
+    T_ENUM (266) 18
+    T_PATTERN (267) 19 20
+    T_ORDER (268) 23
+    T_OPCODE (269) 24 25 26
+    T_FORMAT (270) 30
     T_UNKNOWN_CMD (271)
-    T_INTEGER <dVal> (272) 11 17 20 21 26
-    T_BIT_CONSTANT <dVal> (273) 14 18 34
-    T_BIT_LIT <dVal> (274) 13 16 19 23 33
-    T_STRING <dVal> (275) 12 18 19 23 24 25
-    T_IDENTIFIER <dVal> (276) 9 10 16 17 18 19 22 23 24 25 29 36
-    T_SUBST <dVal> (277) 28
-    T_LEFTPAR (278) 26 27
-    T_RIGHPAR (279) 26 27
-    T_LEFTSQBRACK (280) 30
-    T_RIGHSQBRACK (281) 30
-    T_ELIPSIS (282) 37
-    T_COMMA (283) 32
+    T_INTEGER <dVal> (272) 11 17 18 21 22 27
+    T_BIT_CONSTANT <dVal> (273) 14 19 35
+    T_BIT_LIT <dVal> (274) 13 16 20 24 34
+    T_STRING <dVal> (275) 12 19 20 24 25 26
+    T_IDENTIFIER <dVal> (276) 9 10 16 17 18 19 20 23 24 25 26 30 37
+    T_SUBST <dVal> (277) 29
+    T_LEFTPAR (278) 27 28
+    T_RIGHPAR (279) 27 28
+    T_LEFTSQBRACK (280) 31
+    T_RIGHSQBRACK (281) 31
+    T_ELIPSIS (282) 38
+    T_COMMA (283) 33
 
 
 Nonterminals, with rules where they appear
@@ -116,62 +117,62 @@ Nonterminals, with rules where they appear
         on left: 0
     endline (30)
         on left: 1 2 3 4 5 6 7 8
-        on right: 15 16 17 18 19 22 23 24 25 29 47
+        on right: 15 16 17 18 19 20 23 24 25 26 30 48
     param_args <lVal> (31)
         on left: 9 10 11 12 13 14
         on right: 10 11 12 13 14 15
     param (32)
         on left: 15
-        on right: 38
-    constant (33)
-        on left: 16
         on right: 39
-    enum (34)
-        on left: 17
+    constant (33)
+        on left: 16 17
         on right: 40
-    pattern (35)
-        on left: 18 19
+    enum (34)
+        on left: 18
         on right: 41
-    order_args (36)
-        on left: 20 21
-        on right: 21 22
-    order (37)
-        on left: 22
+    pattern (35)
+        on left: 19 20
         on right: 42
-    opcode (38)
-        on left: 23 24 25
+    order_args (36)
+        on left: 21 22
+        on right: 22 23
+    order (37)
+        on left: 23
         on right: 43
-    expr (39)
-        on left: 26 27
-        on right: 28
-    subst (40)
-        on left: 28
-        on right: 35
-    format (41)
-        on left: 29
+    opcode (38)
+        on left: 24 25 26
         on right: 44
-    bit_pattern (42)
-        on left: 30
+    expr (39)
+        on left: 27 28
         on right: 29
+    subst (40)
+        on left: 29
+        on right: 36
+    format (41)
+        on left: 30
+        on right: 45
+    bit_pattern (42)
+        on left: 31
+        on right: 30
     bit_pattern_args (43)
-        on left: 31 32
-        on right: 30 32
+        on left: 32 33
+        on right: 31 33
     bit_elem (44)
-        on left: 33 34 35 36 37
-        on right: 31 32
+        on left: 34 35 36 37 38
+        on right: 32 33
     command (45)
-        on left: 38 39 40 41 42 43 44
-        on right: 46
+        on left: 39 40 41 42 43 44 45
+        on right: 47
     page (46)
-        on left: 45 46 47
-        on right: 0 46 47
+        on left: 46 47 48
+        on right: 0 47 48
 
 
 State 0
 
     0 $accept: • page $end
 
-    $default  reduce using rule 45 (page)
+    $default  reduce using rule 46 (page)
 
     page  go to state 1
 
@@ -179,8 +180,8 @@ State 0
 State 1
 
     0 $accept: page • $end
-   46 page: page • command
-   47     | page • endline
+   47 page: page • command
+   48     | page • endline
 
     $end          shift, and go to state 2
     T_LINE        shift, and go to state 3
@@ -266,109 +267,110 @@ State 8
 State 9
 
    16 constant: T_CONSTANT • T_IDENTIFIER T_BIT_LIT endline
+   17         | T_CONSTANT • T_IDENTIFIER T_INTEGER endline
 
     T_IDENTIFIER  shift, and go to state 30
 
 
 State 10
 
-   17 enum: T_ENUM • T_IDENTIFIER T_INTEGER endline
+   18 enum: T_ENUM • T_IDENTIFIER T_INTEGER endline
 
     T_IDENTIFIER  shift, and go to state 31
 
 
 State 11
 
-   18 pattern: T_PATTERN • T_IDENTIFIER T_STRING T_BIT_CONSTANT endline
-   19        | T_PATTERN • T_IDENTIFIER T_STRING T_BIT_LIT endline
+   19 pattern: T_PATTERN • T_IDENTIFIER T_STRING T_BIT_CONSTANT endline
+   20        | T_PATTERN • T_IDENTIFIER T_STRING T_BIT_LIT endline
 
     T_IDENTIFIER  shift, and go to state 32
 
 
 State 12
 
-   22 order: T_ORDER • T_IDENTIFIER order_args endline
+   23 order: T_ORDER • T_IDENTIFIER order_args endline
 
     T_IDENTIFIER  shift, and go to state 33
 
 
 State 13
 
-   23 opcode: T_OPCODE • T_IDENTIFIER T_STRING T_BIT_LIT endline
-   24       | T_OPCODE • T_IDENTIFIER T_STRING T_CONSTANT endline
-   25       | T_OPCODE • T_IDENTIFIER T_STRING endline
+   24 opcode: T_OPCODE • T_IDENTIFIER T_STRING T_BIT_LIT endline
+   25       | T_OPCODE • T_IDENTIFIER T_STRING T_CONSTANT endline
+   26       | T_OPCODE • T_IDENTIFIER T_STRING endline
 
     T_IDENTIFIER  shift, and go to state 34
 
 
 State 14
 
-   29 format: T_FORMAT • T_IDENTIFIER bit_pattern endline
+   30 format: T_FORMAT • T_IDENTIFIER bit_pattern endline
 
     T_IDENTIFIER  shift, and go to state 35
 
 
 State 15
 
-   47 page: page endline •
+   48 page: page endline •
 
-    $default  reduce using rule 47 (page)
+    $default  reduce using rule 48 (page)
 
 
 State 16
 
-   38 command: param •
-
-    $default  reduce using rule 38 (command)
-
-
-State 17
-
-   39 command: constant •
+   39 command: param •
 
     $default  reduce using rule 39 (command)
 
 
-State 18
+State 17
 
-   40 command: enum •
+   40 command: constant •
 
     $default  reduce using rule 40 (command)
 
 
-State 19
+State 18
 
-   41 command: pattern •
+   41 command: enum •
 
     $default  reduce using rule 41 (command)
 
 
-State 20
+State 19
 
-   42 command: order •
+   42 command: pattern •
 
     $default  reduce using rule 42 (command)
 
 
-State 21
+State 20
 
-   43 command: opcode •
+   43 command: order •
 
     $default  reduce using rule 43 (command)
 
 
-State 22
+State 21
 
-   44 command: format •
+   44 command: opcode •
 
     $default  reduce using rule 44 (command)
 
 
+State 22
+
+   45 command: format •
+
+    $default  reduce using rule 45 (command)
+
+
 State 23
 
-   46 page: page command •
+   47 page: page command •
 
-    $default  reduce using rule 46 (page)
+    $default  reduce using rule 47 (page)
 
 
 State 24
@@ -433,50 +435,52 @@ State 29
 State 30
 
    16 constant: T_CONSTANT T_IDENTIFIER • T_BIT_LIT endline
+   17         | T_CONSTANT T_IDENTIFIER • T_INTEGER endline
 
-    T_BIT_LIT  shift, and go to state 43
+    T_INTEGER  shift, and go to state 43
+    T_BIT_LIT  shift, and go to state 44
 
 
 State 31
 
-   17 enum: T_ENUM T_IDENTIFIER • T_INTEGER endline
+   18 enum: T_ENUM T_IDENTIFIER • T_INTEGER endline
 
-    T_INTEGER  shift, and go to state 44
+    T_INTEGER  shift, and go to state 45
 
 
 State 32
 
-   18 pattern: T_PATTERN T_IDENTIFIER • T_STRING T_BIT_CONSTANT endline
-   19        | T_PATTERN T_IDENTIFIER • T_STRING T_BIT_LIT endline
+   19 pattern: T_PATTERN T_IDENTIFIER • T_STRING T_BIT_CONSTANT endline
+   20        | T_PATTERN T_IDENTIFIER • T_STRING T_BIT_LIT endline
 
-    T_STRING  shift, and go to state 45
+    T_STRING  shift, and go to state 46
 
 
 State 33
 
-   22 order: T_ORDER T_IDENTIFIER • order_args endline
+   23 order: T_ORDER T_IDENTIFIER • order_args endline
 
-    T_INTEGER  shift, and go to state 46
+    T_INTEGER  shift, and go to state 47
 
-    order_args  go to state 47
+    order_args  go to state 48
 
 
 State 34
 
-   23 opcode: T_OPCODE T_IDENTIFIER • T_STRING T_BIT_LIT endline
-   24       | T_OPCODE T_IDENTIFIER • T_STRING T_CONSTANT endline
-   25       | T_OPCODE T_IDENTIFIER • T_STRING endline
+   24 opcode: T_OPCODE T_IDENTIFIER • T_STRING T_BIT_LIT endline
+   25       | T_OPCODE T_IDENTIFIER • T_STRING T_CONSTANT endline
+   26       | T_OPCODE T_IDENTIFIER • T_STRING endline
 
-    T_STRING  shift, and go to state 48
+    T_STRING  shift, and go to state 49
 
 
 State 35
 
-   29 format: T_FORMAT T_IDENTIFIER • bit_pattern endline
+   30 format: T_FORMAT T_IDENTIFIER • bit_pattern endline
 
-    T_LEFTSQBRACK  shift, and go to state 49
+    T_LEFTSQBRACK  shift, and go to state 50
 
-    bit_pattern  go to state 50
+    bit_pattern  go to state 51
 
 
 State 36
@@ -530,21 +534,7 @@ State 42
 
 State 43
 
-   16 constant: T_CONSTANT T_IDENTIFIER T_BIT_LIT • endline
-
-    $end          shift, and go to state 36
-    T_LINE        shift, and go to state 3
-    T_S_COMMENT   shift, and go to state 4
-    T_M_COMMENT   shift, and go to state 5
-    T_DS_COMMENT  shift, and go to state 6
-    T_DM_COMMENT  shift, and go to state 7
-
-    endline  go to state 51
-
-
-State 44
-
-   17 enum: T_ENUM T_IDENTIFIER T_INTEGER • endline
+   17 constant: T_CONSTANT T_IDENTIFIER T_INTEGER • endline
 
     $end          shift, and go to state 36
     T_LINE        shift, and go to state 3
@@ -556,43 +546,54 @@ State 44
     endline  go to state 52
 
 
+State 44
+
+   16 constant: T_CONSTANT T_IDENTIFIER T_BIT_LIT • endline
+
+    $end          shift, and go to state 36
+    T_LINE        shift, and go to state 3
+    T_S_COMMENT   shift, and go to state 4
+    T_M_COMMENT   shift, and go to state 5
+    T_DS_COMMENT  shift, and go to state 6
+    T_DM_COMMENT  shift, and go to state 7
+
+    endline  go to state 53
+
+
 State 45
 
-   18 pattern: T_PATTERN T_IDENTIFIER T_STRING • T_BIT_CONSTANT endline
-   19        | T_PATTERN T_IDENTIFIER T_STRING • T_BIT_LIT endline
+   18 enum: T_ENUM T_IDENTIFIER T_INTEGER • endline
 
-    T_BIT_CONSTANT  shift, and go to state 53
-    T_BIT_LIT       shift, and go to state 54
+    $end          shift, and go to state 36
+    T_LINE        shift, and go to state 3
+    T_S_COMMENT   shift, and go to state 4
+    T_M_COMMENT   shift, and go to state 5
+    T_DS_COMMENT  shift, and go to state 6
+    T_DM_COMMENT  shift, and go to state 7
+
+    endline  go to state 54
 
 
 State 46
 
-   20 order_args: T_INTEGER •
+   19 pattern: T_PATTERN T_IDENTIFIER T_STRING • T_BIT_CONSTANT endline
+   20        | T_PATTERN T_IDENTIFIER T_STRING • T_BIT_LIT endline
 
-    $default  reduce using rule 20 (order_args)
+    T_BIT_CONSTANT  shift, and go to state 55
+    T_BIT_LIT       shift, and go to state 56
 
 
 State 47
 
-   21 order_args: order_args • T_INTEGER
-   22 order: T_ORDER T_IDENTIFIER order_args • endline
+   21 order_args: T_INTEGER •
 
-    $end          shift, and go to state 36
-    T_LINE        shift, and go to state 3
-    T_S_COMMENT   shift, and go to state 4
-    T_M_COMMENT   shift, and go to state 5
-    T_DS_COMMENT  shift, and go to state 6
-    T_DM_COMMENT  shift, and go to state 7
-    T_INTEGER     shift, and go to state 55
-
-    endline  go to state 56
+    $default  reduce using rule 21 (order_args)
 
 
 State 48
 
-   23 opcode: T_OPCODE T_IDENTIFIER T_STRING • T_BIT_LIT endline
-   24       | T_OPCODE T_IDENTIFIER T_STRING • T_CONSTANT endline
-   25       | T_OPCODE T_IDENTIFIER T_STRING • endline
+   22 order_args: order_args • T_INTEGER
+   23 order: T_ORDER T_IDENTIFIER order_args • endline
 
     $end          shift, and go to state 36
     T_LINE        shift, and go to state 3
@@ -600,72 +601,47 @@ State 48
     T_M_COMMENT   shift, and go to state 5
     T_DS_COMMENT  shift, and go to state 6
     T_DM_COMMENT  shift, and go to state 7
-    T_CONSTANT    shift, and go to state 57
-    T_BIT_LIT     shift, and go to state 58
+    T_INTEGER     shift, and go to state 57
 
-    endline  go to state 59
+    endline  go to state 58
 
 
 State 49
 
-   30 bit_pattern: T_LEFTSQBRACK • bit_pattern_args T_RIGHSQBRACK
+   24 opcode: T_OPCODE T_IDENTIFIER T_STRING • T_BIT_LIT endline
+   25       | T_OPCODE T_IDENTIFIER T_STRING • T_CONSTANT endline
+   26       | T_OPCODE T_IDENTIFIER T_STRING • endline
 
-    T_BIT_CONSTANT  shift, and go to state 60
-    T_BIT_LIT       shift, and go to state 61
-    T_IDENTIFIER    shift, and go to state 62
-    T_SUBST         shift, and go to state 63
-    T_ELIPSIS       shift, and go to state 64
+    $end          shift, and go to state 36
+    T_LINE        shift, and go to state 3
+    T_S_COMMENT   shift, and go to state 4
+    T_M_COMMENT   shift, and go to state 5
+    T_DS_COMMENT  shift, and go to state 6
+    T_DM_COMMENT  shift, and go to state 7
+    T_CONSTANT    shift, and go to state 59
+    T_BIT_LIT     shift, and go to state 60
 
-    subst             go to state 65
-    bit_pattern_args  go to state 66
-    bit_elem          go to state 67
+    endline  go to state 61
 
 
 State 50
 
-   29 format: T_FORMAT T_IDENTIFIER bit_pattern • endline
+   31 bit_pattern: T_LEFTSQBRACK • bit_pattern_args T_RIGHSQBRACK
 
-    $end          shift, and go to state 36
-    T_LINE        shift, and go to state 3
-    T_S_COMMENT   shift, and go to state 4
-    T_M_COMMENT   shift, and go to state 5
-    T_DS_COMMENT  shift, and go to state 6
-    T_DM_COMMENT  shift, and go to state 7
+    T_BIT_CONSTANT  shift, and go to state 62
+    T_BIT_LIT       shift, and go to state 63
+    T_IDENTIFIER    shift, and go to state 64
+    T_SUBST         shift, and go to state 65
+    T_ELIPSIS       shift, and go to state 66
 
-    endline  go to state 68
+    subst             go to state 67
+    bit_pattern_args  go to state 68
+    bit_elem          go to state 69
 
 
 State 51
 
-   16 constant: T_CONSTANT T_IDENTIFIER T_BIT_LIT endline •
-
-    $default  reduce using rule 16 (constant)
-
-
-State 52
-
-   17 enum: T_ENUM T_IDENTIFIER T_INTEGER endline •
-
-    $default  reduce using rule 17 (enum)
-
-
-State 53
-
-   18 pattern: T_PATTERN T_IDENTIFIER T_STRING T_BIT_CONSTANT • endline
-
-    $end          shift, and go to state 36
-    T_LINE        shift, and go to state 3
-    T_S_COMMENT   shift, and go to state 4
-    T_M_COMMENT   shift, and go to state 5
-    T_DS_COMMENT  shift, and go to state 6
-    T_DM_COMMENT  shift, and go to state 7
-
-    endline  go to state 69
-
-
-State 54
-
-   19 pattern: T_PATTERN T_IDENTIFIER T_STRING T_BIT_LIT • endline
+   30 format: T_FORMAT T_IDENTIFIER bit_pattern • endline
 
     $end          shift, and go to state 36
     T_LINE        shift, and go to state 3
@@ -677,23 +653,30 @@ State 54
     endline  go to state 70
 
 
+State 52
+
+   17 constant: T_CONSTANT T_IDENTIFIER T_INTEGER endline •
+
+    $default  reduce using rule 17 (constant)
+
+
+State 53
+
+   16 constant: T_CONSTANT T_IDENTIFIER T_BIT_LIT endline •
+
+    $default  reduce using rule 16 (constant)
+
+
+State 54
+
+   18 enum: T_ENUM T_IDENTIFIER T_INTEGER endline •
+
+    $default  reduce using rule 18 (enum)
+
+
 State 55
 
-   21 order_args: order_args T_INTEGER •
-
-    $default  reduce using rule 21 (order_args)
-
-
-State 56
-
-   22 order: T_ORDER T_IDENTIFIER order_args endline •
-
-    $default  reduce using rule 22 (order)
-
-
-State 57
-
-   24 opcode: T_OPCODE T_IDENTIFIER T_STRING T_CONSTANT • endline
+   19 pattern: T_PATTERN T_IDENTIFIER T_STRING T_BIT_CONSTANT • endline
 
     $end          shift, and go to state 36
     T_LINE        shift, and go to state 3
@@ -705,9 +688,9 @@ State 57
     endline  go to state 71
 
 
-State 58
+State 56
 
-   23 opcode: T_OPCODE T_IDENTIFIER T_STRING T_BIT_LIT • endline
+   20 pattern: T_PATTERN T_IDENTIFIER T_STRING T_BIT_LIT • endline
 
     $end          shift, and go to state 36
     T_LINE        shift, and go to state 3
@@ -719,168 +702,210 @@ State 58
     endline  go to state 72
 
 
+State 57
+
+   22 order_args: order_args T_INTEGER •
+
+    $default  reduce using rule 22 (order_args)
+
+
+State 58
+
+   23 order: T_ORDER T_IDENTIFIER order_args endline •
+
+    $default  reduce using rule 23 (order)
+
+
 State 59
 
-   25 opcode: T_OPCODE T_IDENTIFIER T_STRING endline •
+   25 opcode: T_OPCODE T_IDENTIFIER T_STRING T_CONSTANT • endline
 
-    $default  reduce using rule 25 (opcode)
+    $end          shift, and go to state 36
+    T_LINE        shift, and go to state 3
+    T_S_COMMENT   shift, and go to state 4
+    T_M_COMMENT   shift, and go to state 5
+    T_DS_COMMENT  shift, and go to state 6
+    T_DM_COMMENT  shift, and go to state 7
+
+    endline  go to state 73
 
 
 State 60
 
-   34 bit_elem: T_BIT_CONSTANT •
+   24 opcode: T_OPCODE T_IDENTIFIER T_STRING T_BIT_LIT • endline
 
-    $default  reduce using rule 34 (bit_elem)
+    $end          shift, and go to state 36
+    T_LINE        shift, and go to state 3
+    T_S_COMMENT   shift, and go to state 4
+    T_M_COMMENT   shift, and go to state 5
+    T_DS_COMMENT  shift, and go to state 6
+    T_DM_COMMENT  shift, and go to state 7
+
+    endline  go to state 74
 
 
 State 61
 
-   33 bit_elem: T_BIT_LIT •
+   26 opcode: T_OPCODE T_IDENTIFIER T_STRING endline •
 
-    $default  reduce using rule 33 (bit_elem)
+    $default  reduce using rule 26 (opcode)
 
 
 State 62
 
-   36 bit_elem: T_IDENTIFIER •
+   35 bit_elem: T_BIT_CONSTANT •
 
-    $default  reduce using rule 36 (bit_elem)
+    $default  reduce using rule 35 (bit_elem)
 
 
 State 63
 
-   28 subst: T_SUBST • expr
+   34 bit_elem: T_BIT_LIT •
 
-    T_LEFTPAR  shift, and go to state 73
-
-    expr  go to state 74
+    $default  reduce using rule 34 (bit_elem)
 
 
 State 64
 
-   37 bit_elem: T_ELIPSIS •
+   37 bit_elem: T_IDENTIFIER •
 
     $default  reduce using rule 37 (bit_elem)
 
 
 State 65
 
-   35 bit_elem: subst •
+   29 subst: T_SUBST • expr
 
-    $default  reduce using rule 35 (bit_elem)
+    T_LEFTPAR  shift, and go to state 75
+
+    expr  go to state 76
 
 
 State 66
 
-   30 bit_pattern: T_LEFTSQBRACK bit_pattern_args • T_RIGHSQBRACK
-   32 bit_pattern_args: bit_pattern_args • T_COMMA bit_elem
+   38 bit_elem: T_ELIPSIS •
 
-    T_RIGHSQBRACK  shift, and go to state 75
-    T_COMMA        shift, and go to state 76
+    $default  reduce using rule 38 (bit_elem)
 
 
 State 67
 
-   31 bit_pattern_args: bit_elem •
+   36 bit_elem: subst •
 
-    $default  reduce using rule 31 (bit_pattern_args)
+    $default  reduce using rule 36 (bit_elem)
 
 
 State 68
 
-   29 format: T_FORMAT T_IDENTIFIER bit_pattern endline •
+   31 bit_pattern: T_LEFTSQBRACK bit_pattern_args • T_RIGHSQBRACK
+   33 bit_pattern_args: bit_pattern_args • T_COMMA bit_elem
 
-    $default  reduce using rule 29 (format)
+    T_RIGHSQBRACK  shift, and go to state 77
+    T_COMMA        shift, and go to state 78
 
 
 State 69
 
-   18 pattern: T_PATTERN T_IDENTIFIER T_STRING T_BIT_CONSTANT endline •
-
-    $default  reduce using rule 18 (pattern)
-
-
-State 70
-
-   19 pattern: T_PATTERN T_IDENTIFIER T_STRING T_BIT_LIT endline •
-
-    $default  reduce using rule 19 (pattern)
-
-
-State 71
-
-   24 opcode: T_OPCODE T_IDENTIFIER T_STRING T_CONSTANT endline •
-
-    $default  reduce using rule 24 (opcode)
-
-
-State 72
-
-   23 opcode: T_OPCODE T_IDENTIFIER T_STRING T_BIT_LIT endline •
-
-    $default  reduce using rule 23 (opcode)
-
-
-State 73
-
-   26 expr: T_LEFTPAR • T_INTEGER T_RIGHPAR
-   27     | T_LEFTPAR • T_RIGHPAR
-
-    T_INTEGER  shift, and go to state 77
-    T_RIGHPAR  shift, and go to state 78
-
-
-State 74
-
-   28 subst: T_SUBST expr •
-
-    $default  reduce using rule 28 (subst)
-
-
-State 75
-
-   30 bit_pattern: T_LEFTSQBRACK bit_pattern_args T_RIGHSQBRACK •
-
-    $default  reduce using rule 30 (bit_pattern)
-
-
-State 76
-
-   32 bit_pattern_args: bit_pattern_args T_COMMA • bit_elem
-
-    T_BIT_CONSTANT  shift, and go to state 60
-    T_BIT_LIT       shift, and go to state 61
-    T_IDENTIFIER    shift, and go to state 62
-    T_SUBST         shift, and go to state 63
-    T_ELIPSIS       shift, and go to state 64
-
-    subst     go to state 65
-    bit_elem  go to state 79
-
-
-State 77
-
-   26 expr: T_LEFTPAR T_INTEGER • T_RIGHPAR
-
-    T_RIGHPAR  shift, and go to state 80
-
-
-State 78
-
-   27 expr: T_LEFTPAR T_RIGHPAR •
-
-    $default  reduce using rule 27 (expr)
-
-
-State 79
-
-   32 bit_pattern_args: bit_pattern_args T_COMMA bit_elem •
+   32 bit_pattern_args: bit_elem •
 
     $default  reduce using rule 32 (bit_pattern_args)
 
 
+State 70
+
+   30 format: T_FORMAT T_IDENTIFIER bit_pattern endline •
+
+    $default  reduce using rule 30 (format)
+
+
+State 71
+
+   19 pattern: T_PATTERN T_IDENTIFIER T_STRING T_BIT_CONSTANT endline •
+
+    $default  reduce using rule 19 (pattern)
+
+
+State 72
+
+   20 pattern: T_PATTERN T_IDENTIFIER T_STRING T_BIT_LIT endline •
+
+    $default  reduce using rule 20 (pattern)
+
+
+State 73
+
+   25 opcode: T_OPCODE T_IDENTIFIER T_STRING T_CONSTANT endline •
+
+    $default  reduce using rule 25 (opcode)
+
+
+State 74
+
+   24 opcode: T_OPCODE T_IDENTIFIER T_STRING T_BIT_LIT endline •
+
+    $default  reduce using rule 24 (opcode)
+
+
+State 75
+
+   27 expr: T_LEFTPAR • T_INTEGER T_RIGHPAR
+   28     | T_LEFTPAR • T_RIGHPAR
+
+    T_INTEGER  shift, and go to state 79
+    T_RIGHPAR  shift, and go to state 80
+
+
+State 76
+
+   29 subst: T_SUBST expr •
+
+    $default  reduce using rule 29 (subst)
+
+
+State 77
+
+   31 bit_pattern: T_LEFTSQBRACK bit_pattern_args T_RIGHSQBRACK •
+
+    $default  reduce using rule 31 (bit_pattern)
+
+
+State 78
+
+   33 bit_pattern_args: bit_pattern_args T_COMMA • bit_elem
+
+    T_BIT_CONSTANT  shift, and go to state 62
+    T_BIT_LIT       shift, and go to state 63
+    T_IDENTIFIER    shift, and go to state 64
+    T_SUBST         shift, and go to state 65
+    T_ELIPSIS       shift, and go to state 66
+
+    subst     go to state 67
+    bit_elem  go to state 81
+
+
+State 79
+
+   27 expr: T_LEFTPAR T_INTEGER • T_RIGHPAR
+
+    T_RIGHPAR  shift, and go to state 82
+
+
 State 80
 
-   26 expr: T_LEFTPAR T_INTEGER T_RIGHPAR •
+   28 expr: T_LEFTPAR T_RIGHPAR •
 
-    $default  reduce using rule 26 (expr)
+    $default  reduce using rule 28 (expr)
+
+
+State 81
+
+   33 bit_pattern_args: bit_pattern_args T_COMMA bit_elem •
+
+    $default  reduce using rule 33 (bit_pattern_args)
+
+
+State 82
+
+   27 expr: T_LEFTPAR T_INTEGER T_RIGHPAR •
+
+    $default  reduce using rule 27 (expr)

@@ -2,11 +2,13 @@
 
 #include <string.h>
 #include <stdio.h>
+#include <stdbool.h>
 
 #include "ast_node.h"
 #include "generated/ass.tab.h"
-
 #include "linked_list.h"
+#include "hash_array.h"
+#include "constants.h"
 
 #define MAX_STRING_LENGTH 128
 
@@ -22,8 +24,7 @@ static const char *const param_names[] =
         [ePARAM_ADRRESS_STOP] = "address_stop",
         [ePARAM_ENDIANNESS] = "endianness",
         [ePARAM_ARGS_SEPARATOR] = "args_separator",
-        [ePARAM_LABEL_PATTERN] = "label_pattern"
-    };
+        [ePARAM_LABEL_PATTERN] = "label_pattern"};
 
 typedef struct
 {
@@ -39,6 +40,7 @@ typedef struct
 linked_list_t *opcode_list;
 
 int search_match(const char *const string_list[], int n_strings, const char *pattern);
+bool try_get_integer(linked_list_t *, int64_t *);
 
 int command_param(linked_list_t *args)
 {
@@ -62,11 +64,13 @@ int command_param(linked_list_t *args)
     if (param_number < 0)
         return -4; //Unkown parameter
 
-    linked_list_t* arg_array[len]; //Flexible array
-    for(int i = 1; i < len; i++)
+    linked_list_t *arg_array[len]; //Flexible array
+    for (int i = 1; i < len; i++)
     {
         arg_array[i - 1] = list_get_at(args, i); //Innefficient, but really I don't care
     }
+
+    int64_t val;
 
     switch (param_number)
     {
@@ -75,13 +79,13 @@ int command_param(linked_list_t *args)
             return -5; //Bad arguments
 
         arg_array[0] = list_get_at(args, 1);
-        if (arg_array[0]->type != T_INTEGER)
-            return -5; // Bad argument
+        if (!try_get_integer(arg_array[0], &val))
+            return -5;
 
         if (parameters.opcode_width > 0)
             return 1; //Warning, redeclaring opcode_width
 
-        parameters.opcode_width = ((data_t *)(arg_array[0]->user_data))->iVal;
+        parameters.opcode_width = val;
         return 0; //Success
         break;
 
@@ -90,13 +94,13 @@ int command_param(linked_list_t *args)
             return -5; //Bad arguments
 
         arg_array[0] = list_get_at(args, 1);
-        if (arg_array[0]->type != T_INTEGER)
-            return -5; // Bad argument
+        if (!try_get_integer(arg_array[0], &val))
+            return -5;
 
         if (parameters.memory_width > 0)
             return 1; //Warning, redeclaring opcode_width
 
-        parameters.memory_width = ((data_t *)(arg_array[0]->user_data))->iVal;
+        parameters.memory_width = val;
         return 0; //Success
         break;
 
@@ -105,13 +109,13 @@ int command_param(linked_list_t *args)
             return -5; //Bad arguments
 
         arg_array[0] = list_get_at(args, 1);
-        if (arg_array[0]->type != T_INTEGER)
-            return -5; // Bad argument
+        if (!try_get_integer(arg_array[0], &val))
+            return -5;
 
         if (parameters.alignment > 0)
             return 1; //Warning, redeclaring opcode_width
 
-        parameters.alignment = ((data_t *)(arg_array[0]->user_data))->iVal;
+        parameters.alignment = val;
         return 0; //Success
         break;
 
@@ -120,13 +124,13 @@ int command_param(linked_list_t *args)
             return -5; //Bad arguments
 
         arg_array[0] = list_get_at(args, 1);
-        if (arg_array[0]->type != T_INTEGER)
-            return -5; // Bad argument
+        if (!try_get_integer(arg_array[0], &val))
+            return -5;
 
         if (parameters.address_width > 0)
             return 1; //Warning, redeclaring opcode_width
 
-        parameters.address_width = ((data_t *)(arg_array[0]->user_data))->iVal;
+        parameters.address_width = val;
         return 0; //Success
         break;
 
@@ -135,13 +139,13 @@ int command_param(linked_list_t *args)
             return -5; //Bad arguments
 
         arg_array[0] = list_get_at(args, 1);
-        if (arg_array[0]->type != T_INTEGER)
-            return -5; // Bad argument
+        if (!try_get_integer(arg_array[0], &val))
+            return -5;
 
         if (parameters.address_start > 0)
             return 1; //Warning, redeclaring opcode_width
 
-        parameters.address_start = ((data_t *)(arg_array[0]->user_data))->iVal;
+        parameters.address_start = val;
         return 0; //Success
         break;
 
@@ -150,13 +154,13 @@ int command_param(linked_list_t *args)
             return -5; //Bad arguments
 
         arg_array[0] = list_get_at(args, 1);
-        if (arg_array[0]->type != T_INTEGER)
-            return -5; // Bad argument
+        if (!try_get_integer(arg_array[0], &val))
+            return -5;
 
         if (parameters.address_stop > 0)
             return 1; //Warning, redeclaring opcode_width
 
-        parameters.address_stop = ((data_t *)(arg_array[0]->user_data))->iVal;
+        parameters.address_stop = val;
         return 0; //Success
         break;
 
@@ -171,13 +175,13 @@ int command_param(linked_list_t *args)
         if (parameters.endianness > 0)
             return 1; //Warning, redeclaring opcode_width
 
-        char* str = ((data_t *)(arg_array[0]->user_data))->strVal;
+        char *str = ((data_t *)(arg_array[0]->user_data))->strVal;
 
-        if(strcmp(str, "little") == 0)
+        if (strcmp(str, "little") == 0)
         {
             parameters.endianness = eLITTLE_ENDIAN;
         }
-        else if(strcmp(str, "big") == 0)
+        else if (strcmp(str, "big") == 0)
         {
             parameters.endianness = eBIG_ENDIAN;
         }
@@ -235,4 +239,29 @@ int search_match(const char *const string_list[], int n_strings, const char *pat
     }
 
     return -1; //No match
+}
+
+bool try_get_integer(linked_list_t *element, int64_t *result)
+{
+    if (element->type == T_INTEGER)
+    {
+        //Extract the data from the list element
+        *result = ((data_t *)(element->user_data))->iVal;
+        return true;
+    }
+    else if (element->type == T_IDENTIFIER)
+    {
+        //Extract the constant name from the list element
+        char *key = ((data_t *)(element->user_data))->strVal;
+        if (hash_check_key(int_const_array, key))
+        {
+            *result = ((data_t *)hash_get(int_const_array, key))->iVal;
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+    return false;
 }

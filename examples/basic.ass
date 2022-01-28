@@ -15,6 +15,7 @@
 
 // Constants for opcode prefix
 %constant rr_p $00001
+%constant cnt 154
 
 // Register enumeration
 %enum    reg 3
