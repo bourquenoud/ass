@@ -34,7 +34,8 @@ int main(int argc, char** argv)
     puts("****ENUM****");
     for(int i = 0; i < count; i++)
     {
-        printf("%s = %i\n",csnt[i]->key, ((data_t *)(csnt[i]->user_data))->iVal);
+        printf("%s = %i\n",csnt[i]->key, ((enumeration_t *)(csnt[i]->user_data))->width);
+        print_list_enum(((enumeration_t *)(csnt[i]->user_data))->pattern_list);
     }
 
     count = hash_count(bit_const_array);

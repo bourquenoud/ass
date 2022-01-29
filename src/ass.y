@@ -143,8 +143,8 @@ constant:             T_CONSTANT T_IDENTIFIER T_BIT_LIT endline { fail_set_loc(@
 enum:                 T_ENUM T_IDENTIFIER T_INTEGER endline     { fail_set_loc(@$); command_enum($2, $3); }
 ;
 
-pattern:              T_PATTERN T_IDENTIFIER T_STRING T_BIT_CONSTANT endline
-                    | T_PATTERN T_IDENTIFIER T_STRING T_BIT_LIT endline
+pattern:              T_PATTERN T_IDENTIFIER T_STRING T_BIT_CONSTANT endline { fail_set_loc(@$); command_pattern($2, $3, $4); }
+                    | T_PATTERN T_IDENTIFIER T_STRING T_BIT_LIT endline { fail_set_loc(@$); command_pattern($2, $3, $4); }
 ;
 
 order_args:           T_INTEGER

@@ -1380,8 +1380,20 @@ yyreduce:
 #line 1381 "src/generated/ass.tab.c"
     break;
 
+  case 21: /* pattern: T_PATTERN T_IDENTIFIER T_STRING T_BIT_CONSTANT endline  */
+#line 146 "src/ass.y"
+                                                                             { fail_set_loc((yyloc)); command_pattern((yyvsp[-3].dVal), (yyvsp[-2].dVal), (yyvsp[-1].dVal)); }
+#line 1387 "src/generated/ass.tab.c"
+    break;
 
-#line 1385 "src/generated/ass.tab.c"
+  case 22: /* pattern: T_PATTERN T_IDENTIFIER T_STRING T_BIT_LIT endline  */
+#line 147 "src/ass.y"
+                                                                        { fail_set_loc((yyloc)); command_pattern((yyvsp[-3].dVal), (yyvsp[-2].dVal), (yyvsp[-1].dVal)); }
+#line 1393 "src/generated/ass.tab.c"
+    break;
+
+
+#line 1397 "src/generated/ass.tab.c"
 
       default: break;
     }

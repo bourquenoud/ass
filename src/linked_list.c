@@ -4,6 +4,7 @@
 #include "xmalloc.h"
 #include "macro.h"
 #include "generated/ass.tab.h"
+#include "constants.h"
 
 static void xmalloc_callback(int err);
 
@@ -126,6 +127,25 @@ void print_list(linked_list_t* self)
         else
         {
             printf("Type %s with data\n", getTypeName(current->type));
+        }
+
+        current = current->next;
+    }
+}
+
+void print_list_enum(linked_list_t* self)
+{
+    linked_list_t* current = self;
+    while(current)
+    {
+        if(current->data_type == eNODE)
+        {
+            printf("Type %s\n", getTypeName(current->type));
+            node_print((node_t*)current->user_data, 0, 0);
+        }
+        else
+        {
+            printf("  pattern \"%s\" of value %#x\n", ((pattern_t*)(current->user_data))->pattern, ((pattern_t*)(current->user_data))->bit_const.val);
         }
 
         current = current->next;

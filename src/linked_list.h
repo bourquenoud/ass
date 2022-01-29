@@ -27,3 +27,4 @@ linked_list_t* list_get_last(linked_list_t* self);
 int list_get_lenght(linked_list_t* self);
 
 void print_list(linked_list_t* self);
+void print_list_enum(linked_list_t* self);
