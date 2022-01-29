@@ -6,12 +6,28 @@
 
 static YYLTYPE loc;
 
+//Encaplsulated to have a more realiable error system
+static int warning_count = 0;
+int fail_get_warning_count()
+{
+    return warning_count;
+}
+
+//Encaplsulated to have a more realiable error system
+static int error_count = 0; //Quite useless if we exit directly after an error
+int fail_get_error_count()
+{
+    return error_count;
+}
+
 void fail_set_loc(YYLTYPE location){
     loc = location;
 }
 
 void fail_warning(const char* format, ...)
  {
+    warning_count++;
+
     va_list args;
     va_start(args, format);
     fputs("\033[33m", stderr);
@@ -24,6 +40,8 @@ void fail_warning(const char* format, ...)
 //Write a message before exiting
 void fail_error(const char *format, ...)
 {
+    error_count++;
+
     va_list args;
     va_start(args, format);
     fputs("\033[31m", stderr);

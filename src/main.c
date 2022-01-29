@@ -4,7 +4,7 @@
 #include "constants.h"
 #include "hash_array.h"
 #include "parameters.h"
-
+#include "failure.h"
 
 #define TABLE_SIZE 1024
 
@@ -55,4 +55,13 @@ int main(int argc, char** argv)
     {
         printf("%s = %i\n",csnt[i]->key, ((data_t *)(csnt[i]->user_data))->iVal);
     }
+
+    int error_count = fail_get_error_count();
+    int warning_count = fail_get_warning_count();
+
+    if(error_count > 0)
+        printf("\033[31m>>%i ERROR%s<<\033[0m\n", error_count, (error_count==1)?"":"S");
+
+    if(warning_count > 0)
+        printf("\033[33m>>%i WARNING%s<<\033[0m\n", warning_count, (warning_count==1)?"":"S");
 }
