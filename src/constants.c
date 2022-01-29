@@ -12,7 +12,7 @@ void check_any(char* key)
         hash_check_key(int_const_array, key ) |
         hash_check_key(str_const_array, key ))
         {
-            fail("'%s' redeclared. You can not declare a constant twice.\n", key);
+            fail_error("'%s' redeclared. You can not declare a constant twice.", key);
         }
 }
 

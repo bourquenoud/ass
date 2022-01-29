@@ -28,7 +28,7 @@ int main(int argc, char** argv)
     printf("address_width : %i\n", parameters.address_width); 
     printf("address_start : %i\n", parameters.address_start); 
     printf("address_stop : %i\n", parameters.address_stop);  
-    printf("endianness : %s\n", (parameters.endianness == 0)?"UNDEF?":((parameters.endianness == 1)?"LITTLE":"BIG"));
+    printf("endianness : %s\n", (parameters.endianness == 0)?"UNDEF":((parameters.endianness == 1)?"LITTLE":"BIG"));
     printf("args_separator : %c\n", parameters.args_separator); 
     printf("*label_pattern : %s\n", parameters.label_pattern); 
 

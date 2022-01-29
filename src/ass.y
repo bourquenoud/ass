@@ -1,4 +1,5 @@
 %debug
+%locations
 %define api.token.raw
 %define parse.error detailed
 
@@ -22,6 +23,7 @@
     #include <stdbool.h>
     #include <stdint.h>
 
+    #include "../failure.h"
     #include "../parameters.h"
     #include "../constants.h"
     #include "../enumerations.h"
@@ -130,15 +132,15 @@ param_args:           T_IDENTIFIER                              { $$ = list_init
                     | param_args T_BIT_CONSTANT                 { $$ = $1; list_append($1, list_init(YYSYMBOL_T_BIT_CONSTANT, $2, eDATA)); }
 ;
 
-param:                T_PARAM param_args endline                { command_param($2); }
+param:                T_PARAM param_args endline                { fail_set_loc(@$); command_param($2); }
 ;
 
-constant:             T_CONSTANT T_IDENTIFIER T_BIT_LIT endline { command_bit_const($2, $3); }
-                    | T_CONSTANT T_IDENTIFIER T_INTEGER endline { command_int_const($2, $3); }
-                    | T_CONSTANT T_IDENTIFIER T_STRING endline { command_str_const($2, $3); }
+constant:             T_CONSTANT T_IDENTIFIER T_BIT_LIT endline { fail_set_loc(@$); command_bit_const($2, $3); }
+                    | T_CONSTANT T_IDENTIFIER T_INTEGER endline { fail_set_loc(@$); command_int_const($2, $3); }
+                    | T_CONSTANT T_IDENTIFIER T_STRING endline { fail_set_loc(@$); command_str_const($2, $3); }
 ;
 
-enum:                 T_ENUM T_IDENTIFIER T_INTEGER endline     { command_enum($2, $3); }
+enum:                 T_ENUM T_IDENTIFIER T_INTEGER endline     { fail_set_loc(@$); command_enum($2, $3); }
 ;
 
 pattern:              T_PATTERN T_IDENTIFIER T_STRING T_BIT_CONSTANT endline

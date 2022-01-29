@@ -4,12 +4,32 @@
 #include <stdio.h>
 #include <stdarg.h>
 
+static YYLTYPE loc;
+
+void fail_set_loc(YYLTYPE location){
+    loc = location;
+}
+
+void fail_warning(const char* format, ...)
+ {
+    va_list args;
+    va_start(args, format);
+    fputs("\033[33m", stderr);
+    fprintf(stderr, "WARNING line %i : ", loc.first_line);
+    vfprintf(stderr, format, args);
+    fputs("\033[0m\n", stderr);
+    va_end(args);
+ }
+
 //Write a message before exiting
-void fail(const char *format, ...)
+void fail_error(const char *format, ...)
 {
     va_list args;
     va_start(args, format);
+    fputs("\033[31m", stderr);
+    fprintf(stderr, "ERROR line %i : ", loc.first_line);
     vfprintf(stderr, format, args);
+    fputs("\033[0m\n", stderr);
     va_end(args);
     exit(EXIT_FAILURE);
 }

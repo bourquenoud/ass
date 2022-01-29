@@ -1,3 +1,5 @@
+%option yylineno
+
 %{
     #include "ass.tab.h"
     #include "../macro.h"
@@ -10,6 +12,8 @@
     #include <stdbool.h>
     #include <stdint.h>
     #include <string.h>
+
+    #define YY_USER_ACTION yylloc.first_line = yylloc.last_line = yylineno;
 
     extern int yylex();
     extern int yyparse();
