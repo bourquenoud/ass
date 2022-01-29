@@ -3,7 +3,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "../test/ass.tab.h"
+#include "generated/ass.tab.h"
 #include "xmalloc.h"
 
 #include "macro.h"
