@@ -101,9 +101,9 @@ L_COMMA                 ","
 {L_IDENTIFIER}                                  { printf("T_IDENTIFIER : %s\n", yytext); yylval.dVal = get_id(yytext); return T_IDENTIFIER; }
 
 {L_LINE}                                        { return T_LINE; }
-{L_WHITESPACE}                                  {/* Ignore blank spaces */}
+{L_WHITESPACE}                                  {/* Ignore white spaces */}
 
-.                                               {printf("WARNING : uknown character %s\n", yytext);}
+.                                               {printf("\033[31mERROR line %i : syntax error, unexpected '%s'\033[0m\n", yylineno, yytext); exit(EXIT_FAILURE);}
 
 %%
 
@@ -202,11 +202,11 @@ data_t* get_int(char* in) //Return an signed int
 
 void xmalloc_callback(int err)
 {
-    fputs("Error in " STR_EXPAND(__FILE__) " : ", stderr);
+    fputs("\033[31mError in " STR(__FILE__) " : ", stderr);
     if(0 == err)
-        fputs("Cannot allocate zero length memory\n", stderr);
+        fputs("Cannot allocate zero length memory\033[0m\n", stderr);
     else if(1 == err)
-        fputs("Malloc returned a NULL pointer\n", stderr);
+        fputs("Malloc returned a NULL pointer\033[0m\n", stderr);
     else
-        fputs("Unknown errro\n", stderr);
+        fputs("Unknown errro\033[0m\n", stderr);
 }

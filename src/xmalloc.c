@@ -15,7 +15,7 @@ void* xmalloc(size_t size)
     if(size == 0)
     {
         xmalloc_error_handler(0);
-        exit(1); //Malloc error
+        abort(); //Malloc error
     }
 
     void* ptr = malloc(size);
@@ -23,7 +23,7 @@ void* xmalloc(size_t size)
     if(ptr == NULL)
     {
         xmalloc_error_handler(1);
-        exit(1); //Malloc error
+        abort(); //Malloc error
     }
 
     return ptr;

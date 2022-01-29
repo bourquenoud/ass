@@ -208,11 +208,11 @@ uint32_t hash(unsigned char *str)
 
 void xmalloc_callback(int err)
 {
-    fputs("Error in " STR_EXPAND(__FILE__) " : ", stderr);
+    fputs("\033[31mError in " STR(__FILE__) " : ", stderr);
     if(0 == err)
-        fputs("Cannot allocate zero length memory\n", stderr);
+        fputs("Cannot allocate zero length memory\033[0m\n", stderr);
     else if(1 == err)
-        fputs("Malloc returned a NULL pointer\n", stderr);
+        fputs("Malloc returned a NULL pointer\033[0m\n", stderr);
     else
-        fputs("Unknown errro\n", stderr);
+        fputs("Unknown errro\033[0m\n", stderr);
 }

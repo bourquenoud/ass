@@ -8,16 +8,7 @@
 
 #include "macro.h"
 
-static void xmalloc_callback(int err)
-{
-    fputs("Error in " STR_EXPAND(__FILE__) " : ", stderr);
-    if(0 == err)
-        fputs("Cannot allocate zero length memory\n", stderr);
-    else if(1 == err)
-        fputs("Malloc returned a NULL pointer\n", stderr);
-    else
-        fputs("Unknown errro\n", stderr);
-}
+static void xmalloc_callback(int err);
 
 /***********************************************************************/
 /*                          AST NODES                                  */
@@ -161,4 +152,15 @@ void node_print(node_t *self, int depth, uint64_t drawCol)
         node_print(self->child_2, depth + depthInc, ((uint64_t)(self->child_3 != NULL) << depth + 1) | drawCol);
     if (self->child_3 != NULL)
         node_print(self->child_3, depth + depthInc, drawCol);
+}
+
+void xmalloc_callback(int err)
+{
+    fputs("\033[31mError in " STR(__FILE__) " : ", stderr);
+    if(0 == err)
+        fputs("Cannot allocate zero length memory\033[0m\n", stderr);
+    else if(1 == err)
+        fputs("Malloc returned a NULL pointer\033[0m\n", stderr);
+    else
+        fputs("Unknown errro\033[0m\n", stderr);
 }

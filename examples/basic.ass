@@ -1,7 +1,6 @@
 // Example syntax for a basic assembly with a few instructions
 
-%constant var "pattern machin"
-%constant var 12
+%constant var 65535
 
 //Memory parameters
 %param opcode_width    16
@@ -9,13 +8,12 @@
 %param alignment       16
 %param address_width   14
 %param address_start   0
-%param address_stop    65535
+%param address_stop    var
 %param endianness      "big"
 
 //Syntax parameters
 %param args_separator  ","
-//%param label_pattern   "[a-z][a-z0-9_]:"
-%param label_pattern   var
+%param label_pattern   "[a-z][a-z0-9_]:"
 
 // Constants for opcode prefix
 %constant rr_p $00001

@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 
+#include "failure.h"
 #include "ast_node.h"
 #include "generated/ass.tab.h"
 #include "linked_list.h"
@@ -47,16 +48,16 @@ bool try_get_string(linked_list_t *, char**);
 int command_param(linked_list_t *args)
 {
     if (!args)
-        return -1; //No arguments
+        fail_error("No parameter name found.");
 
     linked_list_t *first_arg = list_get_at(args, 0); //Get the name
     int len = list_get_lenght(args);
 
     if (first_arg == NULL)
-        return -2; //Argument 0 (param name) is empty
+        fail_error("No parameter name found.");
 
     if (first_arg->data_type != eDATA)
-        return -3; //List element is not a data object
+        fail_error("Critical parsing error.");
 
     //Get the parameter number
     char *param_name = ((data_t *)(first_arg->user_data))->strVal;
@@ -64,7 +65,7 @@ int command_param(linked_list_t *args)
 
     //Check if it is a correct parameter
     if (param_number < 0)
-        return -4; //Unkown parameter
+        fail_error("Unkown parameter '%s'", param_name);
 
     linked_list_t *arg_array[len]; //Flexible array
     for (int i = 1; i < len; i++)
@@ -79,14 +80,14 @@ int command_param(linked_list_t *args)
     {
     case ePARAM_OPCODE_WIDTH:
         if (len != 2)
-            return -5; //Bad arguments
+            fail_error("Parameter '%s' expects one integer.", param_name);
 
         arg_array[0] = list_get_at(args, 1);
         if (!try_get_integer(arg_array[0], &val))
-            return -5;
+            fail_error("Parameter '%s' expects one integer.", param_name);
 
         if (parameters.opcode_width > 0)
-            return 1; //Warning, redeclaring opcode_width
+            fail_warning("Parameter '%s' set more than once.", param_name);
 
         parameters.opcode_width = val;
         return 0; //Success
@@ -94,14 +95,14 @@ int command_param(linked_list_t *args)
 
     case ePARAM_MEMORY_WIDTH:
         if (len != 2)
-            return -5; //Bad arguments
+            fail_error("Parameter '%s' expects one integer.", param_name);
 
         arg_array[0] = list_get_at(args, 1);
         if (!try_get_integer(arg_array[0], &val))
-            return -5;
+            fail_error("Parameter '%s' expects one integer.", param_name);
 
         if (parameters.memory_width > 0)
-            return 1; //Warning, redeclaring opcode_width
+            fail_warning("Parameter '%s' set more than once.", param_name);
 
         parameters.memory_width = val;
         return 0; //Success
@@ -109,14 +110,14 @@ int command_param(linked_list_t *args)
 
     case ePARAM_ALIGNMENT:
         if (len != 2)
-            return -5; //Bad arguments
+            fail_error("Parameter '%s' expects one integer.", param_name);
 
         arg_array[0] = list_get_at(args, 1);
         if (!try_get_integer(arg_array[0], &val))
-            return -5;
+            fail_error("Parameter '%s' expects one integer.", param_name);
 
         if (parameters.alignment > 0)
-            return 1; //Warning, redeclaring opcode_width
+            fail_warning("Parameter '%s' set more than once.", param_name);
 
         parameters.alignment = val;
         return 0; //Success
@@ -124,14 +125,14 @@ int command_param(linked_list_t *args)
 
     case ePARAM_ADDRESS_WIDTH:
         if (len != 2)
-            return -5; //Bad arguments
+            fail_error("Parameter '%s' expects one integer.", param_name);
 
         arg_array[0] = list_get_at(args, 1);
         if (!try_get_integer(arg_array[0], &val))
-            return -5;
+            fail_error("Parameter '%s' expects one integer.", param_name);
 
         if (parameters.address_width > 0)
-            return 1; //Warning, redeclaring opcode_width
+            fail_warning("Parameter '%s' set more than once.", param_name);
 
         parameters.address_width = val;
         return 0; //Success
@@ -139,14 +140,14 @@ int command_param(linked_list_t *args)
 
     case ePARAM_ADDRESS_START:
         if (len != 2)
-            return -5; //Bad arguments
+            fail_error("Parameter '%s' expects one integer.", param_name);
 
         arg_array[0] = list_get_at(args, 1);
         if (!try_get_integer(arg_array[0], &val))
-            return -5;
+            fail_error("Parameter '%s' expects one integer.", param_name);
 
         if (parameters.address_start > 0)
-            return 1; //Warning, redeclaring opcode_width
+            fail_warning("Parameter '%s' set more than once.", param_name);
 
         parameters.address_start = val;
         return 0; //Success
@@ -154,14 +155,14 @@ int command_param(linked_list_t *args)
 
     case ePARAM_ADRRESS_STOP:
         if (len != 2)
-            return -5; //Bad arguments
+            fail_error("Parameter '%s' expects one integer.", param_name);
 
         arg_array[0] = list_get_at(args, 1);
         if (!try_get_integer(arg_array[0], &val))
-            return -5;
+            fail_error("Parameter '%s' expects one integer.", param_name);
 
         if (parameters.address_stop > 0)
-            return 1; //Warning, redeclaring opcode_width
+            fail_warning("Parameter '%s' set more than once.", param_name);
 
         parameters.address_stop = val;
         return 0; //Success
@@ -169,14 +170,14 @@ int command_param(linked_list_t *args)
 
     case ePARAM_ENDIANNESS:
         if (len != 2)
-            return -5; //Bad arguments
+            fail_error("Parameter '%s' expects one string.", param_name);
 
         arg_array[0] = list_get_at(args, 1);
         if (!try_get_string(arg_array[0], &str))
-            return -5;
+            fail_error("Parameter '%s' expects one string.", param_name);
 
         if (parameters.endianness > 0)
-            return 1; //Warning, redeclaring opcode_width
+            fail_warning("Parameter '%s' set more than once.", param_name);
 
         if (strcmp(str, "little") == 0)
         {
@@ -189,7 +190,7 @@ int command_param(linked_list_t *args)
         else
         {
             parameters.endianness = eUNDEF_ENDIAN;
-            return -1;
+            fail_error("Parameter '%s' expects either \"big\" or \"little\"", param_name);
         }
 
         return 0; //Success
@@ -197,14 +198,14 @@ int command_param(linked_list_t *args)
 
     case ePARAM_ARGS_SEPARATOR:
         if (len != 2)
-            return -5; //Bad arguments
+            fail_error("Parameter '%s' expects one string.", param_name);
 
         arg_array[0] = list_get_at(args, 1);
         if (!try_get_string(arg_array[0], &str))
-            return -5;
+            fail_error("Parameter '%s' expects one string.", param_name);
 
         if (parameters.args_separator > 0)
-            return 1; //Warning, redeclaring opcode_width
+            fail_warning("Parameter '%s' set more than once.", param_name);
 
         parameters.args_separator = str[0];
         return 0; //Success
@@ -212,14 +213,14 @@ int command_param(linked_list_t *args)
 
     case ePARAM_LABEL_PATTERN:
         if (len != 2)
-            return -5; //Bad arguments
+            fail_error("Parameter '%s' expects one string.", param_name);
 
         arg_array[0] = list_get_at(args, 1);
         if (!try_get_string(arg_array[0], &str))
-            return -5;
+            fail_error("Parameter '%s' expects one string.", param_name);
 
         if (parameters.label_pattern > 0)
-            return 1; //Warning, redeclaring opcode_width
+            fail_warning("Parameter '%s' set more than once.", param_name);
 
         parameters.label_pattern = str;
         return 0; //Success

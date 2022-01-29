@@ -2,7 +2,6 @@
 
 #include "generated/ass.tab.h"
 #include "constants.h"
-#include "enumerations.h"
 #include "hash_array.h"
 #include "parameters.h"
 

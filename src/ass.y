@@ -1,7 +1,7 @@
 %debug
 %locations
 %define api.token.raw
-%define parse.error detailed
+%define parse.error custom
 
 %code requires {
     #include <unistd.h>
@@ -22,11 +22,11 @@
     #include <stdlib.h>
     #include <stdbool.h>
     #include <stdint.h>
+    #include <string.h>
 
     #include "../failure.h"
     #include "../parameters.h"
     #include "../constants.h"
-    #include "../enumerations.h"
 
     extern int yylex();
     extern int yyparse();
@@ -253,11 +253,45 @@ int build_ast(int argc, char** argv)
 
 //Simple error print
 void yyerror(const char* s) {
-	fprintf(stderr, "Parse error: %s\n", s);
-	exit(1);
+	fail_error("%s", s);
 }
 
 const char *getTypeName(int type)
 {
     return yysymbol_name(type);
+}
+
+static int yyreport_syntax_error (const yypcontext_t *ctx)
+{
+    int res = 0;
+    char error_message[1024] = "syntax error, "; 
+    fail_set_loc(*yypcontext_location (ctx));
+
+    // Report the tokens expected at this point.
+    enum { TOKENMAX = 5 };
+    yysymbol_kind_t expected[TOKENMAX];
+    int n = yypcontext_expected_tokens (ctx, expected, TOKENMAX);
+    if (n < 0)
+    {
+        // Forward errors to yyparse.
+        res = n;
+    }
+    else
+    {
+        for (int i = 0; i < n; ++i)
+        {
+            strcat(error_message, i == 0 ? "expected " : " or ");
+            strcat(error_message, yysymbol_name (expected[i]));
+        }
+    }
+
+    // Report the unexpected token.
+
+    yysymbol_kind_t lookahead = yypcontext_token (ctx);
+    if (lookahead != YYSYMBOL_YYEMPTY)
+    {
+        strcat(error_message, " before ");
+        strcat(error_message, yysymbol_name (lookahead));
+    }
+    fail_error(error_message);
 }

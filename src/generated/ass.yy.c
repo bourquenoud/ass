@@ -1016,12 +1016,12 @@ YY_RULE_SETUP
 case 24:
 YY_RULE_SETUP
 #line 104 "src/ass.l"
-{/* Ignore blank spaces */}
+{/* Ignore white spaces */}
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
 #line 106 "src/ass.l"
-{printf("WARNING : uknown character %s\n", yytext);}
+{printf("\033[31mERROR line %i : syntax error, unexpected '%s'\033[0m\n", yylineno, yytext); exit(EXIT_FAILURE);}
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
@@ -2143,11 +2143,11 @@ data_t* get_int(char* in) //Return an signed int
 
 void xmalloc_callback(int err)
 {
-    fputs("Error in " STR_EXPAND(__FILE__) " : ", stderr);
+    fputs("\033[31mError in " STR(__FILE__) " : ", stderr);
     if(0 == err)
-        fputs("Cannot allocate zero length memory\n", stderr);
+        fputs("Cannot allocate zero length memory\033[0m\n", stderr);
     else if(1 == err)
-        fputs("Malloc returned a NULL pointer\n", stderr);
+        fputs("Malloc returned a NULL pointer\033[0m\n", stderr);
     else
-        fputs("Unknown errro\n", stderr);
+        fputs("Unknown errro\033[0m\n", stderr);
 }
