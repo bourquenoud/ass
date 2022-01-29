@@ -49,5 +49,5 @@ void fail_error(const char *format, ...)
     vfprintf(stderr, format, args);
     fputs("\033[0m\n", stderr);
     va_end(args);
-    exit(EXIT_FAILURE);
+    //exit(EXIT_FAILURE);
 }

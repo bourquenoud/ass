@@ -70,10 +70,19 @@ int command_enum(data_t *id, data_t *value)
 int command_pattern(data_t *enum_id, data_t *pattern_data, data_t *bit_const_data)
 {
     if (!hash_check_key(enum_array, enum_id->strVal))
+    {
         fail_error("No enum named '%s'.", enum_id->strVal);
+        return 1;
+    }
 
 
     int len = strlen(pattern_data->strVal) + 1; // +1 to count the terminating NULL
+
+    if (len <= 1)
+    {
+        fail_error("Empty pattern.");
+        return 1;
+    }
 
     xmalloc_set_handler(xmalloc_callback);
     enumeration_t *enumeration = (enumeration_t *)hash_get(enum_array, enum_id->strVal);

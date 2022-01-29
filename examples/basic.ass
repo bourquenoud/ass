@@ -31,7 +31,6 @@
 %pattern reg "r5" $7h
 
 
-
 // Format for arithmetic instructions between registers
 %format rr_f  [$rr_p, ..., ID(4), reg, reg] // 5bits + 4bits + 3bits + 3bits = 14bits -> filling is 1 bit wide
 %order rr_f    2 3 // register1 register2
