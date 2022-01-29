@@ -90,9 +90,19 @@ int command_pattern(data_t *enum_id, data_t *pattern_data, data_t *bit_const_dat
     pattern->bit_const = bit_const_data->bVal;
     strcpy(pattern->pattern, pattern_data->strVal);
 
-    if (pattern->bit_const.width != enumeration->width)
+    if (pattern->bit_const.width < enumeration->width)
     {
-        fail_warning("The pattern \"%s\" width doesn't match the enum '%s' width."
+        fail_info("The pattern \"%s\" width is smaller then the enum '%s' width."
+            " Automatically zero-padded to %i bits.",
+            pattern->pattern,
+            enumeration->name,
+            enumeration->width);
+        pattern->bit_const.width = enumeration->width; //Force the bit_constant to have the correct with
+    }
+
+    if (pattern->bit_const.width > enumeration->width)
+    {
+        fail_warning("The pattern \"%s\" width is greater then the enum '%s' width."
             " Automatically trucated to %i bits.",
             pattern->pattern,
             enumeration->name,

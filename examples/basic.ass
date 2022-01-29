@@ -20,7 +20,7 @@
 %constant cnt 154
 
 // Register enumeration
-%enum    reg 3
+%enum    reg 5
 %pattern reg "pc" $0h
 %pattern reg "sp" $1h
 %pattern reg "r0" $2h
@@ -29,6 +29,14 @@
 %pattern reg "r3" $5h
 %pattern reg "r4" $6h
 %pattern reg "r5" $7h
+
+%enum    io 7
+%pattern io "PORTA" $20h
+%pattern io "PORTB" $24h
+%pattern io "PORTC" $28h
+%pattern io "TRISA" $30h
+%pattern io "TRISB" $34h
+%pattern io "TRISC" $38h
 
 
 // Format for arithmetic instructions between registers

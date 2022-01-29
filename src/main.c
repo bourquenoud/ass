@@ -57,6 +57,10 @@ int main(int argc, char** argv)
     }
 
     //Report parsing result
+    int info_count = fail_get_info_count();
+    if(info_count > 0)
+        printf("\033[34m>>%i INFO%s<<\033[0m\n", info_count, (info_count==1)?"":"S");
+
     int warning_count = fail_get_warning_count();
     if(warning_count > 0)
         printf("\033[33m>>%i WARNING%s<<\033[0m\n", warning_count, (warning_count==1)?"":"S");
