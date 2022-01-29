@@ -898,114 +898,114 @@ do_action:	/* This label is used only to access EOF actions. */
 case 1:
 YY_RULE_SETUP
 #line 75 "src/ass.l"
-{ printf("T_SUBST : %s\n", yytext); return T_SUBST; }
+{ return T_SUBST; }
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
 #line 77 "src/ass.l"
-{ printf("T_PARAM : %s\n", yytext); return T_PARAM; }
+{ return T_PARAM; }
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
 #line 78 "src/ass.l"
-{ printf("T_CONSTANT : %s\n", yytext); return T_CONSTANT; }
+{ return T_CONSTANT; }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
 #line 79 "src/ass.l"
-{ printf("T_ENUM : %s\n", yytext); return T_ENUM; }
+{ return T_ENUM; }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
 #line 80 "src/ass.l"
-{ printf("T_PATTERN : %s\n", yytext); return T_PATTERN; }
+{ return T_PATTERN; }
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
 #line 81 "src/ass.l"
-{ printf("T_FORMAT : %s\n", yytext); return T_FORMAT; }
+{ return T_FORMAT; }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
 #line 82 "src/ass.l"
-{ printf("T_ORDER : %s\n", yytext); return T_ORDER; }
+{ return T_ORDER; }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
 #line 83 "src/ass.l"
-{ printf("T_OPCODE : %s\n", yytext); return T_OPCODE; }
+{ return T_OPCODE; }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
 #line 84 "src/ass.l"
-{ printf("T_UNKNOWN_CMD : %s\n", yytext); return T_UNKNOWN_CMD; }
+{ return T_UNKNOWN_CMD; }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
 #line 86 "src/ass.l"
-{ printf("T_LEFTPAR : %s\n", yytext); return T_LEFTPAR; }
+{ return T_LEFTPAR; }
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
 #line 87 "src/ass.l"
-{ printf("T_RIGHPAR : %s\n", yytext); return T_RIGHPAR; }
+{ return T_RIGHPAR; }
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
 #line 88 "src/ass.l"
-{ printf("T_LEFTSQBRACK : %s\n", yytext); return T_LEFTSQBRACK; }
+{ return T_LEFTSQBRACK; }
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
 #line 89 "src/ass.l"
-{ printf("T_RIGHSQBRACK : %s\n", yytext); return T_RIGHSQBRACK; }
+{ return T_RIGHSQBRACK; }
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
 #line 90 "src/ass.l"
-{ printf("T_ELIPSIS : %s\n", yytext); return T_ELIPSIS; }
+{ return T_ELIPSIS; }
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
 #line 91 "src/ass.l"
-{ printf("T_COMMA : %s\n", yytext); return T_COMMA; }
+{ return T_COMMA; }
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
 #line 93 "src/ass.l"
-{ printf("T_INTEGER : %s\n", yytext); yylval.dVal = get_int(yytext); return T_INTEGER; }
+{ yylval.dVal = get_int(yytext); return T_INTEGER; }
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
 #line 94 "src/ass.l"
-{ printf("T_BIT_LIT : %s\n", yytext); yylval.dVal = get_bits(yytext); return T_BIT_LIT; }
+{ yylval.dVal = get_bits(yytext); return T_BIT_LIT; }
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
 #line 95 "src/ass.l"
-{ printf("T_BIT_CONSTANT : %s\n", yytext); yylval.dVal = get_const(yytext); return T_BIT_CONSTANT; }
+{ yylval.dVal = get_const(yytext); return T_BIT_CONSTANT; }
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
 #line 96 "src/ass.l"
-{ printf("T_STRING : %s\n", yytext); yylval.dVal = get_string(yytext); return T_STRING; }
+{ yylval.dVal = get_string(yytext); return T_STRING; }
 	YY_BREAK
 case 20:
 /* rule 20 can match eol */
 YY_RULE_SETUP
 #line 98 "src/ass.l"
-{ printf("T_DS_COMMENT : %s\n", yytext); return T_DS_COMMENT;}
+{ return T_DS_COMMENT;}
 	YY_BREAK
 case 21:
 /* rule 21 can match eol */
 YY_RULE_SETUP
 #line 99 "src/ass.l"
-{ printf("T_S_COMMENT : %s\n", yytext); return T_S_COMMENT;}
+{ return T_S_COMMENT;}
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
 #line 101 "src/ass.l"
-{ printf("T_IDENTIFIER : %s\n", yytext); yylval.dVal = get_id(yytext); return T_IDENTIFIER; }
+{ yylval.dVal = get_id(yytext); return T_IDENTIFIER; }
 	YY_BREAK
 case 23:
 /* rule 23 can match eol */
@@ -1021,7 +1021,7 @@ YY_RULE_SETUP
 case 25:
 YY_RULE_SETUP
 #line 106 "src/ass.l"
-{printf("\033[31mERROR line %i : syntax error, unexpected '%s'\033[0m\n", yylineno, yytext); exit(EXIT_FAILURE);}
+{ fprintf(stderr, "\033[31mERROR line %i : syntax error, unexpected '%s'\033[0m\n", yylineno, yytext); exit(EXIT_FAILURE);}
 	YY_BREAK
 case 26:
 YY_RULE_SETUP

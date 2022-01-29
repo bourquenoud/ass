@@ -72,38 +72,38 @@ L_COMMA                 ","
 
 %%
 
-{L_SUBST}                                       { printf("T_SUBST : %s\n", yytext); return T_SUBST; }
+{L_SUBST}                                       { return T_SUBST; }
 
-{L_PARAM}                                       { printf("T_PARAM : %s\n", yytext); return T_PARAM; }
-{L_CONSTANT}                                    { printf("T_CONSTANT : %s\n", yytext); return T_CONSTANT; }
-{L_ENUM}                                        { printf("T_ENUM : %s\n", yytext); return T_ENUM; }
-{L_PATTERN}                                     { printf("T_PATTERN : %s\n", yytext); return T_PATTERN; }
-{L_FORMAT}                                      { printf("T_FORMAT : %s\n", yytext); return T_FORMAT; }
-{L_ORDER}                                       { printf("T_ORDER : %s\n", yytext); return T_ORDER; }
-{L_OPCODE}                                      { printf("T_OPCODE : %s\n", yytext); return T_OPCODE; }
-{L_UNKNOWN_CMD}                                 { printf("T_UNKNOWN_CMD : %s\n", yytext); return T_UNKNOWN_CMD; }
+{L_PARAM}                                       { return T_PARAM; }
+{L_CONSTANT}                                    { return T_CONSTANT; }
+{L_ENUM}                                        { return T_ENUM; }
+{L_PATTERN}                                     { return T_PATTERN; }
+{L_FORMAT}                                      { return T_FORMAT; }
+{L_ORDER}                                       { return T_ORDER; }
+{L_OPCODE}                                      { return T_OPCODE; }
+{L_UNKNOWN_CMD}                                 { return T_UNKNOWN_CMD; }
 
-{L_LEFTPAR}                                     { printf("T_LEFTPAR : %s\n", yytext); return T_LEFTPAR; }
-{L_RIGHPAR}                                     { printf("T_RIGHPAR : %s\n", yytext); return T_RIGHPAR; }
-{L_LEFTSQBRACK}                                 { printf("T_LEFTSQBRACK : %s\n", yytext); return T_LEFTSQBRACK; }
-{L_RIGHSQBRACK}                                 { printf("T_RIGHSQBRACK : %s\n", yytext); return T_RIGHSQBRACK; }
-{L_ELIPSIS}                                     { printf("T_ELIPSIS : %s\n", yytext); return T_ELIPSIS; }
-{L_COMMA}                                       { printf("T_COMMA : %s\n", yytext); return T_COMMA; }
+{L_LEFTPAR}                                     { return T_LEFTPAR; }
+{L_RIGHPAR}                                     { return T_RIGHPAR; }
+{L_LEFTSQBRACK}                                 { return T_LEFTSQBRACK; }
+{L_RIGHSQBRACK}                                 { return T_RIGHSQBRACK; }
+{L_ELIPSIS}                                     { return T_ELIPSIS; }
+{L_COMMA}                                       { return T_COMMA; }
 
-{L_INTEGER}                                     { printf("T_INTEGER : %s\n", yytext); yylval.dVal = get_int(yytext); return T_INTEGER; }
-{L_BIT_LIT}                                     { printf("T_BIT_LIT : %s\n", yytext); yylval.dVal = get_bits(yytext); return T_BIT_LIT; }
-{L_BIT_CONSTANT}                                { printf("T_BIT_CONSTANT : %s\n", yytext); yylval.dVal = get_const(yytext); return T_BIT_CONSTANT; }
-{L_STRING}                                      { printf("T_STRING : %s\n", yytext); yylval.dVal = get_string(yytext); return T_STRING; }
+{L_INTEGER}                                     { yylval.dVal = get_int(yytext); return T_INTEGER; }
+{L_BIT_LIT}                                     { yylval.dVal = get_bits(yytext); return T_BIT_LIT; }
+{L_BIT_CONSTANT}                                { yylval.dVal = get_const(yytext); return T_BIT_CONSTANT; }
+{L_STRING}                                      { yylval.dVal = get_string(yytext); return T_STRING; }
 
-{L_DS_COMMENT}|{L_DM_COMMENT}                   { printf("T_DS_COMMENT : %s\n", yytext); return T_DS_COMMENT;}
-{L_S_COMMENT}|{L_M_COMMENT}                     { printf("T_S_COMMENT : %s\n", yytext); return T_S_COMMENT;}
+{L_DS_COMMENT}|{L_DM_COMMENT}                   { return T_DS_COMMENT;}
+{L_S_COMMENT}|{L_M_COMMENT}                     { return T_S_COMMENT;}
 
-{L_IDENTIFIER}                                  { printf("T_IDENTIFIER : %s\n", yytext); yylval.dVal = get_id(yytext); return T_IDENTIFIER; }
+{L_IDENTIFIER}                                  { yylval.dVal = get_id(yytext); return T_IDENTIFIER; }
 
 {L_LINE}                                        { return T_LINE; }
 {L_WHITESPACE}                                  {/* Ignore white spaces */}
 
-.                                               {printf("\033[31mERROR line %i : syntax error, unexpected '%s'\033[0m\n", yylineno, yytext); exit(EXIT_FAILURE);}
+.                                               { fprintf(stderr, "\033[31mERROR line %i : syntax error, unexpected '%s'\033[0m\n", yylineno, yytext); exit(EXIT_FAILURE);}
 
 %%
 
