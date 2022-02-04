@@ -1,0 +1,93 @@
+//Memory parameters
+%param opcode_width    14
+%param memory_width    16
+%param alignment       16
+%param address_width   14
+%param address_start   0
+%param address_stop    0
+%param endianness      "big"
+
+//Syntax parameters
+%param args_separator  ","
+%param label_pattern   "[a-zA_Z][a-zA-Z0-9_]:"
+
+//***********Byte oriented instructions***********
+//Data direction (work register -> file or file -> work register)
+%enum direction 1
+%pattern direction "W" $0b
+%pattern direction "F" $1b
+
+%format byte_format    [$00,ID(4),direction,IMMEDIATE(7)]
+%order byte_format     3 2
+
+%opcode byte_format  "ADDWF"    $0111
+%opcode byte_format  "ANDWF"    $0101
+%opcode byte_format  "CLRF"     $0001
+//%opcode byte_format  "CLRW"     $0001
+%opcode byte_format  "COMF"     $1001
+%opcode byte_format  "DECF"     $0011
+%opcode byte_format  "DECFSZ"   $1011
+%opcode byte_format  "INCF"     $1010
+%opcode byte_format  "INCFSZ"   $1111
+%opcode byte_format  "IORWF"    $0100
+%opcode byte_format  "MOVF"     $1000
+//%opcode byte_format  "MOVWF"    $0000
+//%opcode byte_format  "NOP"      $0000
+%opcode byte_format  "RLF"      $1101
+%opcode byte_format  "RRF"      $1100
+%opcode byte_format  "SUBWF"    $0010
+%opcode byte_format  "SWAPF"    $1110
+%opcode byte_format  "XORWF"    $0110
+
+%format clrw_format [$0000010,...]
+%opcode clrw_format "CLRW"
+
+%format nop_format [$0000000,...,$00000]
+%opcode nop_format "NOP"
+
+%format movwf_format [$0000001,IMMEDIATE(7)]
+%opcode movwf_format "MOVWF"
+
+//***********Bit oriented instructions***********
+%enum bit_pos 3
+%pattern bit_pos "b0" $0h
+%pattern bit_pos "b1" $1h
+%pattern bit_pos "b2" $2h
+%pattern bit_pos "b3" $3h
+%pattern bit_pos "b4" $4h
+%pattern bit_pos "b5" $5h
+%pattern bit_pos "b6" $6h
+%pattern bit_pos "b7" $7h
+
+%format bit_format [$01,ID(2),bit_pos,IMMEDIATE(7)]
+%order  bit_format 3 2
+
+%opcode bit_format "BCF" $00
+%opcode bit_format "BSF" $01
+%opcode bit_format "BTFSC" $10
+%opcode bit_format "BTFSS" $11
+
+//***********Literal instructions***********
+%format lit_format [$11,ID(4),IMMEDIATE(8)]
+
+%opcode lit_format "ADDLW" $1110
+%opcode lit_format "ANDLW" $1001
+%opcode lit_format "IORLW" $1000
+%opcode lit_format "MOVLW" $0000
+%opcode lit_format "RETLW" $0100
+%opcode lit_format "SUBLW" $1100
+%opcode lit_format "XORLW" $1010
+
+//***********Control instructions***********
+%format no_param_format [$00,$0000,ID(12)]
+
+%opcode no_param_format "CLRWDT" $01100100b
+%opcode no_param_format "RETFIE" $00001001b
+%opcode no_param_format "RETURN" $00001000b
+%opcode no_param_format "SLEEP"  $01100011b
+
+//***********Jump instructions***********
+%format jump_format [$10,ID(1),LABEL_ABS(11)]
+
+%opcode jump_format "CALL" $0
+%opcode jump_format "GOTO" $1
