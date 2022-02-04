@@ -175,6 +175,9 @@ bucket_t** hash_serialise(hash_t* self)
     bucket_t** serialised_data;
     uint32_t n_elements = hash_count(self);
 
+    if(n_elements <= 0)
+        return NULL;
+
     xmalloc_set_handler(xmalloc_callback);
     serialised_data = xmalloc(sizeof(bucket_t*) * n_elements);
     

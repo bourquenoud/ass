@@ -25,7 +25,8 @@ static const char *const param_names[] =
         [ePARAM_ADRRESS_STOP] = "address_stop",
         [ePARAM_ENDIANNESS] = "endianness",
         [ePARAM_ARGS_SEPARATOR] = "args_separator",
-        [ePARAM_LABEL_PATTERN] = "label_pattern"};
+        [ePARAM_LABEL_PATTERN] = "label_pattern",
+};
 
 typedef struct
 {
@@ -42,8 +43,8 @@ linked_list_t *opcode_list;
 
 int search_match(const char *const string_list[], int n_strings, const char *pattern);
 bool try_get_integer(linked_list_t *, int64_t *);
-bool try_get_string(linked_list_t *, char**);
-bool try_get_string(linked_list_t *, char**);
+bool try_get_string(linked_list_t *, char **);
+bool try_get_string(linked_list_t *, char **);
 
 int command_param(linked_list_t *args)
 {
@@ -74,7 +75,7 @@ int command_param(linked_list_t *args)
     }
 
     int64_t val;
-    char* str;
+    char *str;
 
     switch (param_number)
     {
@@ -268,7 +269,7 @@ bool try_get_integer(linked_list_t *element, int64_t *result)
     return false;
 }
 
-bool try_get_string(linked_list_t *element, char** result)
+bool try_get_string(linked_list_t *element, char **result)
 {
     if (element->type == T_STRING)
     {
