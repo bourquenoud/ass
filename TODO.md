@@ -5,20 +5,20 @@ This file list everything that has to be done
 
 - [X] Opcode format
 - [X] Menemonic declaration
-- [ ] Register declaration
+- [X] Enum declaration
 - [ ] Section declaration
 - [ ] Built-in macro
 - [ ] Macro
 - [ ] Modifiers
-- [ ] Directive
-- [ ] ASS configuration
-    - [ ] Custom pattern for the syntax
-    - [ ] Data alignement
+- [X] Parameters
+- [X] ASS configuration
+    - [X] Custom pattern for the syntax
+    - [X] Data alignement
     - [ ] Long jump
     - [ ] (More)
 - [ ] (More)
 
 ## Assembly syntax
 - [X] Opcode
-- [ ] Label
+- [X] Label
 - [ ] Macro
