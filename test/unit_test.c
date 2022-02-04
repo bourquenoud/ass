@@ -93,7 +93,12 @@ Test(default_suite, dynamic_array)
    //Try to remove from an emtpy array
    darray = darray_remove(darray, 1);
 
-   cr_expect(darray->count == 0, "Underflow protection not working");
+   cr_expect(darray->count == 0, "Underflow protection not working for 1");
+
+   //Try to remove from an emtpy array
+   darray = darray_remove(darray, 32);
+
+   cr_expect(darray->count == 0, "Underflow protection not working for 32");
 }
 
 Test(default_suite, should_pass)

@@ -51,7 +51,7 @@ void darray_get(darray_t *array, void *data, int index)
 darray_t *darray_remove(darray_t *array, int count)
 {
     darray_t *new_array = array;
-    new_array->count -= count;
+    new_array->count = (new_array->count - count < new_array->count) ? new_array->count - count : 0;
 
     if (new_array->count <= new_array->size / 2 && new_array->count >= DEFAULT_DARRAY_SIZE)
     {
