@@ -8,7 +8,7 @@ Please note that this software is licensed under the GPLv3. As the generated fil
 
 # Getting started
 
-***DISCLAIMER*** *: It has only been tested on Linux. It probably does not work in MacOS and will to fail in Windows.*
+***DISCLAIMER*** *: It has only been tested on Linux. It probably does not work in MacOS or in Windows.*
 
 ## Build and install
 
