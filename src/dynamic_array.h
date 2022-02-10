@@ -22,15 +22,17 @@ typedef struct
  */
 darray_t *darray_init(size_t element_size);
 
+// Wrapped function
+darray_t *_darray_add(darray_t *array, const void const *data);
 /**
  * @brief Add an element to the array, and grow it if necessary
  * 
  * @param array A pointer to the array to modify
- * @param data A pointer to the data
+ * @param data The data
  * @return darray_t* The new array pointer if the data block has moved.
  *         Otherwise returns the original array pointer array
  */
-darray_t *darray_add(darray_t *array, const void const *data);
+#define darray_add(array, data) _darray_add((array), (&data))
 
 /**
  * @brief Remove n elements from the end

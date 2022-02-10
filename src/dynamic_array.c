@@ -2,6 +2,8 @@
 
 #define DEFAULT_DARRAY_SIZE 16
 
+darray_t *_darray_add(darray_t *array, const void const *data);
+
 darray_t *darray_init(size_t element_size)
 {
     if (element_size == 0)
@@ -19,7 +21,7 @@ darray_t *darray_init(size_t element_size)
     return new_darray;
 }
 
-darray_t *darray_add(darray_t *array, const void const *data)
+darray_t *_darray_add(darray_t *array, const void const *data)
 {
     darray_t *new_array = array;
     if (new_array->count >= new_array->size)
