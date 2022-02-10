@@ -2,7 +2,7 @@
 
 #define DEFAULT_DARRAY_SIZE 16
 
-darray_t *_darray_add(darray_t *array, const void const *data);
+void _darray_add(darray_t **array, const void const *data);
 
 darray_t *darray_init(size_t element_size)
 {
@@ -21,45 +21,57 @@ darray_t *darray_init(size_t element_size)
     return new_darray;
 }
 
-darray_t *_darray_add(darray_t *array, const void const *data)
+void _darray_add(darray_t **array, const void const *data)
 {
-    darray_t *new_array = array;
-    if (new_array->count >= new_array->size)
+    if ((*array)->count >= (*array)->size)
     {
-        new_array = realloc(new_array, sizeof(darray_t) + (new_array->element_size) * (new_array->size) * 2);
-        new_array->size *= 2;
+        (*array) = realloc((*array), sizeof(darray_t) + ((*array)->element_size) * ((*array)->size) * 2);
+        (*array)->size *= 2;
     }
 
-    //Copy all bytes to the array
-    for (int i = 0; i < new_array->element_size; i++)
-    {
-        new_array->element_list[new_array->element_size * new_array->count + i] = *((uint8_t *)data + i);
-    }
-    new_array->count++;
-    return new_array;
+    memcpy((*array)->element_list + ((*array)->element_size * (*array)->count), data, (*array)->element_size);
+    (*array)->count++;
 }
 
-void darray_get(darray_t *array, void *data, int index)
+void darray_get(darray_t **array, void *data, int index)
 {
-    size_t computed_index = index * array->element_size;
+    size_t computed_index = index * (*array)->element_size;
 
-    //Copy all bytes to the array
-    for (int i = 0; i < array->element_size; i++)
+    // Copy all bytes to the array
+    for (int i = 0; i < (*array)->element_size; i++)
     {
-        *((uint8_t *)data + i) = array->element_list[computed_index + i];
+        *((uint8_t *)data + i) = (*array)->element_list[computed_index + i];
     }
 }
 
-darray_t *darray_remove(darray_t *array, int count)
+void *darray_get_ptr(darray_t **array, int index)
 {
-    darray_t *new_array = array;
-    new_array->count = (new_array->count - count < new_array->count) ? new_array->count - count : 0;
+    size_t computed_index = index * (*array)->element_size;
 
-    if (new_array->count <= new_array->size / 2 && new_array->count >= DEFAULT_DARRAY_SIZE)
+    return (void *)((*array)->element_list + computed_index);
+}
+
+void darray_copy(darray_t **array_dest, darray_t **array_src)
+{
+    darray_resize(array_dest, (*array_src)->size);
+    (*array_dest)->count = (*array_src)->count;
+    memcpy(&((*array_dest)->element_list), &((*array_src)->element_list), (*array_src)->count * (*array_src)->element_size);
+}
+
+void darray_resize(darray_t **array, int size)
+{
+    *array = realloc(*array, sizeof(darray_t) + size * (*array)->element_size);
+    (*array)->size = size;
+    (*array)->count = ((*array)->count > (*array)->size) ? (*array)->size : (*array)->count;
+}
+
+void darray_remove(darray_t **array, int count)
+{
+    (*array)->count = ((*array)->count - count < (*array)->count) ? (*array)->count - count : 0;
+
+    if ((*array)->count <= (*array)->size / 2 && (*array)->count >= DEFAULT_DARRAY_SIZE)
     {
-        new_array = realloc(new_array, sizeof(darray_t) + (new_array->element_size) * (new_array->size) / 2);
-        new_array->size /= 2;
+        (*array) = realloc((*array), sizeof(darray_t) + ((*array)->element_size) * ((*array)->size) / 2);
+        (*array)->size /= 2;
     }
-
-    return new_array;
 }
