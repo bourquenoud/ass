@@ -21,7 +21,7 @@ typedef struct
  * @param element_size The size in bytes of an element (sizeof(TYPE))
  * @return darray_t* The newly created empty dynamic array
  */
-darray_t *darray_init(size_t element_size);
+darray_t* darray_init(size_t element_size);
 
 // Wrapped function
 void _darray_add(darray_t **array, const void const *data);
@@ -34,7 +34,7 @@ void _darray_add(darray_t **array, const void const *data);
  * @return darray_t* The new array pointer if the data block has moved.
  *         Otherwise returns the original array pointer array
  */
-#define darray_add(array, data) _darray_add((array), (&data))
+#define darray_add(array, data) _darray_add((array), (&(data)))
 
 /**
  * @brief Remove n elements from the end
