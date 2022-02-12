@@ -92,3 +92,9 @@ void darray_remove_at(darray_t **array, int count, int index)
     // Last element is now duplicated, remove it
     darray_remove(array, count);
 }
+
+void darray_empty(darray_t **array)
+{
+    darray_resize(array, DEFAULT_DARRAY_SIZE);
+    (*array)->count = 0;
+}

@@ -21,7 +21,7 @@ typedef struct
  * @param element_size The size in bytes of an element (sizeof(TYPE))
  * @return darray_t* The newly created empty dynamic array
  */
-darray_t* darray_init(size_t element_size);
+darray_t *darray_init(size_t element_size);
 
 // Wrapped function
 void _darray_add(darray_t **array, const void const *data);
@@ -48,12 +48,12 @@ void darray_remove(darray_t **array, int count);
 
 /**
  * @brief Remove elements at the index and shift the array if necessary
- * 
+ *
  * @details Remove the specified amount of elements from the array
  * and the shift it. It removes the element at the specified index,
  * and the one following it in increasing index order. It does NOT
  * check for array overflow.
- * 
+ *
  * @param array A pointer to the array to modify
  * @param count The number of element to remove
  * @param index The index of the first element to remove
@@ -80,7 +80,7 @@ void *darray_get_ptr(darray_t **array, int index);
 
 /**
  * @brief Copy a dynamic array
- * 
+ *
  * @param array_dest Pointer to the destination array
  * @param array_src Pointer to the source array
  */
@@ -89,9 +89,16 @@ void darray_copy(darray_t **array_dest, darray_t **array_src);
 /**
  * @brief Resize allocated memory of the array
  * @details Reallocate the memory for the array, and remove
- * elements if the new size is smaller than the number of elements.  
- * 
+ * elements if the new size is smaller than the number of elements.
+ *
  * @param array Pointer to the array to resize
  * @param size Size in number of elements
  */
-void darray_resize(darray_t** array, int size);
+void darray_resize(darray_t **array, int size);
+
+/**
+ * @brief Remove all elements of the array and
+ * resize it to the default size
+ *
+ */
+void darray_empty(darray_t **array);
