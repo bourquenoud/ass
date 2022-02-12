@@ -147,56 +147,32 @@ int _state_add_transition(int _arg_count, state_t *state, int next_state_id, ...
     va_list args;
     va_start(args, next_state_id);
 
-    transistion_t new_transition;
-    transistion_t *new_transition_ptr = &new_transition;
-
-    transistion_t *transition_array = (transistion_t *)(state->transitions_ttrans->element_list);
-    int transition_index = -1;
-
-    // Search if a transition to the next_state already exist
-    for (int i = 0; i < state->transitions_ttrans->count; i++)
+    // Check if it already exists
+    for (size_t i = 0; i < _arg_count; i++)
     {
-        // Transition already exists, we merge with the new one
-        if (transition_array[i].next_state_id == next_state_id)
-        {
-            new_transition_ptr = transition_array + i;
-            transition_index = i;
-            break;
-        }
-    }
-
-    if (transition_index < 0)
-    {
-        new_transition_ptr->next_state_id = next_state_id;
-        new_transition_ptr->conditions_tint = darray_init(sizeof(int));
-    }
-
-    // We add all the conditions to the transition, checking for conflicts
-    for (int i = 0; i < _arg_count; i++)
-    {
-        int condition = va_arg(args, int);
-
-        // Don't add the condition if it already exists
         bool exists = false;
-        int *condition_array = (int *)(new_transition_ptr->conditions_tint->element_list);
-        for (size_t j = 0; j < new_transition_ptr->conditions_tint->count; j++)
+        int cond = va_arg(args, int);
+        transistion_t *transition_array = (transistion_t *)darray_get_ptr(&(state->transitions_ttrans), 0);
+        for (size_t j = 0; j < state->transitions_ttrans->count; j++)
         {
-            if (condition_array[i] == condition)
+            if (transition_array->next_state_id == next_state_id && transition_array->condition == cond)
             {
-                exists = true;
+                exists = false;
                 break;
             }
         }
 
+        //Add the transition if it doesn't already exist
         if (!exists)
-            darray_add(&(new_transition_ptr->conditions_tint), condition);
+        {
+            transistion_t new_transition = {.condition = cond, .next_state_id = next_state_id};
+            darray_add(&(state->transitions_ttrans), new_transition);
+        }
     }
 
-    // Add the new transition the the state
-    if (transition_index < 0)
-        darray_add(&(state->transitions_ttrans), new_transition);
+    va_end(args);
 
-    return transition_index; // New transition added
+    return 0;
 }
 
 state_machine_t state_machine_merge(state_machine_t *state_machine_a, state_machine_t *state_machine_b)
@@ -215,15 +191,6 @@ state_machine_t state_machine_merge(state_machine_t *state_machine_a, state_mach
         state_t *old_state = darray_get_ptr(&(state_machine_b->states_tstate), i);
         state_t *new_state = state_machine_add_state(&new_state_machine, old_state->id);
         darray_copy(&(new_state->transitions_ttrans), &(old_state->transitions_ttrans)); // Clone the transitions
-
-        // Copy all transitions conditions
-        // TODO: Too compact and hard to read, make it better
-        for (size_t j = 0; j < old_state->transitions_ttrans->count; j++)
-        {
-            darray_copy(
-                &(((transistion_t *)darray_get_ptr(&(new_state->transitions_ttrans), j))->conditions_tint),
-                &(((transistion_t *)darray_get_ptr(&(old_state->transitions_ttrans), j))->conditions_tint));
-        }
 
         // Add to the correspondance table. The id has likely changed so we will remap it
         //  once all state have been copied
@@ -269,7 +236,7 @@ state_machine_t state_machine_merge(state_machine_t *state_machine_a, state_mach
         }
     }
 
-    // Add the transition from start to B machine's states
+    // Merge the start transitions of machine B with the new machine
     state_t *old_state = darray_get_ptr(&(state_machine_b->states_tstate), 0);
     state_t *new_state = darray_get_ptr(&(new_state_machine.states_tstate), 0);
 
@@ -287,10 +254,7 @@ state_machine_t state_machine_merge(state_machine_t *state_machine_a, state_mach
         if (new_id == -1)
             abort();
 
-        state_add_transition(new_state, new_id);
-        darray_copy(
-            &(((transistion_t *)darray_get_ptr(&(new_state->transitions_ttrans), new_state->transitions_ttrans->count - 1))->conditions_tint),
-            &(trans_array[k].conditions_tint));
+        state_add_transition(new_state, new_id, trans_array[k].condition);
     }
 
     return new_state_machine;
@@ -387,34 +351,7 @@ bool state_compare_states(state_t *s1, state_t *s2)
 // return true if identique, false otherwise
 bool state_compare_transitions(transistion_t *t1, transistion_t *t2)
 {
-    size_t count = t1->conditions_tint->count;
-    int *t1_cond_array = darray_get_ptr(&(t1->conditions_tint), 0);
-    int *t2_cond_array = darray_get_ptr(&(t2->conditions_tint), 0);
-
-    if (t1->next_state_id != t2->next_state_id)
-        return false;
-
-    if (t1->conditions_tint->count != t2->conditions_tint->count)
-        return false;
-
-    // For each condition of t1, check if t2 contains it too
-    for (size_t i = 0; i < count; i++)
-    {
-        bool match = false;
-        for (size_t j = 0; j < count; j++)
-        {
-            if (t1_cond_array[i] == t2_cond_array[j])
-            {
-                match = true;
-                break;
-            }
-        }
-        if (!match)
-            return false;
-    }
-
-    // We survived the check, all conditions have a match
-    return true;
+    return (t1->condition == t2->condition && t1->next_state_id == t2->next_state_id);
 }
 
 void state_machine_print(state_machine_t *state_machine, FILE *file_descriptor)
@@ -437,16 +374,7 @@ void state_machine_print(state_machine_t *state_machine, FILE *file_descriptor)
         for (int j = 0; j < state_array[i].transitions_ttrans->count; j++)
         {
             fprintf(file_descriptor, "\t%i -> %i", state_array[i].id, transition[j].next_state_id);
-            fputs("  \t[label=\"(", file_descriptor);
-            for (size_t k = 0; k < transition[j].conditions_tint->count; k++)
-            {
-                fprintf(
-                    file_descriptor,
-                    "%i%c",
-                    *((int *)(transition[j].conditions_tint->element_list) + k),
-                    k == transition[j].conditions_tint->count - 1 ? ')' : ',');
-            }
-            fputs("\"]\n", file_descriptor);
+            fprintf(file_descriptor, "  \t[label=\"(%i)\"]\n", transition[j].condition);
         }
     }
 

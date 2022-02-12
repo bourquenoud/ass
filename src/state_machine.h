@@ -14,8 +14,8 @@ typedef struct state_s state_t;
 
 typedef struct
 {
+    int condition;
     int next_state_id;
-    darray_t *conditions_tint;
 } transistion_t;
 
 struct state_s
