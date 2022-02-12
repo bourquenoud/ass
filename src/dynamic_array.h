@@ -47,6 +47,20 @@ void _darray_add(darray_t **array, const void const *data);
 void darray_remove(darray_t **array, int count);
 
 /**
+ * @brief Remove elements at the index and shift the array if necessary
+ * 
+ * @details Remove the specified amount of elements from the array
+ * and the shift it. It removes the element at the specified index,
+ * and the one following it in increasing index order. It does NOT
+ * check for array overflow.
+ * 
+ * @param array A pointer to the array to modify
+ * @param count The number of element to remove
+ * @param index The index of the first element to remove
+ */
+void darray_remove_at(darray_t **array, int count, int index);
+
+/**
  * @brief Get the data at a specific index and store the result
  *
  * @param array A pointer to array to get the data from

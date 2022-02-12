@@ -75,3 +75,20 @@ void darray_remove(darray_t **array, int count)
         (*array)->size /= 2;
     }
 }
+
+void darray_remove_at(darray_t **array, int count, int index)
+{
+    // Shift the bytes in the array, overriding the element to remove
+    int offset = (*array)->element_size * count;
+
+    void *dest_ptr = (*array)->element_list + ((*array)->element_size * index);
+    void *src_ptr = dest_ptr + offset;
+    void *end_ptr = (*array)->element_size * (*array)->count + (*array)->element_list;
+
+    int size = (int)(end_ptr - src_ptr);
+
+    memmove(dest_ptr, src_ptr, size);
+
+    // Last element is now duplicated, remove it
+    darray_remove(array, count);
+}
