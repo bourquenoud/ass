@@ -129,45 +129,6 @@ Test(default_suite, dynamic_array)
     cr_expect(darray->count == 0, "Underflow protection not working for 32");
 }
 
-/* //Test disabled for now because the transition data structure changed
-Test(default_suite, transition)
-{
-    transistion_t t1;
-    transistion_t t2;
-    transistion_t t3;
-    t1.conditions_tint = darray_init(sizeof(int));
-    t1.next_state_id = 1;
-    t2.conditions_tint = darray_init(sizeof(int));
-    t2.next_state_id = 1;
-    t3.conditions_tint = darray_init(sizeof(int));
-    t3.next_state_id = 1;
-
-    const int const vals[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
-
-    darray_add(&(t1.conditions_tint), vals[0]);
-    darray_add(&(t1.conditions_tint), vals[1]);
-    darray_add(&(t1.conditions_tint), vals[2]);
-    darray_add(&(t1.conditions_tint), vals[3]);
-
-    darray_add(&(t2.conditions_tint), vals[0]);
-    darray_add(&(t2.conditions_tint), vals[1]);
-    darray_add(&(t2.conditions_tint), vals[2]);
-    darray_add(&(t2.conditions_tint), vals[3]);
-
-    cr_expect(state_compare_transitions(&t1, &t2) == true, "Comparison should return true");
-
-    t2.next_state_id = 2;
-
-    cr_expect(state_compare_transitions(&t1, &t2) == false, "Comparison should return false");
-
-    darray_add(&(t3.conditions_tint), vals[2]);
-    darray_add(&(t3.conditions_tint), vals[1]);
-    darray_add(&(t3.conditions_tint), vals[3]);
-    darray_add(&(t3.conditions_tint), vals[8]);
-
-    cr_expect(state_compare_transitions(&t1, &t3) == false, "Comparison should return false");
-}*/
-
 Test(default_suite, state)
 {
     const int N_STATE = 16;
