@@ -1,10 +1,131 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdarg.h>
 
 #include "state_machine.h"
-#include "macro.h"
-#include "xmalloc.h"
+
+#define MAX_STATE 256
+
+static void xmalloc_callback(int err);
+
+/************************************************************************************/
+
+typedef struct
+{
+    uint32_t data[MAX_STATE / sizeof(uint32_t)];
+} bitarray_t;
+
+void bitarray_set(bitarray_t *bitarray, int index, bool val)
+{
+    int uint32_index = index / 32;
+    uint32_t mask = 1 << (index % 32);
+    if (val)
+        bitarray->data[uint32_index] |= mask;
+    else
+        bitarray->data[uint32_index] &= ~mask;
+}
+
+bitarray_t bitarray_union(bitarray_t *bitarray_a, bitarray_t *bitarray_b)
+{
+    bitarray_t new_bitarray;
+
+    for (size_t i = 0; i < MAX_STATE / 32; i++)
+    {
+        new_bitarray.data[i] = bitarray_a->data[i] | bitarray_b->data[i];
+    }
+    return new_bitarray;
+}
+
+bitarray_t bitarray_intersection(bitarray_t *bitarray_a, bitarray_t *bitarray_b)
+{
+    bitarray_t new_bitarray;
+
+    for (size_t i = 0; i < MAX_STATE / 32; i++)
+    {
+        new_bitarray.data[i] = bitarray_a->data[i] & bitarray_b->data[i];
+    }
+    return new_bitarray;
+}
+
+bool bitarray_compare(bitarray_t *bitarray_a, bitarray_t *bitarray_b)
+{
+    for (size_t i = 0; i < MAX_STATE / 32; i++)
+    {
+        if (bitarray_a->data[i] != bitarray_b->data[i])
+            return false;
+    }
+    return true;
+}
+
+/************************************************************************************/
+
+state_machine_t state_machine_init()
+{
+    const int start_id = 0;
+    state_machine_t new_state_machine;
+    state_t new_state;
+    new_state = state_init_state(start_id);
+    new_state.end_state = 0;
+    new_state_machine.states_tstate = darray_init(sizeof(state_t));
+    darray_add(&(new_state_machine.states_tstate), new_state);
+
+    return new_state_machine;
+}
+
+state_t *state_machine_add_state(state_machine_t *state_machine, int end_state)
+{
+    // Get the dynamic array as a static array
+    state_t *state_array = (state_t *)(state_machine->states_tstate->element_list);
+
+    // Get the first available state id
+    // NOTE: O(N²), but not a big problem as the state machine will remain relatively small
+    //  the algorithm complexity could be improved by sorting the states by id
+    int new_id;
+    for (new_id = 0; new_id < MAX_STATE; new_id++)
+    {
+        bool available = true;
+        for (int i = 0; i < state_machine->states_tstate->count; i++)
+        {
+            // Id is already taken
+            if (state_array[i].id == new_id)
+            {
+                available = false;
+                break;
+            }
+        }
+        if (available)
+            break;
+    }
+
+    // Create a new state with the corresponding ID and add it to the state machine
+    state_t new_state = state_init_state(new_id);
+    new_state.end_state = end_state;
+    darray_add(&(state_machine->states_tstate), new_state);
+
+    // Return a pointer to the last element (the one we added)
+    return (state_t *)(state_machine->states_tstate->element_list) + state_machine->states_tstate->count - 1;
+}
+
+state_t *state_machine_get_state(state_machine_t *state_machine, int state_id)
+{
+    // Look for the state id
+    state_t *state_array = (state_t *)state_machine->states_tstate->element_list;
+    for (size_t i = 0; i < state_machine->states_tstate->count; i++)
+    {
+        if (state_array[i].id == state_id)
+            return state_array + i;
+    }
+    return NULL;
+}
+
+transistion_t *state_machine_get_transitions(state_machine_t *state_machine, int state_id)
+{
+    // Look for the state id
+    state_t *state_array = (state_t *)state_machine->states_tstate->element_list;
+    for (size_t i = 0; i < state_machine->states_tstate->count; i++)
+    {
+        if (state_array[i].id == state_id)
+            return (transistion_t *)(state_array[i].transitions_ttrans->element_list);
+    }
+    return NULL;
+}
 
 state_t state_init_state(int id)
 {
@@ -20,21 +141,282 @@ state_t state_init_state(int id)
 // NOTE: This function is wrapped inside a macro, which passes the number of arguments
 //  as "_arg_count". When calling "state_add_transition" (the wrapper), the number of
 //  arguments should not be given, as it is computed by the preprocessor.
-void _state_add_transition(int _arg_count, state_t *state, int next_state_id, ...)
+// TODO: Make it less terrible. Seriously the way it is done sucks
+int _state_add_transition(int _arg_count, state_t *state, int next_state_id, ...)
 {
     va_list args;
     va_start(args, next_state_id);
 
     transistion_t new_transition;
-    new_transition.next_state_id = next_state_id;
+    transistion_t *new_transition_ptr = &new_transition;
 
-    // Create a dynamic array of int
-    new_transition.conditions_tint = darray_init(sizeof(int));
+    transistion_t *transition_array = (transistion_t *)(state->transitions_ttrans->element_list);
+    int transition_index = -1;
 
-    // We add all the conditions to the transition, without checking for conflicts
+    // Search if a transition to the next_state already exist
+    for (int i = 0; i < state->transitions_ttrans->count; i++)
+    {
+        // Transition already exists, we merge with the new one
+        if (transition_array[i].next_state_id == next_state_id)
+        {
+            new_transition_ptr = transition_array + i;
+            transition_index = i;
+            break;
+        }
+    }
+
+    if (transition_index < 0)
+    {
+        new_transition_ptr->next_state_id = next_state_id;
+        new_transition_ptr->conditions_tint = darray_init(sizeof(int));
+    }
+
+    // We add all the conditions to the transition, checking for conflicts
     for (int i = 0; i < _arg_count; i++)
     {
         int condition = va_arg(args, int);
+
+        // Don't add the condition if it already exists
+        bool exists = false;
+        int *condition_array = (int *)(new_transition_ptr->conditions_tint->element_list);
+        for (size_t j = 0; j < new_transition_ptr->conditions_tint->count; j++)
+        {
+            if (condition_array[i] == condition)
+            {
+                exists = true;
+                break;
+            }
+        }
+
+        if (!exists)
+            darray_add(&(new_transition_ptr->conditions_tint), condition);
+    }
+
+    // Add the new transition the the state
+    if (transition_index < 0)
+        darray_add(&(state->transitions_ttrans), new_transition);
+
+    return transition_index; // New transition added
+}
+
+state_machine_t state_machine_merge(state_machine_t *state_machine_a, state_machine_t *state_machine_b)
+{
+    int corresp_table[state_machine_b->states_tstate->count][2];
+
+    state_machine_t new_state_machine = state_machine_init();
+
+    // Copy the state machine A in one go
+    darray_copy(&(new_state_machine.states_tstate), &(state_machine_a->states_tstate));
+
+    // Add each state of the state machine B, skipping the starting state
+    for (size_t i = 1; i < state_machine_b->states_tstate->count; i++)
+    {
+        // Copy one state
+        state_t *old_state = darray_get_ptr(&(state_machine_b->states_tstate), i);
+        state_t *new_state = state_machine_add_state(&new_state_machine, old_state->id);
+        darray_copy(&(new_state->transitions_ttrans), &(old_state->transitions_ttrans)); // Clone the transitions
+
+        // Copy all transitions conditions
+        // TODO: Too compact and hard to read, make it better
+        for (size_t j = 0; j < old_state->transitions_ttrans->count; j++)
+        {
+            darray_copy(
+                &(((transistion_t *)darray_get_ptr(&(new_state->transitions_ttrans), j))->conditions_tint),
+                &(((transistion_t *)darray_get_ptr(&(old_state->transitions_ttrans), j))->conditions_tint));
+        }
+
+        // Add to the correspondance table. The id has likely changed so we will remap it
+        //  once all state have been copied
+        corresp_table[i][0] = old_state->id;
+        corresp_table[i][1] = new_state->id;
+    }
+
+    // Don't remap the starting state, as it is the only one shared by both fsm
+    corresp_table[0][0] = 0;
+    corresp_table[0][1] = 0;
+
+    // Remap
+    // TODO: 4 level for loop ? Really ? Fix that ASAP
+    for (size_t i = 0; i < new_state_machine.states_tstate->count; i++)
+    {
+        // Check if it is a B state machine's state
+        for (size_t j = 1; j < state_machine_b->states_tstate->count; j++)
+        {
+            state_t *state = (state_t *)darray_get_ptr(&(new_state_machine.states_tstate), i);
+
+            // Remap the transitions
+            if (corresp_table[j][1] == (state->id))
+            {
+                int n_trans = state->transitions_ttrans->count;
+                transistion_t *trans_array = ((transistion_t *)darray_get_ptr(&(state->transitions_ttrans), 0));
+                for (size_t k = 0; k < n_trans; k++)
+                {
+                    int old_id = trans_array[k].next_state_id;
+                    int new_id = -1;
+                    for (size_t l = 0; l < state_machine_b->states_tstate->count; l++)
+                    {
+                        if (corresp_table[l][0] == old_id)
+                            new_id = corresp_table[l][1];
+                    }
+                    if (new_id == -1)
+                        abort();
+
+                    trans_array[k].next_state_id = new_id;
+                }
+
+                break;
+            }
+        }
+    }
+
+    // Add the transition from start to B machine's states
+    state_t *old_state = darray_get_ptr(&(state_machine_b->states_tstate), 0);
+    state_t *new_state = darray_get_ptr(&(new_state_machine.states_tstate), 0);
+
+    int n_trans = old_state->transitions_ttrans->count;
+    transistion_t *trans_array = ((transistion_t *)darray_get_ptr(&(old_state->transitions_ttrans), 0));
+    for (size_t k = 0; k < n_trans; k++)
+    {
+        int old_id = trans_array[k].next_state_id;
+        int new_id = -1;
+        for (size_t l = 0; l < state_machine_b->states_tstate->count; l++)
+        {
+            if (corresp_table[l][0] == old_id)
+                new_id = corresp_table[l][1];
+        }
+        if (new_id == -1)
+            abort();
+
+        state_add_transition(new_state, new_id);
+        darray_copy(
+            &(((transistion_t *)darray_get_ptr(&(new_state->transitions_ttrans), new_state->transitions_ttrans->count - 1))->conditions_tint),
+            &(trans_array[k].conditions_tint));
+    }
+
+    return new_state_machine;
+}
+
+void state_machine_reduce(state_machine_t *state_machine)
+{
+    // Two state can be merged if they have the same end_state and the same transitions
+    bool has_merged = true;
+
+    //
+    while (has_merged)
+    {
+        int count = state_machine->states_tstate->count;
+        state_t *state_array = (state_t *)darray_get_ptr(&(state_machine->states_tstate), 0);
+        has_merged = false;
+        // We check each state against all other states
+        for (size_t i = 0; i < count && !has_merged; i++)
+        {
+            for (size_t j = i + 1; j < count && !has_merged; j++)
+            {
+                if (state_compare_states(state_array + i, state_array + j))
+                {
+                    // We can merge the two states
+                    state_machine_replace_id(state_machine, state_array[i].id, state_array[j].id);
+                    darray_remove_at(&(state_machine->states_tstate), 1, j);
+                    has_merged = true;
+                }
+            }
+        }
+    }
+}
+
+void state_machine_replace_id(state_machine_t *state_machine, int new_id, int old_id)
+{
+    // For each state...
+    int s_count = state_machine->states_tstate->count;
+    state_t *state_array = darray_get_ptr(&(state_machine->states_tstate), 0);
+    for (size_t i = 0; i < s_count; i++)
+    {
+        // ...and for each transition
+        int t_count = state_array[i].transitions_ttrans->count;
+        transistion_t *transition_array = darray_get_ptr(&(state_array[i].transitions_ttrans), 0);
+
+        for (size_t j = 0; j < t_count; j++)
+        {
+            // If it points to the old id, replace with the new id
+            if (transition_array[j].next_state_id == old_id)
+            {
+                transition_array[j].next_state_id = new_id;
+            }
+        }
+    }
+}
+
+void state_machine_make_deterministic(state_machine_t *state_machine)
+{
+    darray_t *dfa_state_array = darray_init(sizeof(bitarray_t));
+}
+
+// return true if identique, false otherwise
+bool state_compare_states(state_t *s1, state_t *s2)
+{
+    size_t count = s1->transitions_ttrans->count;
+    transistion_t *s1_trans_array = darray_get_ptr(&(s1->transitions_ttrans), 0);
+    transistion_t *s2_trans_array = darray_get_ptr(&(s2->transitions_ttrans), 0);
+
+    if (s1->end_state != s2->end_state)
+        return false;
+
+    if (s1->transitions_ttrans->count != s2->transitions_ttrans->count)
+        return false;
+
+    // For each condition of t1, check if t2 contains it too
+    for (size_t i = 0; i < count; i++)
+    {
+        bool match = false;
+        for (size_t j = 0; j < count; j++)
+        {
+            if (state_compare_transitions(s1_trans_array + i, s2_trans_array + j))
+            {
+                match = true;
+                break;
+            }
+        }
+        if (!match)
+            return false;
+    }
+
+    // We survived the check, all transitions have a match
+    return true;
+}
+
+// return true if identique, false otherwise
+bool state_compare_transitions(transistion_t *t1, transistion_t *t2)
+{
+    size_t count = t1->conditions_tint->count;
+    int *t1_cond_array = darray_get_ptr(&(t1->conditions_tint), 0);
+    int *t2_cond_array = darray_get_ptr(&(t2->conditions_tint), 0);
+
+    if (t1->next_state_id != t2->next_state_id)
+        return false;
+
+    if (t1->conditions_tint->count != t2->conditions_tint->count)
+        return false;
+
+    // For each condition of t1, check if t2 contains it too
+    for (size_t i = 0; i < count; i++)
+    {
+        bool match = false;
+        for (size_t j = 0; j < count; j++)
+        {
+            if (t1_cond_array[i] == t2_cond_array[j])
+            {
+                match = true;
+                break;
+            }
+        }
+        if (!match)
+            return false;
+    }
+
+    // We survived the check, all conditions have a match
+    return true;
+}
+
 void state_machine_print(state_machine_t *state_machine, FILE *file_descriptor)
 {
     // Get the dynamic array as a static array
