@@ -1,4 +1,4 @@
-# Assembly Syntax Sythetiser
+# Assembly Syntax Synthesiser
 Or ASS for short. This tool enables one to create a simple assembler in mere minutes, along with its documentation. 
 
 ## License
