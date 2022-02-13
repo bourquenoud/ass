@@ -1,7 +1,8 @@
 
 #include "state_machine.h"
+#include "bitarray.h"
 
-#define MAX_STATE 256
+#define MAX_STATE 32
 
 static void xmalloc_callback(int err);
 
@@ -25,7 +26,6 @@ state_t *state_machine_add_state(state_machine_t *state_machine, int end_state)
 
     // Get the first available state id
     // NOTE: O(N²), but not a big problem as the state machine will remain relatively small
-    //  the algorithm complexity could be improved by sorting the states by id
     int new_id;
     for (new_id = 0; new_id < MAX_STATE; new_id++)
     {
@@ -111,7 +111,7 @@ int _state_add_transition(int _arg_count, state_t *state, int next_state_id, ...
             }
         }
 
-        //Add the transition if it doesn't already exist
+        // Add the transition if it doesn't already exist
         if (!exists)
         {
             transistion_t new_transition = {.condition = cond, .next_state_id = next_state_id};
@@ -122,6 +122,17 @@ int _state_add_transition(int _arg_count, state_t *state, int next_state_id, ...
     va_end(args);
 
     return 0;
+}
+
+state_t *state_machine_get_by_id(state_machine_t *state_machine, int id)
+{
+    for (size_t i = 0; i < state_machine->states_tstate->count; i++)
+    {
+        state_t *current_state = darray_get_ptr(&(state_machine->states_tstate), i);
+        if (current_state->id == id)
+            return current_state;
+    }
+    return NULL;
 }
 
 state_machine_t state_machine_merge(state_machine_t *state_machine_a, state_machine_t *state_machine_b)
@@ -214,7 +225,7 @@ void state_machine_reduce(state_machine_t *state_machine)
     // Two state can be merged if they have the same end_state and the same transitions
     bool has_merged = true;
 
-    //
+    // Stop when we can not merge more states
     while (has_merged)
     {
         int count = state_machine->states_tstate->count;
@@ -259,9 +270,185 @@ void state_machine_replace_id(state_machine_t *state_machine, int new_id, int ol
     }
 }
 
-void state_machine_make_deterministic(state_machine_t *state_machine)
+state_machine_t state_machine_make_deterministic(state_machine_t *nfa)
 {
-    darray_t *dfa_state_array = darray_init(sizeof(bitarray_t));
+    // Contains all the state of the old state machine. It is
+    //  organised by index. This means that if, for example,
+    //  the 5th bit and the 11th bit are set the it is an union of
+    //  the 5th state and the 11th state, no matter their id
+    int nfa_state_count = nfa->states_tstate->count;
+    state_t *nfa_state_array = darray_get_ptr(&(nfa->states_tstate), 0);
+
+    // Contains the current state combination
+    bitarray_t current_state_combination;
+    bitarray_set_all(&current_state_combination, false);
+
+    // Contains the generated state combination
+    bitarray_t new_state_combination;
+
+    // Store all generated state in the form of a bit array
+    darray_t *generated_state_table = darray_init(sizeof(bitarray_t));
+
+    // Store all states where the DFA can be at the moment
+    darray_t *current_states = darray_init(sizeof(state_t));
+
+    // Store all conditions of the current states
+    darray_t *current_transitions = darray_init(sizeof(transistion_t));
+
+    // The new deterministic state machine
+    state_machine_t dfa = state_machine_init();
+    state_t *dfa_current_state = (state_t *)darray_get_ptr(&(dfa.states_tstate), 0);
+
+    // Begin by processing the start state
+    bitarray_set(&current_state_combination, 0, true);
+    darray_add(&generated_state_table, current_state_combination);
+
+    // Generate all states until there are no more new state
+    for (size_t i = 0; i < generated_state_table->count; i++)
+    {
+        // Get the state to process in the table
+        darray_get(&generated_state_table, &current_state_combination, i);
+
+        // Generate a new state unless we are processing the starting state
+        if (i != 0)
+            dfa_current_state = state_machine_add_state(&dfa, false); // End state are determined at the end
+
+        // Make sure it is the correct id
+        if (dfa_current_state->id != i)
+        {
+            fprintf(stderr, "The id should be equal to the index. Got %i, expected %i\n", dfa_current_state->id, generated_state_table->count - 1);
+            abort();
+        }
+
+        // Empty the current states array
+        darray_empty(&current_states);
+        darray_empty(&current_transitions);
+
+        // Add all the state we are currently using
+        for (size_t j = 0; j < MAX_STATE / sizeof(uint32_t); j++)
+        {
+            if (bitarray_get(&current_state_combination, j))
+            {
+                darray_add(&current_states, nfa_state_array[j]);
+                // And add all the transitions
+                for (size_t k = 0; k < nfa_state_array[j].transitions_ttrans->count; k++)
+                {
+                    darray_add(&current_transitions, ((transistion_t *)(nfa_state_array[j].transitions_ttrans->element_list))[k]);
+                }
+            }
+        }
+
+        transistion_t *current_transition_array = (transistion_t *)darray_get_ptr(&current_transitions, 0);
+        // Get all conditions to process
+        for (size_t j = 0; j < current_transitions->count; j++)
+        {
+
+            // Reset the combination array
+            bitarray_set_all(&new_state_combination, false); // Reset the old
+
+            // The condition we want to add
+            int cond = current_transition_array[j].condition;
+
+            // Check if the current state already contains the condition
+            bool contains_condition = false;
+            int dfa_current_transitions_count = dfa_current_state->transitions_ttrans->count;
+            transistion_t *dfa_current_transitions = darray_get_ptr(&(dfa_current_state->transitions_ttrans), 0);
+            for (size_t k = 0; k < dfa_current_transitions_count; k++)
+            {
+                if (dfa_current_transitions[k].condition == cond)
+                {
+                    contains_condition = true;
+                    break;
+                }
+            }
+
+            // Check for the next condition if this one has already been computed
+            if (contains_condition)
+                continue;
+
+            // Add a new transition the dfa, the id will be allocated later
+            transistion_t new_transition = {.condition = cond, .next_state_id = -1};
+
+            // Search for transitions with the same conditions in the current states we are processing
+            //  and merge them
+            for (size_t k = j; k < current_transitions->count; k++)
+            {
+                if (current_transition_array[k].condition == cond)
+                {
+                    //Extract the index
+                    state_t *state_ptr = state_machine_get_by_id(nfa, current_transition_array[k].next_state_id);
+                    int index = state_ptr - (state_t *)darray_get_ptr(&(nfa->states_tstate), 0);
+                    index/sizeof(state_t);
+                    bitarray_set(&new_state_combination, index, true);
+                }
+            }
+
+            // Look in the table if the state already exists, and assign its id to the transition
+            bitarray_t *generated_state_table_array = (bitarray_t *)darray_get_ptr(&generated_state_table, 0);
+            for (size_t k = 0; k < generated_state_table->count; k++)
+            {
+                if (bitarray_compare(&(generated_state_table_array[k]), &new_state_combination))
+                {
+                    new_transition.next_state_id = k;
+                    break;
+                }
+            }
+
+            // If it does not already exist the we add it to the table
+            if (new_transition.next_state_id < 0)
+            {
+                new_transition.next_state_id = generated_state_table->count;
+                darray_add(&generated_state_table, new_state_combination);
+            }
+
+            // Update the id
+            darray_add(&(dfa_current_state->transitions_ttrans), new_transition);
+        }
+    }
+
+    // Get all end states
+    darray_t *end_state_ids = darray_init(sizeof(int));
+    for (size_t i = 0; i < nfa_state_count; i++)
+    {
+        if (nfa_state_array[i].end_state)
+            darray_add(&end_state_ids, nfa_state_array[i].id);
+    }
+
+    int *end_state_ids_array = darray_get_ptr(&(end_state_ids), 0);
+    // Mark any set containing an end state as an end state
+    for (size_t i = 0; i < generated_state_table->count; i++)
+    {
+        for (size_t j = 0; j < end_state_ids->count; j++)
+        {
+            if (bitarray_get((bitarray_t *)darray_get_ptr(&generated_state_table, i), end_state_ids_array[j]))
+            {
+                ((state_t *)darray_get_ptr(&(dfa.states_tstate), i))->end_state = true;
+                break;
+            }
+        }
+    }
+
+    fputs("Generated array :\n\t", stdout);
+    for (size_t i = 0; i < generated_state_table->count; i++)
+    {
+        fprintf(stdout, "(%4i) ", i);
+        for (size_t j = 0; j < MAX_STATE; j++)
+        {
+            if (bitarray_get((bitarray_t *)darray_get_ptr(&generated_state_table, i), j))
+            {
+                putc('1', stdout);
+            }
+            else
+            {
+                putc('0', stdout);
+            }
+            if (j % 4 == 3 && j != MAX_STATE - 1)
+                putc('\'', stdout);
+        }
+        fputs(";\n\t", stdout);
+    }
+
+    return dfa;
 }
 
 // return true if identique, false otherwise
@@ -309,7 +496,7 @@ void state_machine_print(state_machine_t *state_machine, FILE *file_descriptor)
     state_t *state_array = (state_t *)(state_machine->states_tstate->element_list);
 
     fputs("digraph STATE_MACHINE {\n"
-          "\tnode [shape=ellipse,width=1.25]\n"
+          "\tnode [shape=circle,width=1]\n"
           "\tmclimit=100\n"
           "\tsplines=spline\n\n",
           file_descriptor);
@@ -324,6 +511,43 @@ void state_machine_print(state_machine_t *state_machine, FILE *file_descriptor)
         {
             fprintf(file_descriptor, "\t%i -> %i", state_array[i].id, transition[j].next_state_id);
             fprintf(file_descriptor, "  \t[label=\"(%i)\"]\n", transition[j].condition);
+        }
+
+        if (state_array[i].end_state)
+        {
+            fprintf(file_descriptor, "\t%i \t[shape=doublecircle]\n", state_array[i].id);
+        }
+    }
+
+    fputs("}\n", file_descriptor);
+}
+
+void state_machine_print_char(state_machine_t *state_machine, FILE *file_descriptor)
+{
+    // Get the dynamic array as a static array
+    state_t *state_array = (state_t *)(state_machine->states_tstate->element_list);
+
+    fputs("digraph STATE_MACHINE {\n"
+          "\tnode [shape=circle,width=1]\n"
+          "\tmclimit=100\n"
+          "\tsplines=spline\n\n",
+          file_descriptor);
+
+    // Print all state and transitions
+    for (int i = 0; i < state_machine->states_tstate->count; i++)
+    {
+        // Get the dynamic array as a static array
+        transistion_t *transition = (transistion_t *)(state_array[i].transitions_ttrans->element_list);
+
+        for (int j = 0; j < state_array[i].transitions_ttrans->count; j++)
+        {
+            fprintf(file_descriptor, "\t%i -> %i", state_array[i].id, transition[j].next_state_id);
+            fprintf(file_descriptor, "  \t[label=\"(%c)\"]\n", (char)(transition[j].condition));
+        }
+
+        if (state_array[i].end_state)
+        {
+            fprintf(file_descriptor, "\t%i \t[shape=doublecircle]\n", state_array[i].id);
         }
     }
 
