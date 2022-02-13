@@ -41,7 +41,7 @@
 
 // Format for arithmetic instructions between registers
 %format rr_f  [$rr_p, ..., ID(4), reg, reg] // 5bits + 4bits + 3bits + 3bits = 14bits -> filling is 1 bit wide
-%order rr_f    2 3 // register1 register2
+%order rr_f    4 3 // register1 register2
 
 %opcode rr_f "add" $0h  /// @desc Add two registers and write the result to register 2
 %opcode rr_f "sub" $1h  /// @desc Substract register2 from register 1 and write the result to register 2
@@ -53,7 +53,7 @@
 
 //Format for conditionnal jumps
 %format brch_f [$001, ID(2), LABEL_REL(8), reg] // All bits are used, can only jump 128 forward or 127 backward, 0 means go to next instruction
-%order brch_f 2 1 // Reordering to have the register as first argument
+%order brch_f 3 2 // Reordering to have the register as first argument
 
 %opcode brch_f "bz"  $0  /// @desc Branch if register is equal to zero
 %opcode brch_f "bnz" $1  /// @desc Branch if register is not equal to zero

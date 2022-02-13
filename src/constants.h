@@ -15,7 +15,7 @@ typedef struct pattern_s
 typedef struct
 {
     linked_list_t* pattern_list;
-    int64_t width;
+    int width;
     char name[]; //Flexible array
 } enumeration_t;
 
