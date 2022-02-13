@@ -28,19 +28,6 @@ static const char *const param_names[] =
         [ePARAM_LABEL_PATTERN] = "label_pattern",
 };
 
-typedef struct
-{
-    int pattern; //TODO: make this shit
-} bit_pattern_t;
-
-typedef struct
-{
-    char *pattern;
-    bit_pattern_t byte_pattern;
-} opcode_t;
-
-linked_list_t *opcode_list;
-
 int search_match(const char *const string_list[], int n_strings, const char *pattern);
 bool try_get_integer(linked_list_t *, int64_t *);
 bool try_get_string(linked_list_t *, char **);
