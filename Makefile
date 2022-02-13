@@ -12,6 +12,7 @@ gen_obj_files := ass.tab.o ass.yy.o
 src_dir := src
 obj_dir := build
 gen_dir := generated
+sklt_dir := skeletons
 
 gen_src := $(src_dir)/$(gen_dir)/$(gen_src_files)
 gen_obj := $(obj_dir)/$(gen_dir)/$(gen_obj_files)
@@ -47,6 +48,14 @@ $(output_dir):
 		@mkdir -p $(output_dir)
 
 ########################################################################
+#                      SKELETONS FILE GENERATIONS                      #
+########################################################################
+$(src_dir)/$(gen_dir)/skeleton.h: $(sklt_dir)/skeleton.h.sk
+		xxd -i $(sklt_dir)/skeleton.h.sk $(src_dir)/$(gen_dir)/skeleton.h
+		sed -i 's/unsigned char .*\[\]/unsigned char SKELETON\[\]/g' src/generated/skeleton.h
+		sed -i 's/unsigned int .*_len/unsigned int SKELETON_LEN/g' src/generated/skeleton.h
+
+########################################################################
 #                    BISON AND FLEX FILE GENERATIONS                   #
 ########################################################################
 
@@ -70,14 +79,14 @@ $(obj_dir)/$(gen_dir)/ass.yy.o $(obj_dir)/$(gen_dir)/ass.tab.o : $(src_dir)/$(ge
 ########################################################################
 
 #Compile all files except the generated ones. Include the header
-$(OBJS): $(SRCS) $(src_dir)/$(gen_dir)/ass.tab.h | $(OBJSDIRS)
+$(OBJS): $(SRCS) $(src_dir)/$(gen_dir)/ass.tab.h $(obj_dir)/$(gen_dir)/ass.yy.o $(obj_dir)/$(gen_dir)/ass.tab.o $(src_dir)/$(gen_dir)/skeleton.h | $(OBJSDIRS)
 		@$(foreach file, $@,\
 		echo gcc $(CFLAGS) -c -o $(file) $(patsubst $(obj_dir)%.o,$(src_dir)%.c,$(file));\
 		gcc $(CFLAGS) -c -o $(file) $(patsubst $(obj_dir)%.o,$(src_dir)%.c,$(file));\
 		)
 
 #Link
-$(output_dir)$(output_file): $(OBJS) $(obj_dir)/$(gen_dir)/ass.yy.o $(obj_dir)/$(gen_dir)/ass.tab.o | $(output_dir)
+$(output_dir)$(output_file): $(OBJS) | $(output_dir)
 	gcc -o $(output_dir)/$(output_file) $(LDFLAGS) $(shell find $(obj_dir) -name *.o)
 
 ########################################################################

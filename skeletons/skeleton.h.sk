@@ -1,0 +1,49 @@
+#include <stdlib.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <stdio.h>
+
+/* state machine */
+typedef uint32_t ASS_state_t;
+ASS_state_t ASS_current_state = 0;
+bool ASS_valid_sentence = false;
+int ASS_current_token;
+int ASS_column = 0;
+
+void ASS_syntax_error()
+{
+    fprintf(stderr, "Syntax error at %i\n", ASS_column);
+    ASS_current_state = 0;
+}
+
+// State machine
+void state_machine()
+{
+    //!! dfa_switch !!//
+}
+
+int main(int argc, char const *argv[])
+{
+
+    while (true)
+    {
+        // Run on step of the state machine
+
+        ASS_current_token = fgetc(stdin);
+
+        if (ASS_current_token == '\n')
+        {
+            if (ASS_valid_sentence)
+                printf("Valid\n");
+            else
+                printf("Invalid\n");
+            ASS_current_state = 0;
+            continue;
+        }
+
+        state_machine();
+        ASS_column++;
+    }
+
+    return 0;
+}
