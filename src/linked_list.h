@@ -5,7 +5,8 @@
 enum
 {
     eNODE,
-    eDATA
+    eDATA,
+    eBIT_ELEM
 };
 
 typedef struct linked_list_s linked_list_t;

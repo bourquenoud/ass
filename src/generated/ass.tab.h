@@ -45,20 +45,21 @@
 extern int yydebug;
 #endif
 /* "%code requires" blocks.  */
-#line 6 "src/ass.y"
 
     #include <unistd.h>
     #include <stdio.h>
     #include <stdlib.h>
     #include <stdbool.h>
     #include <stdint.h>
+    #include <string.h>
+
     #include "../linked_list.h"
     #include "../ast_node.h"
+    #include "../bitpattern.h"
 
     int build_ast(int argc, char** argv);
     const char *getTypeName(int type);
 
-#line 62 "src/generated/ass.tab.h"
 
 /* Token kinds.  */
 #ifndef YYTOKENTYPE
@@ -94,7 +95,12 @@ extern int yydebug;
     T_LEFTSQBRACK = 25,            /* T_LEFTSQBRACK  */
     T_RIGHSQBRACK = 26,            /* T_RIGHSQBRACK  */
     T_ELIPSIS = 27,                /* T_ELIPSIS  */
-    T_COMMA = 28                   /* T_COMMA  */
+    T_COMMA = 28,                  /* T_COMMA  */
+    T_PLUS = 29,                   /* T_PLUS  */
+    T_MINUS = 30,                  /* T_MINUS  */
+    T_MULTIPLY = 31,               /* T_MULTIPLY  */
+    T_DIVIDE = 32,                 /* T_DIVIDE  */
+    T_MODULO = 33                  /* T_MODULO  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -103,13 +109,11 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 38 "src/ass.y"
 
     data_t*         dVal;
     node_t*         nVal;
     linked_list_t*  lVal;
 
-#line 113 "src/generated/ass.tab.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

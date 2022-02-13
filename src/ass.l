@@ -69,10 +69,15 @@ L_LEFTSQBRACK           "["
 L_RIGHSQBRACK           "]"
 L_ELIPSIS               "..."
 L_COMMA                 ","
+L_PLUS                  "+"
+L_MINUS                 "-"
+L_MULTIPLY              "*"
+L_DIVIDE                "/"
+L_MODULO                "%"
 
 %%
 
-{L_SUBST}                                       { return T_SUBST; }
+{L_SUBST}                                       { yylval.dVal = get_id(yytext); return T_SUBST; }
 
 {L_PARAM}                                       { return T_PARAM; }
 {L_CONSTANT}                                    { return T_CONSTANT; }
@@ -89,6 +94,11 @@ L_COMMA                 ","
 {L_RIGHSQBRACK}                                 { return T_RIGHSQBRACK; }
 {L_ELIPSIS}                                     { return T_ELIPSIS; }
 {L_COMMA}                                       { return T_COMMA; }
+{L_PLUS}                                        { return T_PLUS; }
+{L_MINUS}                                       { return T_MINUS; }
+{L_MULTIPLY}                                    { return T_MULTIPLY; }
+{L_DIVIDE}                                      { return T_DIVIDE; }
+{L_MODULO}                                      { return T_MODULO; }
 
 {L_INTEGER}                                     { yylval.dVal = get_int(yytext); return T_INTEGER; }
 {L_BIT_LIT}                                     { yylval.dVal = get_bits(yytext); return T_BIT_LIT; }

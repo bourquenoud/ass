@@ -9,8 +9,11 @@
     #include <stdlib.h>
     #include <stdbool.h>
     #include <stdint.h>
+    #include <string.h>
+
     #include "../linked_list.h"
     #include "../ast_node.h"
+    #include "../bitpattern.h"
 
     int build_ast(int argc, char** argv);
     const char *getTypeName(int type);
@@ -24,6 +27,7 @@
     #include <stdint.h>
     #include <string.h>
 
+    #include "../bitpattern.h"
     #include "../failure.h"
     #include "../parameters.h"
     #include "../constants.h"
@@ -33,6 +37,7 @@
     extern FILE* yyin;
 
     void yyerror(const char* s);
+    linked_list_t* subst(data_t* id, data_t* val);
 }
 
 %union {
@@ -90,27 +95,32 @@
 %token T_RIGHSQBRACK         
 %token T_ELIPSIS             
 %token T_COMMA  
+%token T_PLUS    
+%token T_MINUS   
+%token T_MULTIPLY
+%token T_DIVIDE  
+%token T_MODULO  
 
 %start page
 
 
 /* Types */
 %type<lVal> param_args
+%type<lVal> bit_elem
+%type<lVal> bit_pattern_args
+%type<lVal> bit_pattern
+%type<lVal> subst
+%type<lVal> order_args
 
 %type page
 %type param
 %type constant
 %type enum
 %type pattern
-%type order_args
 %type order
 %type opcode
 %type expr
-%type subst
 %type format
-%type bit_pattern
-%type bit_pattern_args
-%type bit_elem
 %type command
 
 %%
@@ -147,39 +157,39 @@ pattern:              T_PATTERN T_IDENTIFIER T_STRING T_BIT_CONSTANT endline { f
                     | T_PATTERN T_IDENTIFIER T_STRING T_BIT_LIT endline { fail_set_loc(@$); command_pattern($2, $3, $4); }
 ;
 
-order_args:           T_INTEGER
-                    | order_args T_INTEGER
+order_args:           T_INTEGER                 { $$ = list_init(YYSYMBOL_T_INTEGER, $1, eDATA); }
+                    | order_args T_INTEGER      { $$ = $1; list_append($1, list_init(YYSYMBOL_T_INTEGER, $2, eDATA)); }
 ;
 
-order:                T_ORDER T_IDENTIFIER order_args endline
+order:                T_ORDER T_IDENTIFIER order_args endline           { fail_set_loc(@$); command_order($2, $3); }
 ;
 
 opcode:               T_OPCODE T_IDENTIFIER T_STRING T_BIT_LIT endline
-                    | T_OPCODE T_IDENTIFIER T_STRING T_CONSTANT endline
+                    | T_OPCODE T_IDENTIFIER T_STRING T_BIT_CONSTANT endline
                     | T_OPCODE T_IDENTIFIER T_STRING endline
 ;
 
-expr:                 T_LEFTPAR T_INTEGER T_RIGHPAR
-                    | T_LEFTPAR T_RIGHPAR
+expr:                 T_LEFTPAR T_RIGHPAR
 ;
 
-subst: T_SUBST expr
+subst:                T_SUBST T_LEFTPAR T_INTEGER T_RIGHPAR             { fail_set_loc(@$); $$ = subst($1, $3); }
 ;
 
-format:               T_FORMAT T_IDENTIFIER bit_pattern endline
-
-bit_pattern:          T_LEFTSQBRACK bit_pattern_args T_RIGHSQBRACK
+format:               T_FORMAT T_IDENTIFIER bit_pattern endline         { fail_set_loc(@$); command_format($2, $3); }
 ;
 
-bit_pattern_args:     bit_elem
-                    | bit_pattern_args T_COMMA bit_elem
+bit_pattern:          T_LEFTSQBRACK bit_pattern_args T_RIGHSQBRACK      { $$ = $2; }
 ;
 
-bit_elem:             T_BIT_LIT
-                    | T_BIT_CONSTANT
-                    | subst
-                    | T_IDENTIFIER
-                    | T_ELIPSIS
+bit_pattern_args:     bit_elem                              {$$ = $1;}
+                    | bit_pattern_args T_COMMA bit_elem     {$$ = $1; list_append($1, $3);}
+;
+
+bit_elem:             T_BIT_LIT         {$$ = list_init(YYSYMBOL_T_BIT_LIT, bit_elem_init(eBP_BIT_LIT, 0, &($1->bVal)), eBIT_ELEM);}
+                    | T_BIT_CONSTANT    {$$ = list_init(YYSYMBOL_T_BIT_CONSTANT, bit_elem_init(eBP_BIT_CONST, 0, $1->strVal), eBIT_ELEM);}
+                    | subst             {$$ = $1;}
+                    | T_IDENTIFIER      {$$ = list_init(YYSYMBOL_T_IDENTIFIER, bit_elem_init(eBP_ENUM, 0, $1->strVal), eBIT_ELEM);}
+                    | T_ELIPSIS         {$$ = list_init(YYSYMBOL_T_IDENTIFIER, bit_elem_init(eBP_ELLIPSIS, 0, NULL), eBIT_ELEM);}
 ;
 
 command:              param
@@ -294,4 +304,32 @@ static int yyreport_syntax_error (const yypcontext_t *ctx)
         strcat(error_message, yysymbol_name (lookahead));
     }
     fail_error(error_message);
+}
+
+linked_list_t* subst(data_t* id, data_t* val)
+{
+    bit_elem_t* new_bit_elem;
+    if(strcmp(id->strVal, "ID") == 0)
+    {
+        new_bit_elem = bit_elem_init(eBP_ID, val->iVal, NULL);
+    }
+    else if(strcmp(id->strVal, "IMMEDIATE") == 0)
+    {
+        new_bit_elem = bit_elem_init(eBP_IMMEDIATE, val->iVal, NULL);
+    }
+    else if(strcmp(id->strVal, "LABEL_ABS") == 0)
+    {
+        new_bit_elem = bit_elem_init(eBP_LABEL_ABS, val->iVal, NULL);
+    }
+    else if(strcmp(id->strVal, "LABEL_REL") == 0)
+    {
+        new_bit_elem = bit_elem_init(eBP_LABEL_REL, val->iVal, NULL);
+    }
+    else
+    {
+        new_bit_elem = bit_elem_init(eBP_UNDEF, val->iVal, NULL);
+        fail_error("Unkown substitution '%s'", id->strVal);
+    }
+
+    return list_init(YYSYMBOL_T_SUBST, (void*)new_bit_elem, eBIT_ELEM);
 }

@@ -64,7 +64,6 @@
 #define YYPULL 1
 
 /* "%code top" blocks.  */
-#line 19 "src/ass.y"
 
     #include <unistd.h>
     #include <stdio.h>
@@ -73,6 +72,7 @@
     #include <stdint.h>
     #include <string.h>
 
+    #include "../bitpattern.h"
     #include "../failure.h"
     #include "../parameters.h"
     #include "../constants.h"
@@ -82,8 +82,8 @@
     extern FILE* yyin;
 
     void yyerror(const char* s);
+    linked_list_t* subst(data_t* id, data_t* val);
 
-#line 87 "src/generated/ass.tab.c"
 
 
 
@@ -143,37 +143,39 @@ enum yysymbol_kind_t
   YYSYMBOL_T_RIGHSQBRACK = 26,             /* T_RIGHSQBRACK  */
   YYSYMBOL_T_ELIPSIS = 27,                 /* T_ELIPSIS  */
   YYSYMBOL_T_COMMA = 28,                   /* T_COMMA  */
-  YYSYMBOL_YYACCEPT = 29,                  /* $accept  */
-  YYSYMBOL_endline = 30,                   /* endline  */
-  YYSYMBOL_param_args = 31,                /* param_args  */
-  YYSYMBOL_param = 32,                     /* param  */
-  YYSYMBOL_constant = 33,                  /* constant  */
-  YYSYMBOL_enum = 34,                      /* enum  */
-  YYSYMBOL_pattern = 35,                   /* pattern  */
-  YYSYMBOL_order_args = 36,                /* order_args  */
-  YYSYMBOL_order = 37,                     /* order  */
-  YYSYMBOL_opcode = 38,                    /* opcode  */
-  YYSYMBOL_expr = 39,                      /* expr  */
-  YYSYMBOL_subst = 40,                     /* subst  */
-  YYSYMBOL_format = 41,                    /* format  */
-  YYSYMBOL_bit_pattern = 42,               /* bit_pattern  */
-  YYSYMBOL_bit_pattern_args = 43,          /* bit_pattern_args  */
-  YYSYMBOL_bit_elem = 44,                  /* bit_elem  */
-  YYSYMBOL_command = 45,                   /* command  */
-  YYSYMBOL_page = 46                       /* page  */
+  YYSYMBOL_T_PLUS = 29,                    /* T_PLUS  */
+  YYSYMBOL_T_MINUS = 30,                   /* T_MINUS  */
+  YYSYMBOL_T_MULTIPLY = 31,                /* T_MULTIPLY  */
+  YYSYMBOL_T_DIVIDE = 32,                  /* T_DIVIDE  */
+  YYSYMBOL_T_MODULO = 33,                  /* T_MODULO  */
+  YYSYMBOL_YYACCEPT = 34,                  /* $accept  */
+  YYSYMBOL_endline = 35,                   /* endline  */
+  YYSYMBOL_param_args = 36,                /* param_args  */
+  YYSYMBOL_param = 37,                     /* param  */
+  YYSYMBOL_constant = 38,                  /* constant  */
+  YYSYMBOL_enum = 39,                      /* enum  */
+  YYSYMBOL_pattern = 40,                   /* pattern  */
+  YYSYMBOL_order_args = 41,                /* order_args  */
+  YYSYMBOL_order = 42,                     /* order  */
+  YYSYMBOL_opcode = 43,                    /* opcode  */
+  YYSYMBOL_subst = 44,                     /* subst  */
+  YYSYMBOL_format = 45,                    /* format  */
+  YYSYMBOL_bit_pattern = 46,               /* bit_pattern  */
+  YYSYMBOL_bit_pattern_args = 47,          /* bit_pattern_args  */
+  YYSYMBOL_bit_elem = 48,                  /* bit_elem  */
+  YYSYMBOL_command = 49,                   /* command  */
+  YYSYMBOL_page = 50                       /* page  */
 };
 typedef enum yysymbol_kind_t yysymbol_kind_t;
 
 
 
 /* Unqualified %code blocks.  */
-#line 44 "src/ass.y"
 
     //NULL until tree is completely built
     node_t* topNode = NULL;
     linked_list_t* top_list = NULL;
 
-#line 177 "src/generated/ass.tab.c"
 
 #ifdef short
 # undef short
@@ -496,16 +498,16 @@ union yyalloc
 #define YYLAST   89
 
 /* YYNTOKENS -- Number of terminals.  */
-#define YYNTOKENS  29
+#define YYNTOKENS  34
 /* YYNNTS -- Number of nonterminals.  */
-#define YYNNTS  18
+#define YYNNTS  17
 /* YYNRULES -- Number of rules.  */
-#define YYNRULES  50
+#define YYNRULES  48
 /* YYNSTATES -- Number of states.  */
-#define YYNSTATES  85
+#define YYNSTATES  83
 
 /* YYMAXUTOK -- Last valid token kind.  */
-#define YYMAXUTOK   283
+#define YYMAXUTOK   288
 
 
 /* YYTRANSLATE(TOKEN-NUM) -- Symbol number corresponding to TOKEN-NUM
@@ -516,12 +518,11 @@ union yyalloc
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,   118,   118,   119,   120,   121,   122,   123,   124,   125,
-     127,   128,   129,   130,   131,   132,   135,   138,   139,   140,
-     143,   146,   147,   150,   151,   154,   157,   158,   159,   162,
-     163,   166,   169,   171,   174,   175,   178,   179,   180,   181,
-     182,   185,   186,   187,   188,   189,   190,   191,   194,   195,
-     196
+       0,   128,   128,   129,   130,   131,   132,   133,   134,   135,
+     137,   138,   139,   140,   141,   142,   145,   148,   149,   150,
+     153,   156,   157,   160,   161,   164,   167,   168,   169,   175,
+     178,   181,   184,   185,   188,   189,   190,   191,   192,   195,
+     196,   197,   198,   199,   200,   201,   204,   205,   206
 };
 #endif
 
@@ -543,10 +544,11 @@ yysymbol_name (yysymbol_kind_t yysymbol)
   "T_CONSTANT", "T_ENUM", "T_PATTERN", "T_ORDER", "T_OPCODE", "T_FORMAT",
   "T_UNKNOWN_CMD", "T_INTEGER", "T_BIT_CONSTANT", "T_BIT_LIT", "T_STRING",
   "T_IDENTIFIER", "T_SUBST", "T_LEFTPAR", "T_RIGHPAR", "T_LEFTSQBRACK",
-  "T_RIGHSQBRACK", "T_ELIPSIS", "T_COMMA", "$accept", "endline",
-  "param_args", "param", "constant", "enum", "pattern", "order_args",
-  "order", "opcode", "expr", "subst", "format", "bit_pattern",
-  "bit_pattern_args", "bit_elem", "command", "page", YY_NULLPTR
+  "T_RIGHSQBRACK", "T_ELIPSIS", "T_COMMA", "T_PLUS", "T_MINUS",
+  "T_MULTIPLY", "T_DIVIDE", "T_MODULO", "$accept", "endline", "param_args",
+  "param", "constant", "enum", "pattern", "order_args", "order", "opcode",
+  "subst", "format", "bit_pattern", "bit_pattern_args", "bit_elem",
+  "command", "page", YY_NULLPTR
   };
   return yy_sname[yysymbol];
 }
@@ -559,7 +561,8 @@ static const yytype_int16 yytoknum[] =
 {
        0,   256,   257,   258,   259,   260,   261,   262,   263,   264,
      265,   266,   267,   268,   269,   270,   271,   272,   273,   274,
-     275,   276,   277,   278,   279,   280,   281,   282,   283
+     275,   276,   277,   278,   279,   280,   281,   282,   283,   284,
+     285,   286,   287,   288
 };
 #endif
 
@@ -577,15 +580,15 @@ static const yytype_int16 yytoknum[] =
      STATE-NUM.  */
 static const yytype_int8 yypact[] =
 {
-     -30,    56,   -30,   -30,     2,   -30,    31,   -30,    -9,     9,
-      14,    34,    36,    37,    53,   -30,   -30,   -30,   -30,   -30,
+     -30,    58,   -30,   -30,     2,   -30,    31,   -30,   -18,   -10,
+       9,    14,    21,    34,    54,   -30,   -30,   -30,   -30,   -30,
      -30,   -30,   -30,   -30,   -30,   -30,   -30,   -30,   -30,    19,
-      33,    28,    58,    62,    66,    29,   -30,   -30,   -30,   -30,
-     -30,   -30,   -30,    77,    77,    77,    77,    24,   -30,     1,
-      41,    54,    77,   -30,   -30,   -30,   -30,    77,    77,   -30,
-     -30,    77,    77,   -30,   -30,   -30,   -30,    64,   -30,   -30,
-     -15,   -30,   -30,   -30,   -30,   -30,   -30,   -14,   -30,   -30,
-      54,    65,   -30,   -30,   -30
+      -7,    59,    63,    61,    64,    27,   -30,   -30,   -30,   -30,
+     -30,   -30,   -30,    74,    74,    74,    74,    32,   -30,     1,
+      41,    35,    74,   -30,   -30,   -30,   -30,    74,    74,   -30,
+     -30,    74,    74,   -30,   -30,   -30,   -30,    62,   -30,   -30,
+      17,   -30,   -30,   -30,   -30,   -30,   -30,    69,   -30,    35,
+      65,   -30,   -30
 };
 
   /* YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
@@ -593,29 +596,29 @@ static const yytype_int8 yypact[] =
      means the default is an error.  */
 static const yytype_int8 yydefact[] =
 {
-      48,     0,     9,     8,     0,     2,     0,     5,     0,     0,
-       0,     0,     0,     0,     0,    50,    41,    42,    43,    44,
-      45,    46,    47,    49,     4,     3,     7,     6,    10,     0,
+      46,     0,     9,     8,     0,     2,     0,     5,     0,     0,
+       0,     0,     0,     0,     0,    48,    39,    40,    41,    42,
+      43,    44,    45,    47,     4,     3,     7,     6,    10,     0,
        0,     0,     0,     0,     0,     0,     9,    12,    15,    14,
       13,    11,    16,     0,     0,     0,     0,     0,    23,     0,
        0,     0,     0,    18,    17,    19,    20,     0,     0,    24,
-      25,     0,     0,    28,    37,    36,    39,     0,    40,    38,
-       0,    34,    32,    21,    22,    27,    26,     0,    31,    33,
-       0,     0,    30,    35,    29
+      25,     0,     0,    28,    35,    34,    37,     0,    38,    36,
+       0,    32,    30,    21,    22,    27,    26,     0,    31,     0,
+       0,    33,    29
 };
 
   /* YYPGOTO[NTERM-NUM].  */
 static const yytype_int8 yypgoto[] =
 {
      -30,   -29,   -30,   -30,   -30,   -30,   -30,   -30,   -30,   -30,
-     -30,   -30,   -30,   -30,   -30,     8,   -30,   -30
+     -30,   -30,   -30,   -30,     8,   -30,   -30
 };
 
   /* YYDEFGOTO[NTERM-NUM].  */
 static const yytype_int8 yydefgoto[] =
 {
        0,    15,    29,    16,    17,    18,    19,    49,    20,    21,
-      78,    69,    22,    52,    70,    71,    23,     1
+      69,    22,    52,    70,    71,    23,     1
 };
 
   /* YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
@@ -623,54 +626,53 @@ static const yytype_int8 yydefgoto[] =
      number is the opposite.  If YYTABLE_NINF, syntax error.  */
 static const yytype_int8 yytable[] =
 {
-      42,    36,    24,    81,     3,    25,     4,     5,     6,     7,
-      82,    79,    28,    80,    53,    54,    55,    56,    59,    36,
+      42,    36,    24,    28,     3,    25,     4,     5,     6,     7,
+      43,    30,    44,    45,    53,    54,    55,    56,    59,    36,
       60,    63,     3,    72,     4,     5,     6,     7,    73,    74,
-      30,    26,    75,    76,    27,    31,    37,    38,    39,    40,
-      41,    36,    57,    58,     3,    46,     4,     5,     6,     7,
-      43,    61,    44,    45,    51,    32,     2,    33,    34,     3,
-      62,     4,     5,     6,     7,     8,     9,    10,    11,    12,
-      13,    14,    64,    65,    35,    66,    67,    36,    47,    48,
-       3,    68,     4,     5,     6,     7,    50,    77,    83,    84
+      31,    26,    75,    76,    27,    32,    37,    38,    39,    40,
+      41,    36,    33,    78,     3,    79,     4,     5,     6,     7,
+      57,    58,    51,    64,    65,    34,    66,    67,     2,    61,
+      62,     3,    68,     4,     5,     6,     7,     8,     9,    10,
+      11,    12,    13,    14,    36,    35,    46,     3,    48,     4,
+       5,     6,     7,    47,    50,    77,    80,    81,     0,    82
 };
 
 static const yytype_int8 yycheck[] =
 {
-      29,     0,     0,    17,     3,     3,     5,     6,     7,     8,
-      24,    26,    21,    28,    43,    44,    45,    46,    17,     0,
+      29,     0,     0,    21,     3,     3,     5,     6,     7,     8,
+      17,    21,    19,    20,    43,    44,    45,    46,    17,     0,
       49,    50,     3,    52,     5,     6,     7,     8,    57,    58,
       21,     0,    61,    62,     3,    21,    17,    18,    19,    20,
-      21,     0,    18,    19,     3,    17,     5,     6,     7,     8,
-      17,    10,    19,    20,    25,    21,     0,    21,    21,     3,
-      19,     5,     6,     7,     8,     9,    10,    11,    12,    13,
-      14,    15,    18,    19,    21,    21,    22,     0,    20,    17,
-       3,    27,     5,     6,     7,     8,    20,    23,    80,    24
+      21,     0,    21,    26,     3,    28,     5,     6,     7,     8,
+      18,    19,    25,    18,    19,    21,    21,    22,     0,    18,
+      19,     3,    27,     5,     6,     7,     8,     9,    10,    11,
+      12,    13,    14,    15,     0,    21,    17,     3,    17,     5,
+       6,     7,     8,    20,    20,    23,    17,    79,    -1,    24
 };
 
   /* YYSTOS[STATE-NUM] -- The (internal number of the) accessing
      symbol of state STATE-NUM.  */
 static const yytype_int8 yystos[] =
 {
-       0,    46,     0,     3,     5,     6,     7,     8,     9,    10,
-      11,    12,    13,    14,    15,    30,    32,    33,    34,    35,
-      37,    38,    41,    45,     0,     3,     0,     3,    21,    31,
+       0,    50,     0,     3,     5,     6,     7,     8,     9,    10,
+      11,    12,    13,    14,    15,    35,    37,    38,    39,    40,
+      42,    43,    45,    49,     0,     3,     0,     3,    21,    36,
       21,    21,    21,    21,    21,    21,     0,    17,    18,    19,
-      20,    21,    30,    17,    19,    20,    17,    20,    17,    36,
-      20,    25,    42,    30,    30,    30,    30,    18,    19,    17,
-      30,    10,    19,    30,    18,    19,    21,    22,    27,    40,
-      43,    44,    30,    30,    30,    30,    30,    23,    39,    26,
-      28,    17,    24,    44,    24
+      20,    21,    35,    17,    19,    20,    17,    20,    17,    41,
+      20,    25,    46,    35,    35,    35,    35,    18,    19,    17,
+      35,    18,    19,    35,    18,    19,    21,    22,    27,    44,
+      47,    48,    35,    35,    35,    35,    35,    23,    26,    28,
+      17,    48,    24
 };
 
   /* YYR1[YYN] -- Symbol number of symbol that rule YYN derives.  */
 static const yytype_int8 yyr1[] =
 {
-       0,    29,    30,    30,    30,    30,    30,    30,    30,    30,
-      31,    31,    31,    31,    31,    31,    32,    33,    33,    33,
-      34,    35,    35,    36,    36,    37,    38,    38,    38,    39,
-      39,    40,    41,    42,    43,    43,    44,    44,    44,    44,
-      44,    45,    45,    45,    45,    45,    45,    45,    46,    46,
-      46
+       0,    34,    35,    35,    35,    35,    35,    35,    35,    35,
+      36,    36,    36,    36,    36,    36,    37,    38,    38,    38,
+      39,    40,    40,    41,    41,    42,    43,    43,    43,    44,
+      45,    46,    47,    47,    48,    48,    48,    48,    48,    49,
+      49,    49,    49,    49,    49,    49,    50,    50,    50
 };
 
   /* YYR2[YYN] -- Number of symbols on the right hand side of rule YYN.  */
@@ -678,10 +680,9 @@ static const yytype_int8 yyr2[] =
 {
        0,     2,     1,     2,     2,     1,     2,     2,     1,     1,
        1,     2,     2,     2,     2,     2,     3,     4,     4,     4,
-       4,     5,     5,     1,     2,     4,     5,     5,     4,     3,
-       2,     2,     4,     3,     1,     3,     1,     1,     1,     1,
-       1,     1,     1,     1,     1,     1,     1,     1,     0,     2,
-       2
+       4,     5,     5,     1,     2,     4,     5,     5,     4,     4,
+       4,     3,     1,     3,     1,     1,     1,     1,     1,     1,
+       1,     1,     1,     1,     1,     1,     0,     2,     2
 };
 
 
@@ -1315,85 +1316,110 @@ yyreduce:
   switch (yyn)
     {
   case 10: /* param_args: T_IDENTIFIER  */
-#line 127 "src/ass.y"
                                                                 { (yyval.lVal) = list_init(YYSYMBOL_T_IDENTIFIER, (yyvsp[0].dVal), eDATA); }
-#line 1321 "src/generated/ass.tab.c"
     break;
 
   case 11: /* param_args: param_args T_IDENTIFIER  */
-#line 128 "src/ass.y"
                                                                 { (yyval.lVal) = (yyvsp[-1].lVal); list_append((yyvsp[-1].lVal), list_init(YYSYMBOL_T_IDENTIFIER, (yyvsp[0].dVal), eDATA)); }
-#line 1327 "src/generated/ass.tab.c"
     break;
 
   case 12: /* param_args: param_args T_INTEGER  */
-#line 129 "src/ass.y"
                                                                 { (yyval.lVal) = (yyvsp[-1].lVal); list_append((yyvsp[-1].lVal), list_init(YYSYMBOL_T_INTEGER, (yyvsp[0].dVal), eDATA)); }
-#line 1333 "src/generated/ass.tab.c"
     break;
 
   case 13: /* param_args: param_args T_STRING  */
-#line 130 "src/ass.y"
                                                                 { (yyval.lVal) = (yyvsp[-1].lVal); list_append((yyvsp[-1].lVal), list_init(YYSYMBOL_T_STRING, (yyvsp[0].dVal), eDATA)); }
-#line 1339 "src/generated/ass.tab.c"
     break;
 
   case 14: /* param_args: param_args T_BIT_LIT  */
-#line 131 "src/ass.y"
                                                                 { (yyval.lVal) = (yyvsp[-1].lVal); list_append((yyvsp[-1].lVal), list_init(YYSYMBOL_T_BIT_LIT, (yyvsp[0].dVal), eDATA)); }
-#line 1345 "src/generated/ass.tab.c"
     break;
 
   case 15: /* param_args: param_args T_BIT_CONSTANT  */
-#line 132 "src/ass.y"
                                                                 { (yyval.lVal) = (yyvsp[-1].lVal); list_append((yyvsp[-1].lVal), list_init(YYSYMBOL_T_BIT_CONSTANT, (yyvsp[0].dVal), eDATA)); }
-#line 1351 "src/generated/ass.tab.c"
     break;
 
   case 16: /* param: T_PARAM param_args endline  */
-#line 135 "src/ass.y"
                                                                 { fail_set_loc((yyloc)); command_param((yyvsp[-1].lVal)); }
-#line 1357 "src/generated/ass.tab.c"
     break;
 
   case 17: /* constant: T_CONSTANT T_IDENTIFIER T_BIT_LIT endline  */
-#line 138 "src/ass.y"
                                                                 { fail_set_loc((yyloc)); command_bit_const((yyvsp[-2].dVal), (yyvsp[-1].dVal)); }
-#line 1363 "src/generated/ass.tab.c"
     break;
 
   case 18: /* constant: T_CONSTANT T_IDENTIFIER T_INTEGER endline  */
-#line 139 "src/ass.y"
                                                                 { fail_set_loc((yyloc)); command_int_const((yyvsp[-2].dVal), (yyvsp[-1].dVal)); }
-#line 1369 "src/generated/ass.tab.c"
     break;
 
   case 19: /* constant: T_CONSTANT T_IDENTIFIER T_STRING endline  */
-#line 140 "src/ass.y"
                                                                { fail_set_loc((yyloc)); command_str_const((yyvsp[-2].dVal), (yyvsp[-1].dVal)); }
-#line 1375 "src/generated/ass.tab.c"
     break;
 
   case 20: /* enum: T_ENUM T_IDENTIFIER T_INTEGER endline  */
-#line 143 "src/ass.y"
                                                                 { fail_set_loc((yyloc)); command_enum((yyvsp[-2].dVal), (yyvsp[-1].dVal)); }
-#line 1381 "src/generated/ass.tab.c"
     break;
 
   case 21: /* pattern: T_PATTERN T_IDENTIFIER T_STRING T_BIT_CONSTANT endline  */
-#line 146 "src/ass.y"
                                                                              { fail_set_loc((yyloc)); command_pattern((yyvsp[-3].dVal), (yyvsp[-2].dVal), (yyvsp[-1].dVal)); }
-#line 1387 "src/generated/ass.tab.c"
     break;
 
   case 22: /* pattern: T_PATTERN T_IDENTIFIER T_STRING T_BIT_LIT endline  */
-#line 147 "src/ass.y"
                                                                         { fail_set_loc((yyloc)); command_pattern((yyvsp[-3].dVal), (yyvsp[-2].dVal), (yyvsp[-1].dVal)); }
-#line 1393 "src/generated/ass.tab.c"
+    break;
+
+  case 23: /* order_args: T_INTEGER  */
+                                                { (yyval.lVal) = list_init(YYSYMBOL_T_INTEGER, (yyvsp[0].dVal), eDATA); }
+    break;
+
+  case 24: /* order_args: order_args T_INTEGER  */
+                                                { (yyval.lVal) = (yyvsp[-1].lVal); list_append((yyvsp[-1].lVal), list_init(YYSYMBOL_T_INTEGER, (yyvsp[0].dVal), eDATA)); }
+    break;
+
+  case 25: /* order: T_ORDER T_IDENTIFIER order_args endline  */
+                                                                        { fail_set_loc((yyloc)); command_order((yyvsp[-2].dVal), (yyvsp[-1].lVal)); }
+    break;
+
+  case 29: /* subst: T_SUBST T_LEFTPAR T_INTEGER T_RIGHPAR  */
+                                                                        { fail_set_loc((yyloc)); (yyval.lVal) = subst((yyvsp[-3].dVal), (yyvsp[-1].dVal)); }
+    break;
+
+  case 30: /* format: T_FORMAT T_IDENTIFIER bit_pattern endline  */
+                                                                        { fail_set_loc((yyloc)); command_format((yyvsp[-2].dVal), (yyvsp[-1].lVal)); }
+    break;
+
+  case 31: /* bit_pattern: T_LEFTSQBRACK bit_pattern_args T_RIGHSQBRACK  */
+                                                                        { (yyval.lVal) = (yyvsp[-1].lVal); }
+    break;
+
+  case 32: /* bit_pattern_args: bit_elem  */
+                                                            {(yyval.lVal) = (yyvsp[0].lVal);}
+    break;
+
+  case 33: /* bit_pattern_args: bit_pattern_args T_COMMA bit_elem  */
+                                                            {(yyval.lVal) = (yyvsp[-2].lVal); list_append((yyvsp[-2].lVal), (yyvsp[0].lVal));}
+    break;
+
+  case 34: /* bit_elem: T_BIT_LIT  */
+                                        {(yyval.lVal) = list_init(YYSYMBOL_T_BIT_LIT, bit_elem_init(eBP_BIT_LIT, 0, &((yyvsp[0].dVal)->bVal)), eBIT_ELEM);}
+    break;
+
+  case 35: /* bit_elem: T_BIT_CONSTANT  */
+                                        {(yyval.lVal) = list_init(YYSYMBOL_T_BIT_CONSTANT, bit_elem_init(eBP_BIT_CONST, 0, (yyvsp[0].dVal)->strVal), eBIT_ELEM);}
+    break;
+
+  case 36: /* bit_elem: subst  */
+                                        {(yyval.lVal) = (yyvsp[0].lVal);}
+    break;
+
+  case 37: /* bit_elem: T_IDENTIFIER  */
+                                        {(yyval.lVal) = list_init(YYSYMBOL_T_IDENTIFIER, bit_elem_init(eBP_ENUM, 0, (yyvsp[0].dVal)->strVal), eBIT_ELEM);}
+    break;
+
+  case 38: /* bit_elem: T_ELIPSIS  */
+                                        {(yyval.lVal) = list_init(YYSYMBOL_T_IDENTIFIER, bit_elem_init(eBP_ELLIPSIS, 0, NULL), eBIT_ELEM);}
     break;
 
 
-#line 1397 "src/generated/ass.tab.c"
 
       default: break;
     }
@@ -1597,7 +1623,6 @@ yyreturn:
   return yyresult;
 }
 
-#line 199 "src/ass.y"
 
 
 
@@ -1696,4 +1721,32 @@ static int yyreport_syntax_error (const yypcontext_t *ctx)
         strcat(error_message, yysymbol_name (lookahead));
     }
     fail_error(error_message);
+}
+
+linked_list_t* subst(data_t* id, data_t* val)
+{
+    bit_elem_t* new_bit_elem;
+    if(strcmp(id->strVal, "ID") == 0)
+    {
+        new_bit_elem = bit_elem_init(eBP_ID, val->iVal, NULL);
+    }
+    else if(strcmp(id->strVal, "IMMEDIATE") == 0)
+    {
+        new_bit_elem = bit_elem_init(eBP_IMMEDIATE, val->iVal, NULL);
+    }
+    else if(strcmp(id->strVal, "LABEL_ABS") == 0)
+    {
+        new_bit_elem = bit_elem_init(eBP_LABEL_ABS, val->iVal, NULL);
+    }
+    else if(strcmp(id->strVal, "LABEL_REL") == 0)
+    {
+        new_bit_elem = bit_elem_init(eBP_LABEL_REL, val->iVal, NULL);
+    }
+    else
+    {
+        new_bit_elem = bit_elem_init(eBP_UNDEF, val->iVal, NULL);
+        fail_error("Unkown substitution '%s'", id->strVal);
+    }
+
+    return list_init(YYSYMBOL_T_SUBST, (void*)new_bit_elem, eBIT_ELEM);
 }

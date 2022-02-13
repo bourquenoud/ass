@@ -10,6 +10,7 @@ hash_t *bit_const_array;
 hash_t *int_const_array;
 hash_t *str_const_array;
 hash_t *enum_array;
+hash_t *format_array;
 
 static void xmalloc_callback(int err);
 
@@ -19,52 +20,132 @@ void check_any(char *key)
         fail_error("'%s' already declared as a constant. You can not declare an enum or a constant twice.", key);
     if (hash_check_key(enum_array, key))
         fail_error("'%s'  already declared as an enum. You can not declare an enum or a constant twice.", key);
+    if (hash_check_key(format_array, key))
+        fail_error("'%s'  already declared as an opcode format.", key);
 }
 
 int command_bit_const(data_t *id, data_t *value)
 {
-    //Check if the constant already exists
+    // Check if the constant already exists
     check_any(id->strVal);
 
     bit_const_t *data = &(value->bVal);
 
     hash_add(bit_const_array, id->strVal, (void *)data);
-    return 0; //Success
+    return 0; // Success
 }
 
 int command_int_const(data_t *id, data_t *value)
 {
-    //Check if the constant already exists
+    // Check if the constant already exists
     check_any(id->strVal);
 
     hash_add(int_const_array, id->strVal, (void *)value);
-    return 0; //Success
+    return 0; // Success
 }
 
 int command_str_const(data_t *id, data_t *value)
 {
-    //Check if the constant already exists
+    // Check if the constant already exists
     check_any(id->strVal);
 
     hash_add(str_const_array, id->strVal, (void *)value);
-    return 0; //Success
+    return 0; // Success
 }
 
 int command_enum(data_t *id, data_t *value)
 {
-    //Check if the constant already exists
+    // Check if the constant already exists
     check_any(id->strVal);
 
     int len = strlen(id->strVal) + 1; //+1 to include the NULL
 
     xmalloc_set_handler(xmalloc_callback);
-    enumeration_t *new_enumeration = xmalloc(sizeof(enumeration_t) + sizeof(char[len]));
+    enumeration_t *new_enumeration = xmalloc(sizeof(enumeration_t) + len);
     new_enumeration->width = value->iVal;
     new_enumeration->pattern_list = NULL;
     strcpy(new_enumeration->name, id->strVal);
 
     hash_add(enum_array, id->strVal, (void *)new_enumeration);
-    return 0; //Success
+    printf(">>>>> '%s' | '%s' | '%s' <<<<<\n", id->strVal, new_enumeration->name, ((enumeration_t *)(hash_get(enum_array, id->strVal)))->name);
+    return 0; // Success
+}
+
+int command_format(data_t *id, linked_list_t *list)
+{
+    // Check if the constant already exists
+    check_any(id->strVal);
+
+    // Number the elements in order
+    linked_list_t *current = list;
+    int index_opcode = 0;
+    int index_mnemonic = 0;
+    while (current != NULL)
+    {
+        // Skip non-arguments
+        if (((bit_elem_t *)(current->user_data))->index_mnemonic >= 0)
+        {
+            ((bit_elem_t *)(current->user_data))->index_mnemonic = index_mnemonic;
+            index_mnemonic++;
+        }
+        ((bit_elem_t *)(current->user_data))->index_opcode = index_opcode;
+        index_opcode++;
+        current = current->next;
+    }
+
+    hash_add(format_array, id->strVal, (void *)list);
+    return 0; // Success
+}
+
+int command_order(data_t *id, linked_list_t *order_args)
+{
+    if (!hash_check_key(format_array, id->strVal))
+    {
+        fail_error("The opcode format '%s' has not been declared.", id->strVal);
+        return 1;
+    }
+
+    linked_list_t *start_bit_format_list = (linked_list_t *)hash_get(format_array, id->strVal);
+    linked_list_t *bit_format_list = start_bit_format_list;
+
+    // Count the number of arguments for the mnemonic
+    int n_args = 0;
+    while (bit_format_list != NULL)
+    {
+        if (((bit_elem_t *)(bit_format_list->user_data))->index_mnemonic >= 0)
+            n_args++;
+
+        bit_format_list = bit_format_list->next;
+    }
+
+    int index = 0;
+    while (order_args != NULL)
+    {
+        bit_format_list = start_bit_format_list;
+        while (bit_format_list != NULL)
+        {
+            bit_elem_t *bit_elem = (bit_elem_t *)(bit_format_list->user_data);
+            if (bit_elem->index_opcode == ((data_t *)(order_args->user_data))->iVal)
+            {
+                if (bit_elem->index_mnemonic < 0)
+                {
+                    fail_error("Trying to reorder a non-argument (index %i).", bit_elem->index_opcode);
+                    return -1;
+                }
+                bit_elem->index_mnemonic = index;
+                n_args--;
+                break;
+            }
+
+            bit_format_list = bit_format_list->next;
+        }
+        if(bit_format_list == NULL)
+            fail_error("Reordering out-of-range (index %i).", ((data_t *)(order_args->user_data))->iVal);
+        index++;
+        order_args = order_args->next;
+    }
+
+    return 0;
 }
 
 int command_pattern(data_t *enum_id, data_t *pattern_data, data_t *bit_const_data)
@@ -74,7 +155,6 @@ int command_pattern(data_t *enum_id, data_t *pattern_data, data_t *bit_const_dat
         fail_error("No enum named '%s'.", enum_id->strVal);
         return 1;
     }
-
 
     int len = strlen(pattern_data->strVal) + 1; // +1 to count the terminating NULL
 
@@ -86,35 +166,35 @@ int command_pattern(data_t *enum_id, data_t *pattern_data, data_t *bit_const_dat
 
     xmalloc_set_handler(xmalloc_callback);
     enumeration_t *enumeration = (enumeration_t *)hash_get(enum_array, enum_id->strVal);
-    pattern_t* pattern = xmalloc(sizeof(pattern_t) + sizeof(char [len]));
+    pattern_t *pattern = xmalloc(sizeof(pattern_t) + sizeof(char[len]));
     pattern->bit_const = bit_const_data->bVal;
     strcpy(pattern->pattern, pattern_data->strVal);
 
     if (pattern->bit_const.width < enumeration->width)
     {
         fail_info("The pattern \"%s\" width is smaller then the enum '%s' width."
-            " Automatically zero-padded to %i bits.",
-            pattern->pattern,
-            enumeration->name,
-            enumeration->width);
-        pattern->bit_const.width = enumeration->width; //Force the bit_constant to have the correct with
+                  " Automatically zero-padded to %i bits.",
+                  pattern->pattern,
+                  enumeration->name,
+                  enumeration->width);
+        pattern->bit_const.width = enumeration->width; // Force the bit_constant to have the correct width
     }
 
     if (pattern->bit_const.width > enumeration->width)
     {
         fail_warning("The pattern \"%s\" width is greater then the enum '%s' width."
-            " Automatically trucated to %i bits.",
-            pattern->pattern,
-            enumeration->name,
-            enumeration->width);
-        pattern->bit_const.width = enumeration->width; //Force the bit_constant to have the correct with
+                     " Automatically trucated to %i bits.",
+                     pattern->pattern,
+                     enumeration->name,
+                     enumeration->width);
+        pattern->bit_const.width = enumeration->width; // Force the bit_constant to have the correct width
     }
 
-    //Create the list or append it
+    // Create the list or append it
     if (enumeration->pattern_list == NULL)
-        enumeration->pattern_list = list_init(0, (void*)pattern, eDATA);
+        enumeration->pattern_list = list_init(0, (void *)pattern, eDATA);
     else
-        list_append(enumeration->pattern_list, list_init(0, (void*)pattern, eDATA));
+        list_append(enumeration->pattern_list, list_init(0, (void *)pattern, eDATA));
 }
 
 /********************************************************/
