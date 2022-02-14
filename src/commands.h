@@ -34,7 +34,8 @@ extern hash_t *enum_array;
 extern hash_t *format_array;
 extern darray_t *opcode_array;
 
-// id expects a string, value expects a uint64_t
+void command_init();
+
 int command_bit_const(data_t *id, data_t *value);
 int command_int_const(data_t *id, data_t *value);
 int command_str_const(data_t *id, data_t *value);

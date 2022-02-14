@@ -1,7 +1,7 @@
 #include <stdlib.h>
 
 #include "generated/ass.tab.h"
-#include "constants.h"
+#include "commands.h"
 #include "hash_array.h"
 #include "parameters.h"
 #include "failure.h"

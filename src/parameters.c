@@ -9,7 +9,7 @@
 #include "generated/ass.tab.h"
 #include "linked_list.h"
 #include "hash_array.h"
-#include "constants.h"
+#include "commands.h"
 
 #define MAX_STRING_LENGTH 128
 

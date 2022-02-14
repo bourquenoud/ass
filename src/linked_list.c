@@ -4,7 +4,7 @@
 #include "xmalloc.h"
 #include "macro.h"
 #include "generated/ass.tab.h"
-#include "constants.h"
+#include "commands.h"
 
 static void xmalloc_callback(int err);
 

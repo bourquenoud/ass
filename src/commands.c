@@ -1,10 +1,12 @@
-#include "constants.h"
+#include "commands.h"
 
 #include <string.h>
 
 #include "failure.h"
 #include "xmalloc.h"
 #include "macro.h"
+
+#define TABLE_SIZE 1024
 
 hash_t *bit_const_array;
 hash_t *int_const_array;
@@ -15,6 +17,16 @@ hash_t *format_array;
 darray_t *opcode_array;
 
 static void xmalloc_callback(int err);
+
+void command_init()
+{
+    enum_array = hash_init(TABLE_SIZE);
+    bit_const_array = hash_init(TABLE_SIZE);
+    int_const_array = hash_init(TABLE_SIZE);
+    str_const_array = hash_init(TABLE_SIZE);
+    format_array = hash_init(TABLE_SIZE);
+    opcode_array = darray_init(sizeof(opcode_t));
+}
 
 void check_any(char *key)
 {
@@ -69,7 +81,6 @@ int command_enum(data_t *id, data_t *value)
     strcpy(new_enumeration->name, id->strVal);
 
     hash_add(enum_array, id->strVal, (void *)new_enumeration);
-    printf(">>>>> '%s' | '%s' | '%s' <<<<<\n", id->strVal, new_enumeration->name, ((enumeration_t *)(hash_get(enum_array, id->strVal)))->name);
     return 0; // Success
 }
 
@@ -117,7 +128,6 @@ int command_format(data_t *id, linked_list_t *list)
         current = current->next;
     }
 
-
     // Check if the format width is correct, and compute the ellipsis width
     if (width > expected_width)
     {
@@ -126,13 +136,13 @@ int command_format(data_t *id, linked_list_t *list)
     }
     else if (width == expected_width)
     {
-        if(ellipsis != NULL)
+        if (ellipsis != NULL)
             fail_info("Ellipsis is useless in '%s'", id->strVal);
     }
     else
     {
-        //Set the ellipsis size
-        if(ellipsis != NULL)
+        // Set the ellipsis size
+        if (ellipsis != NULL)
         {
             ellipsis->width = expected_width - width;
         }

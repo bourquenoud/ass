@@ -6,7 +6,7 @@
 
 #include "macro.h"
 #include "xmalloc.h"
-#include "constants.h"
+#include "commands.h"
 #include "hash_array.h"
 #include "ast_node.h"
 
