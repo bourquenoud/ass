@@ -20,7 +20,7 @@
 %constant cnt 154
 
 // Register enumeration
-%enum    reg 5
+%enum    reg 3
 %pattern reg "pc" $0h
 %pattern reg "sp" $1h
 %pattern reg "r0" $2h
