@@ -2,7 +2,7 @@
 #include "state_machine.h"
 #include "bitarray.h"
 
-#define MAX_STATE 32
+#define MAX_STATE 1024
 
 static void xmalloc_callback(int err);
 
@@ -151,6 +151,7 @@ state_machine_t state_machine_merge(state_machine_t *state_machine_a, state_mach
         state_t *old_state = darray_get_ptr(&(state_machine_b->states_tstate), i);
         state_t *new_state = state_machine_add_state(&new_state_machine, old_state->id);
         darray_copy(&(new_state->transitions_ttrans), &(old_state->transitions_ttrans)); // Clone the transitions
+        new_state->end_state = old_state->end_state;
 
         // Add to the correspondance table. The id has likely changed so we will remap it
         //  once all state have been copied
@@ -447,6 +448,9 @@ state_machine_t state_machine_make_deterministic(state_machine_t *nfa)
         }
         fputs(";\n\t", stdout);
     }
+
+    //Reduction pass
+    state_machine_reduce(&dfa);
 
     return dfa;
 }
