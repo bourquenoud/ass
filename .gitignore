@@ -66,3 +66,4 @@ dkms.conf
 ##########
 test/graph.dot
 test/graph.svg
+src/generated
