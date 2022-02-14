@@ -55,10 +55,10 @@
 %format brch_f [$001, ID(2), LABEL_REL(8), reg] // All bits are used, can only jump 128 forward or 127 backward, 0 means go to next instruction
 %order brch_f 3 2 // Reordering to have the register as first argument
 
-%opcode brch_f "bz"  $0  /// @desc Branch if register is equal to zero
-%opcode brch_f "bnz" $1  /// @desc Branch if register is not equal to zero
-%opcode brch_f "bgz" $2  /// @desc Branch if register is greater than zero
-%opcode brch_f "bsz" $3  /// @desc Branch if register is smaller than zero
+%opcode brch_f "bz"  $0h  /// @desc Branch if register is equal to zero
+%opcode brch_f "bnz" $1h  /// @desc Branch if register is not equal to zero
+%opcode brch_f "bgz" $2h  /// @desc Branch if register is greater than zero
+%opcode brch_f "bsz" $3h  /// @desc Branch if register is smaller than zero
 
 
 //Jumps
@@ -68,5 +68,5 @@
 //Data movements
 %format mv_f [$0001, ID(1), reg, LABEL_ABS(8)]
 %order mv_f 3 2
-%opcode mv_f "ld"   /// @desc Load from memory in the first 256 adresses to a register
-%opcode mv_f "str"  /// @desc Store from a register to memory in the first 256 adresses
+%opcode mv_f "ld" $0h  /// @desc Load from memory in the first 256 adresses to a register
+%opcode mv_f "str" $1h /// @desc Store from a register to memory in the first 256 adresses

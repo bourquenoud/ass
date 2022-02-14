@@ -42,7 +42,7 @@
 %format clrw_format [$0000010,...]
 %opcode clrw_format "CLRW"
 
-%format nop_format [$0000000,...,$00000]
+%format nop_format [...]
 %opcode nop_format "NOP"
 
 %format movwf_format [$0000001,IMMEDIATE(7)]
@@ -79,7 +79,7 @@
 %opcode lit_format "XORLW" $1010
 
 //***********Control instructions***********
-%format no_param_format [$00,$0000,ID(12)]
+%format no_param_format [$00,$0000,ID(8)]
 
 %opcode no_param_format "CLRWDT" $01100100b
 %opcode no_param_format "RETFIE" $00001001b
