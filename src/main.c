@@ -10,12 +10,14 @@
 
 int main(int argc, char **argv)
 {
-    //Init everything for parsing
+    // Init everything for parsing
     command_init();
     param_init();
 
+    // Parse the file and generate all data
     parse_file(argc, argv);
 
+    // Fill default parameters
     param_fill_unset();
 
 #pragma region Debug
@@ -31,7 +33,7 @@ int main(int argc, char **argv)
     printf("address_width : %i\n", parameters.address_width);
     printf("address_start : %i\n", parameters.address_start);
     printf("address_stop : %i\n", parameters.address_stop);
-    printf("endianness : %s\n", (parameters.endianness == 0) ? "UNDEF" : ((parameters.endianness == 1) ? "LITTLE" : "BIG"));
+    printf("endianness : %s\n", (parameters.endianness == 0) ? "UNDEF" : ((parameters.endianness == eLITTLE_ENDIAN) ? "LITTLE" : "BIG"));
     printf("args_separator : %c\n", parameters.args_separator);
     printf("*label_pattern : %c\n", parameters.label_postfix);
 
@@ -173,5 +175,6 @@ int main(int argc, char **argv)
 
 #pragma endregion
 
-
+    // Generate the tokeniser
+    
 }
