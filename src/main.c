@@ -8,17 +8,17 @@
 #include "bitpattern.h"
 #include "dynamic_array.h"
 
-#define TABLE_SIZE 1024
-
 int main(int argc, char **argv)
 {
-    enum_array = hash_init(TABLE_SIZE);
-    bit_const_array = hash_init(TABLE_SIZE);
-    int_const_array = hash_init(TABLE_SIZE);
-    str_const_array = hash_init(TABLE_SIZE);
-    format_array = hash_init(TABLE_SIZE);
-    opcode_array = darray_init(sizeof(opcode_t));
-    build_ast(argc, argv);
+    //Init everything for parsing
+    command_init();
+    param_init();
+
+    parse_file(argc, argv);
+
+    param_fill_unset();
+
+#pragma region Debug
 
     size_t count = hash_count(enum_array);
     bucket_t **csnt = hash_serialise(enum_array);
@@ -33,7 +33,7 @@ int main(int argc, char **argv)
     printf("address_stop : %i\n", parameters.address_stop);
     printf("endianness : %s\n", (parameters.endianness == 0) ? "UNDEF" : ((parameters.endianness == 1) ? "LITTLE" : "BIG"));
     printf("args_separator : %c\n", parameters.args_separator);
-    printf("*label_pattern : %s\n", parameters.label_pattern);
+    printf("*label_pattern : %c\n", parameters.label_postfix);
 
     puts("****ENUM****");
     for (int i = 0; i < count; i++)
@@ -170,4 +170,8 @@ int main(int argc, char **argv)
         puts("Parsing failed, exiting.");
         exit(EXIT_FAILURE);
     }
+
+#pragma endregion
+
+
 }

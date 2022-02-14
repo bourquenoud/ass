@@ -15,7 +15,7 @@
     #include "../ast_node.h"
     #include "../bitpattern.h"
 
-    int build_ast(int argc, char** argv);
+    int parse_file(int argc, char** argv);
     const char *getTypeName(int type);
 }
 
@@ -30,7 +30,7 @@
     #include "../bitpattern.h"
     #include "../failure.h"
     #include "../parameters.h"
-    #include "../constants.h"
+    #include "../commands.h"
 
     extern int yylex();
     extern int yyparse();
@@ -229,7 +229,7 @@ int yywrap()
     return 1;
 }
 
-int build_ast(int argc, char** argv)
+int parse_file(int argc, char** argv)
 {
     /*Allocate memory for the files paths*/
     totalFiles = argc - 1;                      //Don't count argv[0] (programm name)
