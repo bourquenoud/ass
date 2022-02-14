@@ -12,6 +12,8 @@ hash_t *str_const_array;
 hash_t *enum_array;
 hash_t *format_array;
 
+darray_t *opcode_array;
+
 static void xmalloc_callback(int err);
 
 void check_any(char *key)
@@ -76,12 +78,23 @@ int command_format(data_t *id, linked_list_t *list)
     // Check if the constant already exists
     check_any(id->strVal);
 
-    // Number the elements in order
+    // Get the opcode width parameter
+    int expected_width = parameters.opcode_width;
+    if (expected_width < 0)
+    {
+        fail_error("Opcode width not set.");
+        return 1;
+    }
+
+    // Number the elements in order, compute the width and extract the ellipsis
+    int width = 0;
     linked_list_t *current = list;
     int index_opcode = 0;
     int index_mnemonic = 0;
+    bit_elem_t *ellipsis = NULL;
     while (current != NULL)
     {
+        width += ((bit_elem_t *)(current->user_data))->width;
         // Skip non-arguments
         if (((bit_elem_t *)(current->user_data))->index_mnemonic >= 0)
         {
@@ -90,7 +103,44 @@ int command_format(data_t *id, linked_list_t *list)
         }
         ((bit_elem_t *)(current->user_data))->index_opcode = index_opcode;
         index_opcode++;
+
+        if (((bit_elem_t *)(current->user_data))->type == eBP_ELLIPSIS)
+        {
+            if (ellipsis != NULL)
+            {
+                fail_error("Multiple ellipsis (...) in a bit format.");
+                return 1;
+            }
+            ellipsis = ((bit_elem_t *)(current->user_data));
+        }
+
         current = current->next;
+    }
+
+
+    // Check if the format width is correct, and compute the ellipsis width
+    if (width > expected_width)
+    {
+        fail_error("Format '%s' width (%i) is larger than the expected one (%i).", id->strVal, width, expected_width);
+        return 1;
+    }
+    else if (width == expected_width)
+    {
+        if(ellipsis != NULL)
+            fail_info("Ellipsis is useless in '%s'", id->strVal);
+    }
+    else
+    {
+        //Set the ellipsis size
+        if(ellipsis != NULL)
+        {
+            ellipsis->width = expected_width - width;
+        }
+        else
+        {
+            fail_error("Format '%s' width (%i) is smaller than the expected one (%i).", id->strVal, width, expected_width);
+            return 1;
+        }
     }
 
     hash_add(format_array, id->strVal, (void *)list);
@@ -105,6 +155,15 @@ int command_order(data_t *id, linked_list_t *order_args)
         return 1;
     }
 
+    // Count the number of argument we want to reorder
+    int n_reorder = 0;
+    linked_list_t *current = order_args;
+    while (current != NULL)
+    {
+        n_reorder++;
+        current = current->next;
+    }
+
     linked_list_t *start_bit_format_list = (linked_list_t *)hash_get(format_array, id->strVal);
     linked_list_t *bit_format_list = start_bit_format_list;
 
@@ -116,6 +175,18 @@ int command_order(data_t *id, linked_list_t *order_args)
             n_args++;
 
         bit_format_list = bit_format_list->next;
+    }
+
+    // Check if we are reordering the correct number of arguments
+    if (n_reorder != n_args)
+    {
+        fail_error(
+            "%s arguments, '%s' have %i arguments but got %i.",
+            (n_reorder >= n_args) ? "Too many" : "Not enough",
+            id->strVal,
+            n_args,
+            n_reorder);
+        return -1;
     }
 
     int index = 0;
@@ -139,7 +210,7 @@ int command_order(data_t *id, linked_list_t *order_args)
 
             bit_format_list = bit_format_list->next;
         }
-        if(bit_format_list == NULL)
+        if (bit_format_list == NULL)
             fail_error("Reordering out-of-range (index %i).", ((data_t *)(order_args->user_data))->iVal);
         index++;
         order_args = order_args->next;
@@ -148,11 +219,119 @@ int command_order(data_t *id, linked_list_t *order_args)
     return 0;
 }
 
+int command_opcode(data_t *id, data_t *pattern, data_t *opcode_id, bool is_constant)
+{
+    // Check for common errors
+    if (!hash_check_key(format_array, id->strVal))
+    {
+        fail_error("The opcode format '%s' has not been declared.", id->strVal);
+        return 1;
+    }
+    if (is_constant && !hash_check_key(bit_const_array, opcode_id->strVal))
+    {
+        fail_error("The bit constant '%s' has not been declared.", opcode_id->strVal);
+        return 1;
+    }
+    int len = strlen(pattern->strVal) + 1; // +1 to count the terminating NULL
+    if (len <= 1)
+    {
+        fail_error("Empty pattern.");
+        return 1;
+    }
+
+    // Resolve the opcode id if necessary
+    bit_const_t *resolved_opcode_id;
+    if (is_constant)
+        resolved_opcode_id = (bit_const_t *)hash_get(bit_const_array, opcode_id->strVal);
+    else
+        resolved_opcode_id = &(opcode_id->bVal);
+
+    // Get the format
+    linked_list_t *format_list = (linked_list_t *)hash_get(format_array, id->strVal);
+    linked_list_t *current = format_list;
+
+    // Check if the format expects an id
+    bit_elem_t *id_bit_elem = NULL;
+    bool require_id = false;
+    while (current != NULL)
+    {
+        if (((bit_elem_t *)(current->user_data))->type == eBP_ID)
+        {
+            id_bit_elem = (bit_elem_t *)(current->user_data);
+            require_id = true;
+            break;
+        }
+        current = current->next;
+    }
+
+    // Produce warning if the opcode ID is not the correct width
+    if (opcode_id != NULL)
+    {
+        if (resolved_opcode_id->width < id_bit_elem->width)
+        {
+            fail_info(
+                "The width of the id of the opcode \"%s\" is smaller than the expected width. Automatically zero-padded to %i bits.",
+                pattern->strVal,
+                resolved_opcode_id->width);
+        }
+        else if (resolved_opcode_id->width > id_bit_elem->width)
+        {
+            fail_info(
+                "The width of the id of the opcode \"%s\" is greater than the expected width. Automatically trucated to %i bits.",
+                pattern->strVal,
+                resolved_opcode_id->width);
+        }
+    }
+
+    // Error if we expect an id but don't receive one
+    if (opcode_id == NULL && require_id)
+    {
+        fail_error("'%s' expects an opcode id, but none given.", id->strVal);
+        return 1;
+    }
+
+    // Warning if we receive an useless id
+    if (opcode_id != NULL && !require_id)
+        fail_warning("'%s' does not expect an opcode id. Ignored.", id->strVal);
+
+    // Create a new opcode and clone the bitpattern
+    opcode_t new_opcode;
+    new_opcode.text_pattern = pattern->strVal;
+    new_opcode.bit_pattern = NULL;
+    linked_list_t *list_element;
+    current = format_list;
+    while (current != NULL)
+    {
+        if (((bit_elem_t *)(current->user_data))->type == eBP_ID) // Replace the id
+        {
+            bit_elem_t *new_bit_elem = bit_elem_init(
+                eBP_BIT_LIT,
+                ((bit_elem_t *)(current->user_data))->width,
+                resolved_opcode_id);
+
+            list_element = list_init(eBP_BIT_LIT, (void *)new_bit_elem, current->data_type);
+        }
+        else
+            list_element = list_init(current->type, current->user_data, current->data_type);
+
+        if (new_opcode.bit_pattern == NULL)
+            new_opcode.bit_pattern = list_element;
+        else
+            list_append(new_opcode.bit_pattern, list_element);
+
+        current = current->next;
+    }
+
+    darray_add(&opcode_array, new_opcode);
+
+    return 0;
+}
+
 int command_pattern(data_t *enum_id, data_t *pattern_data, data_t *bit_const_data)
 {
     if (!hash_check_key(enum_array, enum_id->strVal))
     {
-        fail_error("No enum named '%s'.", enum_id->strVal);
+        fail_error("The enum '%s' has not been declared.", enum_id->strVal);
         return 1;
     }
 

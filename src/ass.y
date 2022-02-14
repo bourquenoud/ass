@@ -164,9 +164,9 @@ order_args:           T_INTEGER                 { $$ = list_init(YYSYMBOL_T_INTE
 order:                T_ORDER T_IDENTIFIER order_args endline           { fail_set_loc(@$); command_order($2, $3); }
 ;
 
-opcode:               T_OPCODE T_IDENTIFIER T_STRING T_BIT_LIT endline
-                    | T_OPCODE T_IDENTIFIER T_STRING T_BIT_CONSTANT endline
-                    | T_OPCODE T_IDENTIFIER T_STRING endline
+opcode:               T_OPCODE T_IDENTIFIER T_STRING T_BIT_LIT endline          { fail_set_loc(@$); command_opcode($2, $3, $4, false); }
+                    | T_OPCODE T_IDENTIFIER T_STRING T_BIT_CONSTANT endline     { fail_set_loc(@$); command_opcode($2, $3, $4, true); }
+                    | T_OPCODE T_IDENTIFIER T_STRING endline                    { fail_set_loc(@$); command_opcode($2, $3, NULL, false); }
 ;
 
 expr:                 T_LEFTPAR T_RIGHPAR

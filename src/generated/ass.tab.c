@@ -1379,6 +1379,18 @@ yyreduce:
                                                                         { fail_set_loc((yyloc)); command_order((yyvsp[-2].dVal), (yyvsp[-1].lVal)); }
     break;
 
+  case 26: /* opcode: T_OPCODE T_IDENTIFIER T_STRING T_BIT_LIT endline  */
+                                                                                { fail_set_loc((yyloc)); command_opcode((yyvsp[-3].dVal), (yyvsp[-2].dVal), (yyvsp[-1].dVal), false); }
+    break;
+
+  case 27: /* opcode: T_OPCODE T_IDENTIFIER T_STRING T_BIT_CONSTANT endline  */
+                                                                                { fail_set_loc((yyloc)); command_opcode((yyvsp[-3].dVal), (yyvsp[-2].dVal), (yyvsp[-1].dVal), true); }
+    break;
+
+  case 28: /* opcode: T_OPCODE T_IDENTIFIER T_STRING endline  */
+                                                                                { fail_set_loc((yyloc)); command_opcode((yyvsp[-2].dVal), (yyvsp[-1].dVal), NULL, false); }
+    break;
+
   case 29: /* subst: T_SUBST T_LEFTPAR T_INTEGER T_RIGHPAR  */
                                                                         { fail_set_loc((yyloc)); (yyval.lVal) = subst((yyvsp[-3].dVal), (yyvsp[-1].dVal)); }
     break;
