@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <string.h>
 
 #include "generated/ass.tab.h"
 #include "commands.h"
@@ -7,6 +8,13 @@
 #include "failure.h"
 #include "bitpattern.h"
 #include "dynamic_array.h"
+#include "tokeniser.h"
+#include "macro.h"
+#include "xmalloc.h"
+#include "generator.h"
+#include "populator.h"
+
+char *name_from_pattern(const char *str);
 
 int main(int argc, char **argv)
 {
@@ -175,6 +183,72 @@ int main(int argc, char **argv)
 
 #pragma endregion
 
-    // Generate the tokeniser
-    
+    // Generate the tokens from the opcodes
+    int id = 0;
+    token_def_t new_token;
+    darray_t *tokens = darray_init(sizeof(token_def_t));
+    int opcode_count = opcode_array->count;
+    opcodes = darray_get_ptr(&opcode_array, 0);
+
+    for (size_t i = 0; i < opcode_count; i++)
+    {
+        new_token.id = id++;
+        new_token.pattern = opcodes[i].text_pattern;
+        new_token.name = name_from_pattern(opcodes[i].text_pattern);
+        darray_add(&tokens, new_token);
+    }
+
+    new_token = (token_def_t){.name = "ARG_SEPARATOR", .id = id++, .pattern = ","};
+    darray_add(&tokens, new_token);
+
+    new_token = (token_def_t){.name = "NEWLINE", .id = id++, .pattern = "[\\n\\r]"};
+    darray_add(&tokens, new_token);
+
+    new_token = (token_def_t){.name = "WHITESPACE", .id = id++, .pattern = "[ \\t]+"};
+    darray_add(&tokens, new_token);
+
+    new_token = (token_def_t){.name = "ADDRESS", .id = id++, .pattern = "0x[0-9a-fA-F]+:"};
+    darray_add(&tokens, new_token);
+
+    new_token = (token_def_t){.name = "LABEL", .id = id++, .pattern = "[a-zA-Z][0-9a-zA-Z_]*:"};
+    darray_add(&tokens, new_token);
+
+    new_token = (token_def_t){.name = "IMMEDIATE", .id = id++, .pattern = "0x[0-9a-fA-F]+"};
+    darray_add(&tokens, new_token);
+
+    new_token = (token_def_t){.name = "IDENTIFIER", .id = id++, .pattern = "[a-zA-Z][a-zA-Z0-9_]*"};
+    darray_add(&tokens, new_token);
+
+    for (size_t i = 0; i < tokens->count; i++)
+    {
+        new_token = *((token_def_t *)darray_get_ptr(&tokens, i));
+        printf("Name : %s | Id : %i | Pattern : %s\n", new_token.name, new_token.id, new_token.pattern);
+    }
+
+    generator_generate_lexer(tokens->count, (token_def_t *)tokens->element_list);
+
+    FILE *fd = fopen("parser.c", "w");
+
+    generator_set_file_descriptor(fd);
+    generate(fd);
+    fclose(fd);
+
+    return 0;
+}
+
+char *name_from_pattern(const char *str)
+{
+    int len = strlen(str);
+    char *name = xmalloc(len + 1);
+
+    // Simply replace any non-alphanumeric char with an underscore
+    for (size_t i = 0; i < len; i++)
+    {
+        name[i] = ((str[i] >= '0' && str[i] <= '9') || (str[i] >= 'a' && str[i] <= 'z') || (str[i] >= 'A' && str[i] <= 'Z'))
+                      ? str[i]
+                      : '_';
+    }
+    name[len] = '\0';
+
+    return name;
 }
