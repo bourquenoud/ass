@@ -61,5 +61,5 @@ Mkfile.old
 dkms.conf
 
 ##########
-test
+test/
 src/generated
