@@ -64,6 +64,5 @@ Mkfile.old
 dkms.conf
 
 ##########
-test/graph.dot
-test/graph.svg
+test
 src/generated
