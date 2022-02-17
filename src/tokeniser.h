@@ -2,9 +2,17 @@
 
 #include <stdlib.h>
 #include <stdint.h>
+#include <stddef.h>
 
 #include "state_machine.h"
 #include "linked_list.h"
 
-state_machine_t tokeniser_array_to_nfa(int count, const char const **string_array);
-state_machine_t tokeniser_str_to_nfa(const char *string);
+typedef struct
+{
+    int id;
+    char *name;
+    char *pattern;
+} token_def_t;
+
+state_machine_t tokeniser_array_to_nfa(int count, const token_def_t *tokens);
+state_machine_t tokeniser_token_to_nfa(const token_def_t token);
