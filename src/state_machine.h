@@ -22,6 +22,7 @@ struct state_s
 {
     int id;
     int end_state;
+    int output;
     darray_t *transitions_ttrans;
 };
 
@@ -41,7 +42,7 @@ void state_machine_reduce(state_machine_t *state_machine);
 void state_machine_replace_id(state_machine_t *state_machine, int new_id, int old_id);
 transistion_t *state_machine_get_transitions(state_machine_t *state_machine, int state_id);
 state_machine_t state_machine_make_deterministic(state_machine_t *nfa);
-
+void state_machine_remove_state(state_machine_t *state_machine);
 state_t state_init_state(int id);
 
 int _state_add_transition(int _arg_count, state_t *state, int next_state_id, ...);

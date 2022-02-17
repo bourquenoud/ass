@@ -13,10 +13,16 @@ state_machine_t state_machine_init()
     state_t new_state;
     new_state = state_init_state(start_id);
     new_state.end_state = 0;
+    new_state.output = -1;
     new_state_machine.states_tstate = darray_init(sizeof(state_t));
     darray_add(&(new_state_machine.states_tstate), new_state);
 
     return new_state_machine;
+}
+
+void state_machine_remove_state(state_machine_t *state_machine)
+{
+    darray_remove(&(state_machine->states_tstate), 1);
 }
 
 state_t *state_machine_add_state(state_machine_t *state_machine, int end_state)
@@ -80,6 +86,7 @@ state_t state_init_state(int id)
 {
     state_t new_state;
     new_state.id = id;
+    new_state.output = -1;
 
     // Create a dynamic array of transitions
     new_state.transitions_ttrans = darray_init(sizeof(transistion_t));
@@ -152,6 +159,7 @@ state_machine_t state_machine_merge(state_machine_t *state_machine_a, state_mach
         state_t *new_state = state_machine_add_state(&new_state_machine, old_state->id);
         darray_copy(&(new_state->transitions_ttrans), &(old_state->transitions_ttrans)); // Clone the transitions
         new_state->end_state = old_state->end_state;
+        new_state->output = old_state->output;
 
         // Add to the correspondance table. The id has likely changed so we will remap it
         //  once all state have been copied
@@ -218,12 +226,24 @@ state_machine_t state_machine_merge(state_machine_t *state_machine_a, state_mach
         state_add_transition(new_state, new_id, trans_array[k].condition);
     }
 
+    // Mark as end state if needed
+    if (!new_state->end_state && old_state->end_state)
+    {
+        new_state->output = old_state->output;
+        new_state->end_state = true;
+    }
+    else if (new_state->end_state && old_state->end_state && old_state->output != new_state->output)
+    {
+        fprintf(stderr, "Conflicting empty tokens");
+        exit(EXIT_FAILURE);
+    }
+
     return new_state_machine;
 }
 
 void state_machine_reduce(state_machine_t *state_machine)
 {
-    // Two state can be merged if they have the same end_state and the same transitions
+    // Two state can be merged if they have the same end_state, the same output and the same transitions
     bool has_merged = true;
 
     // Stop when we can not merge more states
@@ -280,6 +300,10 @@ state_machine_t state_machine_make_deterministic(state_machine_t *nfa)
     int nfa_state_count = nfa->states_tstate->count;
     state_t *nfa_state_array = darray_get_ptr(&(nfa->states_tstate), 0);
 
+    // Used to keep track of output values
+    int last_id = -1;
+    int output = -1;
+
     // Contains the current state combination
     bitarray_t current_state_combination;
     bitarray_set_all(&current_state_combination, false);
@@ -307,6 +331,9 @@ state_machine_t state_machine_make_deterministic(state_machine_t *nfa)
     // Generate all states until there are no more new state
     for (size_t i = 0; i < generated_state_table->count; i++)
     {
+        last_id = -1;
+        output = -1;
+
         // Get the state to process in the table
         darray_get(&generated_state_table, &current_state_combination, i);
 
@@ -331,6 +358,21 @@ state_machine_t state_machine_make_deterministic(state_machine_t *nfa)
             if (bitarray_get(&current_state_combination, j))
             {
                 darray_add(&current_states, nfa_state_array[j]);
+                if (nfa_state_array[j].output != -1)
+                {
+                    // Priority to the lowest id
+                    if (output != -1 && nfa_state_array[j].output != output)
+                    {
+                        fprintf(stdout, "Output confliting for state %i and %i, outputing %i and %i\n", last_id, nfa_state_array[j].id, output, nfa_state_array[j].output);
+                        output = (output < nfa_state_array[j].output) ? output : nfa_state_array[j].output;
+                    }
+                    else
+                    {
+                        output = nfa_state_array[j].output;
+                        last_id = nfa_state_array[j].id;
+                    }
+                }
+
                 // And add all the transitions
                 for (size_t k = 0; k < nfa_state_array[j].transitions_ttrans->count; k++)
                 {
@@ -339,11 +381,13 @@ state_machine_t state_machine_make_deterministic(state_machine_t *nfa)
             }
         }
 
+        // Set the output
+        dfa_current_state->output = output;
+
         transistion_t *current_transition_array = (transistion_t *)darray_get_ptr(&current_transitions, 0);
         // Get all conditions to process
         for (size_t j = 0; j < current_transitions->count; j++)
         {
-
             // Reset the combination array
             bitarray_set_all(&new_state_combination, false); // Reset the old
 
@@ -376,10 +420,10 @@ state_machine_t state_machine_make_deterministic(state_machine_t *nfa)
             {
                 if (current_transition_array[k].condition == cond)
                 {
-                    //Extract the index
+                    // Extract the index
                     state_t *state_ptr = state_machine_get_by_id(nfa, current_transition_array[k].next_state_id);
                     int index = state_ptr - (state_t *)darray_get_ptr(&(nfa->states_tstate), 0);
-                    index/sizeof(state_t);
+                    index / sizeof(state_t);
                     bitarray_set(&new_state_combination, index, true);
                 }
             }
@@ -419,16 +463,25 @@ state_machine_t state_machine_make_deterministic(state_machine_t *nfa)
     // Mark any set containing an end state as an end state
     for (size_t i = 0; i < generated_state_table->count; i++)
     {
+        last_id = -1;
+        output = -1;
         for (size_t j = 0; j < end_state_ids->count; j++)
         {
+            // If multiple end state with different output conflict, we get a rule conflict
             if (bitarray_get((bitarray_t *)darray_get_ptr(&generated_state_table, i), end_state_ids_array[j]))
             {
-                ((state_t *)darray_get_ptr(&(dfa.states_tstate), i))->end_state = true;
-                break;
+                state_t *end_state = ((state_t *)darray_get_ptr(&(dfa.states_tstate), i));
+                if (output > 0 && end_state->output != output)
+                {
+                    fprintf(stderr, "Rule %i conflicts with rule %i", last_id, end_state->id);
+                    exit(EXIT_FAILURE);
+                }
+                end_state->end_state = true;
             }
         }
     }
 
+#ifdef DEBUG
     fputs("Generated array :\n\t", stdout);
     for (size_t i = 0; i < generated_state_table->count; i++)
     {
@@ -448,8 +501,9 @@ state_machine_t state_machine_make_deterministic(state_machine_t *nfa)
         }
         fputs(";\n\t", stdout);
     }
+#endif // DEBUG
 
-    //Reduction pass
+    // Reduction pass
     state_machine_reduce(&dfa);
 
     return dfa;
@@ -463,6 +517,9 @@ bool state_compare_states(state_t *s1, state_t *s2)
     transistion_t *s2_trans_array = darray_get_ptr(&(s2->transitions_ttrans), 0);
 
     if (s1->end_state != s2->end_state)
+        return false;
+
+    if (s1->output != s2->output)
         return false;
 
     if (s1->transitions_ttrans->count != s2->transitions_ttrans->count)
@@ -526,6 +583,8 @@ void state_machine_print(state_machine_t *state_machine, FILE *file_descriptor)
     fputs("}\n", file_descriptor);
 }
 
+void char_to_escape_seq(char c, char *buff);
+
 void state_machine_print_char(state_machine_t *state_machine, FILE *file_descriptor)
 {
     // Get the dynamic array as a static array
@@ -545,17 +604,65 @@ void state_machine_print_char(state_machine_t *state_machine, FILE *file_descrip
 
         for (int j = 0; j < state_array[i].transitions_ttrans->count; j++)
         {
+            char buff[6];
+            char_to_escape_seq((char)(transition[j].condition), buff);
             fprintf(file_descriptor, "\t%i -> %i", state_array[i].id, transition[j].next_state_id);
-            fprintf(file_descriptor, "  \t[label=\"(%c)\"]\n", (char)(transition[j].condition));
+            fprintf(file_descriptor, "  \t[label=\"(%s)\"]\n", buff);
         }
 
         if (state_array[i].end_state)
         {
-            fprintf(file_descriptor, "\t%i \t[shape=doublecircle]\n", state_array[i].id);
+            fprintf(file_descriptor, "\t%i \t[shape=doublecircle, label=\"%i\\n>%i<\"]\n", state_array[i].id, state_array[i].id, state_array[i].output);
         }
     }
 
     fputs("}\n", file_descriptor);
+}
+
+void char_to_escape_seq(char c, char *buff)
+{
+    if (c >= '!' && c <= '~')
+    {
+        buff[0] = c;
+        buff[1] = '\0';
+    }
+    else if (c == '\n')
+    {
+        buff[0] = '\\';
+        buff[1] = '\\';
+        buff[2] = 'n';
+        buff[3] = '\0';
+    }
+    else if (c == '\r')
+    {
+        buff[0] = '\\';
+        buff[1] = '\\';
+        buff[2] = 'r';
+        buff[3] = '\0';
+    }
+    else if (c == '\n')
+    {
+        buff[0] = '\\';
+        buff[1] = '\\';
+        buff[2] = 't';
+        buff[3] = '\0';
+    }
+    else if (c == '"')
+    {
+        buff[0] = '\\';
+        buff[1] = '\\';
+        buff[2] = '"';
+        buff[3] = '\0';
+    }
+    else
+    {
+        buff[0] = '\\';
+        buff[1] = '\\';
+        buff[2] = 'x';
+        buff[3] = ((c >> 4) & 0x0F) < 10 ? ((c >> 4) & 0x0F) + '0' : ((c >> 4) & 0x0F) - 10 + 'A';
+        buff[4] = (c & 0x0F) < 10 ? (c & 0x0F) + '0' : (c & 0x0F) - 10 + 'A';
+        buff[5] = '\0';
+    }
 }
 
 /********************************************************/
