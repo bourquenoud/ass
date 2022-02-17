@@ -12,7 +12,9 @@ void generate(FILE *fd)
     int wait_index = 3;
 
     function_table = hash_init(64);
-    hash_add(function_table, "dfa_switch", generator_dfa_switch);
+    hash_add(function_table, "lexer_switch", generator_lexer_switch);
+    hash_add(function_table, "token_enum", generator_token_enum);
+    hash_add(function_table, "token_names", generator_token_names);
 
     int line = 1;
     int column = 1;
@@ -89,7 +91,7 @@ void generate(FILE *fd)
             if (function == NULL)
             {
                 fprintf(stderr, "Line %i, col %i : ", line, column);
-                fprintf(stderr, "Syntax error in the skelton file, '%s' not registers\n", name_buff);
+                fprintf(stderr, "Syntax error in the skelton file, '%s' not registered\n", name_buff);
                 abort();
             }
             function(column / 4 - 1);

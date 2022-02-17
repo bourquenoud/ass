@@ -3,47 +3,86 @@
 #include <stdbool.h>
 #include <stdio.h>
 
-/* state machine */
-typedef uint32_t ASS_state_t;
-ASS_state_t ASS_current_state = 0;
-bool ASS_valid_sentence = false;
-int ASS_current_token;
-int ASS_column = 0;
+/*  */
+//!! token_enum !!//
 
-void ASS_syntax_error()
+const char const * ASS_token_names[] = //!! token_names !!//
+
+/* Lexer */
+typedef uint32_t ASS_state_t;
+ASS_state_t ASS_lexer_state = 0;
+bool ASS_lexer_valid = false;
+bool ASS_lexer_processed = false;
+int ASS_lexer_output = -1;
+int ASS_lexer_token;
+
+/* Location tracking */
+//TODO: make a bison-style location system
+int ASS_column = 0;
+int ASS_line = 1;
+
+// Called when
+void ASS_lexer_exit_point()
 {
-    fprintf(stderr, "Syntax error at %i\n", ASS_column);
-    ASS_current_state = 0;
+    ASS_lexer_state = 0;
+    ASS_lexer_processed = false;
+    ASS_lexer_valid = false;
+    printf("Extracted token %s\n", ASS_token_names[ASS_lexer_output]);
+}
+
+// Called when encountered an invalid token
+void ASS_lexer_invalid_token()
+{
+    fprintf(stderr, "Lexical error at %i:%i\n", ASS_line, ASS_column);
+    exit(EXIT_FAILURE);
 }
 
 // State machine
-void state_machine()
+void ASS_lexer()
 {
-    //!! dfa_switch !!//
+    ASS_lexer_processed = true;
+    //!! lexer_switch !!//
 }
 
 int main(int argc, char const *argv[])
 {
 
+    FILE *fd;
+
+    if (argc == 1)
+        fd = stdin;
+    else
+        fd = fopen(argv[1], "r");
+
     while (true)
     {
-        // Run on step of the state machine
+        // Run one step of the state machine
 
-        ASS_current_token = fgetc(stdin);
+        if ((ASS_lexer_token = fgetc(fd)) == EOF)
+            break;
 
-        if (ASS_current_token == '\n')
+        // Mark the token as unprocessed
+        ASS_lexer_processed = false;
+
+        // Keep track of the position
+        if (ASS_lexer_token == '\n')
         {
-            if (ASS_valid_sentence)
-                printf("Valid\n");
-            else
-                printf("Invalid\n");
-            ASS_current_state = 0;
-            continue;
+            ASS_column = -1;
+            ASS_line++;
         }
-
-        state_machine();
+        else if (ASS_lexer_token == '\r') //Because windows, I guess...
+        {
+            ASS_column = -1;
+        }
+        
         ASS_column++;
+
+        // Run the lexer machine until the token has been processed
+        while (!ASS_lexer_processed)
+            ASS_lexer();
     }
+
+    printf("File parsed\n");
 
     return 0;
 }

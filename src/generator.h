@@ -8,6 +8,9 @@
 #include "state_machine.h"
 #include "hash_array.h"
 #include "dynamic_array.h"
+#include "tokeniser.h"
+#include "macro.h"
+#include "xmalloc.h"
 
 /**
  * @brief Set the file descriptor for the generator
@@ -17,23 +20,16 @@
 void generator_set_file_descriptor(FILE *file_descriptor);
 
 /**
- * @brief Set the state machine to use for the generation
- * 
- * @param state_machine The state machine to use for the generation
+ * @brief Generate the lexer from a list of tokens
+ *
+ * @param count The number of token
+ * @param _tokens The token array
  */
-void generator_set_state_machine(state_machine_t* state_machine);
+void generator_generate_lexer(int count, const token_def_t *_tokens);
 
-/**
- * @brief Generate the definiton for the state machine
- * 
- * @param indent The indentation level of the whole block
- */
-void generator_dfa_def(int indent);
-
-/**
- * @brief Generate an implemention of the state machine using a
- *          large switch-case statement
- * 
- * @param indent The indentation level of the whole block
- */
-void generator_dfa_switch(int indent);
+/**************************************************/
+/*                   CALLBACKS                    */
+/**************************************************/
+void generator_lexer_switch(int indent);
+void generator_token_enum(int indent);
+void generator_token_names(int indent);
