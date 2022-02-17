@@ -13,7 +13,7 @@
 
 //Syntax parameters
 %param args_separator  ","
-%param label_pattern   "[a-z][a-z0-9_]:"
+%param label_postfix   ":"
 
 // Constants for opcode prefix
 %constant rr_p $00001
