@@ -1,6 +1,6 @@
 #Test directory
-
 test/*
+test/
 
 # Build directory
 build/
