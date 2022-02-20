@@ -14,6 +14,7 @@ typedef struct
     char *name;
     char *pattern;
     char *action;
+    void *data;
 } token_def_t;
 
 state_machine_t tokeniser_array_to_nfa(int count, const token_def_t *tokens);
