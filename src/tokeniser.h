@@ -6,6 +6,7 @@
 
 #include "state_machine.h"
 #include "linked_list.h"
+#include "pattern_compiler.h"
 
 typedef struct
 {
