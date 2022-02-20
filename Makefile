@@ -1,7 +1,7 @@
 CFLAGS = -O0 -ggdb3
 LDFLAGS = -lm
 output_file = ass
-output_dir = build/bin/
+output_dir = bin
 
 lex_file := ass.l
 parse_file := ass.y
@@ -12,7 +12,7 @@ gen_obj_files := ass.tab.o ass.yy.o
 src_dir := src
 obj_dir := build
 gen_dir := generated
-sklt_dir := skeletons
+sklt_dir := src/skeletons
 
 gen_src := $(src_dir)/$(gen_dir)/$(gen_src_files)
 gen_obj := $(obj_dir)/$(gen_dir)/$(gen_obj_files)
@@ -87,7 +87,7 @@ $(OBJS): $(SRCS) $(src_dir)/$(gen_dir)/ass.tab.h $(obj_dir)/$(gen_dir)/ass.yy.o 
 
 #Link
 $(output_dir)$(output_file): $(OBJS) | $(output_dir)
-	gcc -o $(output_dir)/$(output_file) $(LDFLAGS) $(shell find $(obj_dir) -name *.o)
+	gcc -o $(output_dir)/$(output_file) $(LDFLAGS) $(shell find $(obj_dir) -name '*.o')
 
 ########################################################################
 #                               CLEAN                                  #
