@@ -5,7 +5,6 @@
 // Generate a state machine matching the provided sequence
 state_machine_t pattern_compiler(size_t count, const int *sequence, int output)
 {
-
     state_machine_t new_state_machine = state_machine_init();
 
     state_t *current_state = darray_get_ptr(&(new_state_machine.states_tstate), 0); // State to be processed
@@ -24,6 +23,14 @@ state_machine_t pattern_compiler(size_t count, const int *sequence, int output)
     // TODO: implement negative sets
     bool negative_set = false; // If the set we are processing is negative
 
+    // Check for empty pattern
+    if (count == 0)
+    {
+        fail_error("Empty rule");
+        exit(EXIT_FAILURE);
+    }
+
+    // Generate the state machine
     for (size_t i = 0; i < count; i++)
     {
         // Empty the set unless we are currently processing a set
@@ -37,9 +44,9 @@ state_machine_t pattern_compiler(size_t count, const int *sequence, int output)
             switch (-sequence[i])
             {
             case '+': // Make the current state loop on itself
-                if (parsing_set)
-                { // Invalid in a set
-                    fail_error("Unexpected '+' control in a set, at position %i", i);
+                if (parsing_set || last_state == NULL)
+                {
+                    fail_error("Unexpected '+' at position %i", i);
                     exit(EXIT_FAILURE);
                 }
 
@@ -51,9 +58,9 @@ state_machine_t pattern_compiler(size_t count, const int *sequence, int output)
                 continue;
 
             case '*': // Remove the new state and make the old one loop on itself
-                if (parsing_set)
-                { // Invalid in a set
-                    fail_error("Unexpected '+' control in a set, at position %i", i);
+                if (parsing_set || last_state == NULL)
+                {
+                    fail_error("Unexpected '*' at position %i", i);
                     exit(EXIT_FAILURE);
                 }
 
@@ -67,9 +74,9 @@ state_machine_t pattern_compiler(size_t count, const int *sequence, int output)
                 continue;
 
             case '?': // Save the last state to make it skip over the current one after
-                if (parsing_set)
-                { // Invalid in a set
-                    fail_error("Unexpected '?' control in a set, at position %i", i);
+                if (parsing_set || last_state == NULL)
+                {
+                    fail_error("Unexpected '?' at position %i", i);
                     exit(EXIT_FAILURE);
                 }
 
@@ -79,8 +86,8 @@ state_machine_t pattern_compiler(size_t count, const int *sequence, int output)
 
             case '[': // Enter a set
                 if (parsing_set)
-                { // Invalid in a set
-                    fail_error("Unexpected '[' control in a set, at position %i", i);
+                {
+                    fail_error("Unexpected '[' at position %i", i);
                     exit(EXIT_FAILURE);
                 }
 
@@ -99,8 +106,8 @@ state_machine_t pattern_compiler(size_t count, const int *sequence, int output)
 
             case ']': // Exit the set
                 if (!parsing_set)
-                { // Invalid outside of a set
-                    fail_error("Unexpected ']' control outside of a set, at position %i", i);
+                {
+                    fail_error("Unexpected ']' at position %i", i);
                     exit(EXIT_FAILURE);
                 }
 
@@ -108,24 +115,15 @@ state_machine_t pattern_compiler(size_t count, const int *sequence, int output)
                 break;
 
             case '-': // Range value in set
-                if (!parsing_set)
+                if (!parsing_set || i + 1 > count || sequence[i + 1] < -1)
                 {
-                    // Invalid outside of a set
-                    fail_error("Unexpected '-' control outside of a set, at position %i", i);
+                    fail_error("Unexpected '-' at position %i", i);
                     exit(EXIT_FAILURE);
                 }
 
                 int start_range = *((int *)(darray_get_ptr(&set, set->count - 1)));
                 int end_range;
                 i++;
-
-                // Check for a valid range
-                if (i > count || sequence[i] < -1)
-                {
-                    // Invalid outside of a set
-                    fail_error("Invalid range, at position %i", i - 1);
-                    exit(EXIT_FAILURE);
-                }
 
                 // Swap the direction if necessary
                 if (start_range > sequence[i])
