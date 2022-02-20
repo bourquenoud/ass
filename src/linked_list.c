@@ -104,6 +104,9 @@ linked_list_t* list_get_last(linked_list_t* self)
 
 int list_get_lenght(linked_list_t* self)
 {
+    if(self == NULL)
+        return 0;
+
     int i = 0;
     linked_list_t* current = self;
     while(current->next)
