@@ -3,10 +3,14 @@
 /*********************************************************************/
 
 static FILE *fd = NULL;
-static state_machine_t *state_machine;
+
 static state_machine_t *lexer_dfa;
 static const token_def_t *tokens;
-static int tokens_count;
+static int token_count;
+
+static state_machine_t *parser_dfa;
+static const rule_def_t **rules;
+static int rule_count;
 
 /**
  * @brief print with an indentation level
@@ -26,6 +30,15 @@ void iprintf(size_t indentation, const char *format, ...);
  */
 void generator_dfa_switch(int indent, state_machine_t *state_machine, char *name);
 
+/**
+ * @brief Print to a dynamic array
+ *
+ * @param array Pointer to the dynamic array
+ * @param format printf-like format string
+ * @param ... Arguments
+ */
+void bprintf(darray_t **array, const char *format, ...);
+
 // Handle an xmalloc error
 static void xmalloc_callback(int err);
 
@@ -38,7 +51,7 @@ void generator_set_file_descriptor(FILE *file_descriptor)
 
 void generator_generate_lexer(int count, const token_def_t *_tokens)
 {
-    tokens_count = count;
+    token_count = count;
     tokens = _tokens;
     xmalloc_set_handler(xmalloc_callback);
     lexer_dfa = xmalloc(sizeof(state_machine_t));
@@ -49,25 +62,331 @@ void generator_generate_lexer(int count, const token_def_t *_tokens)
     // state_machine_destroy(&nfa);
 }
 
+void generator_generate_parser(int count, const rule_def_t **_rules)
+{
+    rule_count = count;
+    rules = _rules;
+    xmalloc_set_handler(xmalloc_callback);
+    parser_dfa = xmalloc(sizeof(state_machine_t));
+    state_machine_t nfa = parser_arrays_to_nfa(count, _rules);
+    state_machine_reduce(&nfa);
+    *parser_dfa = state_machine_make_deterministic(&nfa);
+    state_machine_reduce(parser_dfa);
+
+    // XXX: REMOVE ME from here..
+    FILE *fd = fopen("graph.dot", "w");
+    state_machine_print(parser_dfa, fd);
+    fclose(fd);
+    // XXX: ...to here
+
+    // state_machine_destroy(&nfa);
+}
+
+char *generator_generate_action(opcode_t opcode)
+{
+    uint32_t offset = 0;
+    darray_t **buff = alloca(sizeof(sizeof(darray_t *)));
+    *buff = darray_init(1);
+
+    // Because of the way "darray_add" is implemented, we can't pass it rvalues
+    char tmp = '\0';
+    darray_add(buff, tmp); // Start the buffer as an empty string
+
+    bprintf(buff, "    ASS_opcode_t opcode =");
+    bprintf(buff, "    {");
+    bprintf(buff, "        .address = ASS_current_address,");
+    bprintf(buff, "        .data = 0LLU");
+    bprintf(buff, "    };");
+    bprintf(buff, "");
+    bprintf(buff, "    uint64_t data = 0;");
+    bprintf(buff, "    uint64_t mask = 0;");
+    bprintf(buff, "    ASS_ref_t new_ref;");
+    bprintf(buff, "");
+
+    // Process each element in the opcode reverse order
+    //  doing it in reverse allow use to keep track of the
+    //  offset
+    int len = list_get_lenght(opcode.bit_pattern);
+    for (int i = len - 1; i >= 0; i--)
+    {
+        linked_list_t *current = opcode.bit_pattern;
+        while (current != NULL)
+        {
+            bit_elem_t *bit_elem = (bit_elem_t *)(current->user_data);
+
+            if (bit_elem->index_opcode == i)
+            {
+
+                switch (bit_elem->type)
+                {
+                case eBP_IMMEDIATE:
+                    bprintf(buff, "    /**eBP_IMMEDIATE**/");
+                    bprintf(buff, "    mask = (0xFFFFFFFFFFFFFFFFLLU << %u);", bit_elem->width + offset);
+                    bprintf(buff, "    mask |= ~(0xFFFFFFFFFFFFFFFFLLU << %u);", offset);
+                    bprintf(buff, "    data = ASS_parser_stack[%i].iVal;", bit_elem->index_mnemonic);
+                    bprintf(buff, "    opcode.data &= mask;");
+                    bprintf(buff, "    opcode.data |= (~mask & (data << %u));", offset);
+                    break;
+                case eBP_LABEL_ABS:
+                    bprintf(buff, "    /**eBP_LABEL_ABS**/");
+                    bprintf(buff, "    new_ref.absolute = true;");
+                    bprintf(buff, "    new_ref.symbol_name = ASS_parser_stack[%i].sVal;", bit_elem->index_mnemonic);
+                    bprintf(buff, "    new_ref.index = ASS_binary_stack_ptr;");
+                    bprintf(buff, "    new_ref.bit_offset = %i;", offset);
+                    bprintf(buff, "    new_ref.bit_width = %i;", bit_elem->width + offset);
+                    bprintf(buff, "    ASS_ref_stack_push(new_ref);");
+                    break;
+                case eBP_LABEL_REL:
+                    bprintf(buff, "    /**eBP_LABEL_REL**/");
+                    bprintf(buff, "    new_ref.absolute = false;");
+                    bprintf(buff, "    new_ref.symbol_name = ASS_parser_stack[%i].sVal;", bit_elem->index_mnemonic);
+                    bprintf(buff, "    new_ref.index =  ASS_binary_stack_ptr;");
+                    bprintf(buff, "    new_ref.bit_offset = %i;", offset);
+                    bprintf(buff, "    new_ref.bit_width = %i;", bit_elem->width + offset);
+                    bprintf(buff, "    ASS_ref_stack_push(new_ref);");
+                case eBP_ENUM:
+                    break;
+                case eBP_ID:
+                    fprintf(stderr, "Unresolved ID\n");
+                    abort();
+                    break;
+                case eBP_BIT_CONST:
+                case eBP_BIT_LIT:
+                    bprintf(buff, "    /**eBP_BIT_LIT**/");
+                    bprintf(buff, "    mask = (0xFFFFFFFFFFFFFFFFLLU << %u);", bit_elem->width + offset);
+                    bprintf(buff, "    mask |= ~(0xFFFFFFFFFFFFFFFFLLU << %u);", offset);
+                    bprintf(buff, "    opcode.data &= mask;");
+                    bprintf(buff, "    opcode.data |= (~mask & (%#xLLU << %u));", ((bit_const_t *)(bit_elem->data))->val, offset);
+                    break;
+                case eBP_ELLIPSIS:
+                    bprintf(buff, "    /**eBP_ELLIPSIS**/");
+                    bprintf(buff, "    mask = (0xFFFFFFFFFFFFFFFFLLU << %u);", bit_elem->width + offset);
+                    bprintf(buff, "    mask |= ~(0xFFFFFFFFFFFFFFFFLLU << %u);", offset);
+                    bprintf(buff, "    opcode.data &= mask;");
+                    break;
+                default:
+                    fprintf(stderr, "Unknown bit_elem type\n");
+                    abort();
+                    break;
+                }
+
+                // Keep track of the offset
+                offset += bit_elem->width;
+                break;
+            }
+
+            current = current->next;
+        }
+    }
+    bprintf(buff, "");
+    bprintf(buff, "    ASS_binary_stack_push(opcode);");
+    bprintf(buff, "    ASS_current_address++;");
+    xmalloc_set_handler(xmalloc_callback);
+    char *result = xmalloc((*buff)->count);
+    strcpy(result, (char *)((*buff)->element_list));
+}
+
 /**************************************************/
 /*                   CALLBACKS                    */
 /**************************************************/
 
+void generator_data_union(int indent)
+{
+    iprintf(0, "typedef union");
+    iprintf(0 + indent, "{");
+    iprintf(1 + indent, "uint64_t uVal;");
+    iprintf(1 + indent, "int64_t iVal;");
+    iprintf(1 + indent, "char *sVal;");
+    iprintf(0 + indent, "} ASS_data_t;");
+}
+
+void generator_lexer_actions(int indent)
+{
+    int duplicates[token_count];
+
+    for (size_t i = 0; i < token_count; i++)
+    {
+        // Look if we have already genrated the token id
+        duplicates[i] = -1;
+        bool duplicated = false;
+        for (size_t j = 0; j < i; j++)
+        {
+            if (duplicates[j] == tokens[i].id)
+            {
+                duplicated = true;
+                break;
+            }
+        }
+
+        // Save the the id
+        duplicates[i] = tokens[i].id;
+
+        // Generate the token id if it is not a duplicate
+        if (!duplicated)
+        {
+            if (tokens[i].action != NULL)
+            {
+                iprintf(0 + indent, "ASS_data_t ASS_TA_%s()", tokens[i].name);
+                iprintf(0 + indent, "{");
+                iprintf(0, "%s", tokens[i].action);
+                iprintf(0 + indent, "}");
+            }
+            else
+            {
+                iprintf(0 + indent, "// Empty action");
+                iprintf(0 + indent, "ASS_data_t ASS_TA_%s()", tokens[i].name);
+                iprintf(0 + indent, "{");
+                iprintf(1 + indent, "return (ASS_data_t)(uint64_t)0;");
+                iprintf(0 + indent, "}");
+            }
+        }
+    }
+}
+
+void generator_lexer_action_list(int indent)
+{
+    int duplicates[token_count];
+
+    iprintf(0, "const ASS_action_t ASS_lexer_action_list[] = ");
+    iprintf(0 + indent, "{");
+    for (size_t i = 0; i < token_count; i++)
+    {
+        // Look if we have already genrated the token id
+        duplicates[i] = -1;
+        bool duplicated = false;
+        for (size_t j = 0; j < i; j++)
+        {
+            if (duplicates[j] == tokens[i].id)
+            {
+                duplicated = true;
+                break;
+            }
+        }
+
+        // Save the the id
+        duplicates[i] = tokens[i].id;
+
+        // Generate the token id if it is not a duplicate
+        if (!duplicated)
+        {
+            iprintf(1 + indent,
+                    "[ASS_T_%s] = (ASS_action_t){.action = ASS_TA_%s, .type = %s},",
+                    tokens[i].name,
+                    tokens[i].name,
+                    tokens[i].action == NULL ? "ASS_U_NONE" : "ASS_U_DATA");
+        }
+    }
+    iprintf(0 + indent, "};");
+}
+
+void generator_parser_actions(int indent)
+{
+    int duplicates[rule_count];
+
+    for (size_t i = 0; i < rule_count; i++)
+    {
+        // Look if we have already generated the rule id
+        duplicates[i] = -1;
+        bool duplicated = false;
+        for (size_t j = 0; j < i; j++)
+        {
+            if (duplicates[j] == rules[i]->id)
+            {
+                duplicated = true;
+                break;
+            }
+        }
+
+        // Save the the id
+        duplicates[i] = rules[i]->id;
+
+        // Generate the rule id if it is not a duplicate
+        if (!duplicated)
+        {
+            if (rules[i]->action != NULL)
+            {
+                iprintf(0 + indent, "// %s action", rules[i]->name);
+                iprintf(0 + indent, "ASS_data_t ASS_RA_%s()", rules[i]->name);
+                iprintf(0 + indent, "{");
+                iprintf(0, "%s", rules[i]->action);
+                iprintf(0 + indent, "}");
+            }
+            else
+            {
+                iprintf(0 + indent, "// Empty action");
+                iprintf(0 + indent, "ASS_data_t ASS_RA_%s()", rules[i]->name);
+                iprintf(0 + indent, "{");
+                iprintf(1 + indent, "return (ASS_data_t)(uint64_t)0;");
+                iprintf(0 + indent, "}");
+            }
+        }
+    }
+}
+
+void generator_parser_action_list(int indent)
+{
+    int duplicates[rule_count];
+
+    iprintf(0, "const ASS_action_t ASS_parser_action_list[] = ");
+    iprintf(0 + indent, "{");
+    for (size_t i = 0; i < rule_count; i++)
+    {
+        // Look if we have already genrated the rule id
+        duplicates[i] = -1;
+        bool duplicated = false;
+        for (size_t j = 0; j < i; j++)
+        {
+            if (duplicates[j] == rules[i]->id)
+            {
+                duplicated = true;
+                break;
+            }
+        }
+
+        // Save the the id
+        duplicates[i] = rules[i]->id;
+
+        // Generate the rule id if it is not a duplicate
+        if (!duplicated)
+            iprintf(1 + indent, "[%i] = (ASS_action_t){.action = ASS_RA_%s, .type = ASS_U_NONE},", rules[i]->id, rules[i]->name);
+    }
+    iprintf(0 + indent, "};");
+}
+
 void generator_token_enum(int indent)
 {
+    int duplicates[token_count];
+
     iprintf(0, "typedef enum");
     iprintf(0 + indent, "{");
-    for (size_t i = 0; i < tokens_count; i++)
+    for (size_t i = 0; i < token_count; i++)
     {
-        iprintf(1 + indent, "ASS_T_%s = %i,", tokens[i].name, tokens[i].id);
+        // Look if we have already genrated the token id
+        duplicates[i] = -1;
+        bool duplicated = false;
+        for (size_t j = 0; j < i; j++)
+        {
+            if (duplicates[j] == tokens[i].id)
+            {
+                duplicated = true;
+                break;
+            }
+        }
+
+        // Save the the id
+        duplicates[i] = tokens[i].id;
+
+        // Generate the token id if it is not a duplicate
+        if (!duplicated)
+            iprintf(1 + indent, "ASS_T_%s = %i,", tokens[i].name, tokens[i].id);
     }
     iprintf(0 + indent, "} ASS_token_t;");
 }
 
 void generator_token_names(int indent)
 {
-    iprintf(0, "{");
-    for (size_t i = 0; i < tokens_count; i++)
+    iprintf(0, "const char const *ASS_token_names[] = {");
+    for (size_t i = 0; i < token_count; i++)
     {
         iprintf(1 + indent, "[ASS_T_%s] = \"%s\",", tokens[i].name, tokens[i].name);
     }
@@ -77,6 +396,11 @@ void generator_token_names(int indent)
 void generator_lexer_switch(int indent)
 {
     generator_dfa_switch(indent, lexer_dfa, "lexer");
+}
+
+void generator_parser_switch(int indent)
+{
+    generator_dfa_switch(indent, parser_dfa, "parser");
 }
 
 void generator_dfa_switch(int indent, state_machine_t *state_machine, char *name)
@@ -122,6 +446,35 @@ void generator_dfa_switch(int indent, state_machine_t *state_machine, char *name
 }
 
 /*********************************************************************/
+
+// Print to a dynamic array buffer
+void bprintf(darray_t **array, const char *format, ...)
+{
+    int len;
+    char buff[1024];
+    char tmp;
+
+    // Print to the buffer
+    va_list args;
+    va_start(args, format);
+    len = vsnprintf(buff, 1024, format, args);
+    va_end(args);
+
+    // Remove that last character of the string in the
+    //  array, as it is normally a NULL
+    darray_remove(array, 1);
+
+    // Skip the NULL
+    // NOTE: Inefficient
+    for (int i = 0; i < len; i++)
+    {
+        darray_add(array, buff[i]);
+    }
+    tmp = '\n';
+    darray_add(array, tmp);
+    tmp = '\0';
+    darray_add(array, tmp);
+}
 
 void iprintf(size_t indentation, const char *format, ...)
 {
