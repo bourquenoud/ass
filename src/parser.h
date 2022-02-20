@@ -1,6 +1,7 @@
 #pragma once
 
 #include "state_machine.h"
+#include "pattern_compiler.h"
 
 typedef struct
 {
