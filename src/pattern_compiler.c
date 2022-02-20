@@ -46,7 +46,7 @@ state_machine_t pattern_compiler(size_t count, const int *sequence, int output)
             case '+': // Make the current state loop on itself
                 if (parsing_set || last_state == NULL)
                 {
-                    fail_error("Unexpected '+' at position %i", i);
+                    fail_error("Unexpected '%c' at position %i of pattern %i", (char)(-sequence[i]), i, output);
                     exit(EXIT_FAILURE);
                 }
 
@@ -55,12 +55,12 @@ state_machine_t pattern_compiler(size_t count, const int *sequence, int output)
                     transistion_t *trans = darray_get_ptr(&(last_state->transitions_ttrans), j);
                     state_add_transition(current_state, current_state->id, trans->condition);
                 }
-                continue;
+                continue; // Skip the state generation and don't add the character
 
             case '*': // Remove the new state and make the old one loop on itself
                 if (parsing_set || last_state == NULL)
                 {
-                    fail_error("Unexpected '*' at position %i", i);
+                    fail_error("Unexpected '%c' at position %i of pattern %i", (char)(-sequence[i]), i, output);
                     exit(EXIT_FAILURE);
                 }
 
@@ -71,23 +71,23 @@ state_machine_t pattern_compiler(size_t count, const int *sequence, int output)
                     transistion_t *trans = darray_get_ptr(&(last_state->transitions_ttrans), j);
                     trans->next_state_id = last_state->id;
                 }
-                continue;
+                continue; // Skip the state generation and don't add the character
 
             case '?': // Save the last state to make it skip over the current one after
                 if (parsing_set || last_state == NULL)
                 {
-                    fail_error("Unexpected '?' at position %i", i);
+                    fail_error("Unexpected '%c' at position %i of pattern %i", (char)(-sequence[i]), i, output);
                     exit(EXIT_FAILURE);
                 }
 
                 optional = true;
                 save_state = last_state;
-                continue;
+                continue; // Skip the state generation and don't add the character
 
             case '[': // Enter a set
                 if (parsing_set)
                 {
-                    fail_error("Unexpected '[' at position %i", i);
+                    fail_error("Unexpected '%c' at position %i of pattern %i", (char)(-sequence[i]), i, output);
                     exit(EXIT_FAILURE);
                 }
 
@@ -102,12 +102,12 @@ state_machine_t pattern_compiler(size_t count, const int *sequence, int output)
                     negative_set = false;
                     parsing_set = true;
                 }
-                break;
+                continue; // Skip the state generation and don't add the character
 
             case ']': // Exit the set
                 if (!parsing_set)
                 {
-                    fail_error("Unexpected ']' at position %i", i);
+                    fail_error("Unexpected '%c' at position %i of pattern %i", (char)(-sequence[i]), i, output);
                     exit(EXIT_FAILURE);
                 }
 
@@ -117,7 +117,7 @@ state_machine_t pattern_compiler(size_t count, const int *sequence, int output)
             case '-': // Range value in set
                 if (!parsing_set || i + 1 > count || sequence[i + 1] < -1)
                 {
-                    fail_error("Unexpected '-' at position %i", i);
+                    fail_error("Unexpected '%c' at position %i of pattern %i", (char)(-sequence[i]), i, output);
                     exit(EXIT_FAILURE);
                 }
 
@@ -140,7 +140,7 @@ state_machine_t pattern_compiler(size_t count, const int *sequence, int output)
                 }
 
                 // Add all character from start to current char
-                for (char j = start_range; j <= end_range; j++)
+                for (int j = start_range; j <= end_range; j++)
                 {
                     darray_add(&set, j);
                 }
@@ -159,12 +159,12 @@ state_machine_t pattern_compiler(size_t count, const int *sequence, int output)
                 exit(EXIT_FAILURE);
                 break;
             }
-            // Skip the state generation and don't add the character
-            continue;
         }
-
-        // Add the character to the set if it is not a control character
-        darray_add(&set, sequence[i]);
+        else
+        {
+            // Add the character to the set if it is not a control character
+            darray_add(&set, sequence[i]);
+        }
 
         // Skip the state generation until we exit the set
         if (parsing_set)
