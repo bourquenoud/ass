@@ -123,6 +123,22 @@ state_machine_t tokeniser_token_to_nfa(const token_def_t token)
             {
                 processed_char = ')';
             }
+            else if (string[i] == '.')
+            {
+                processed_char = '.';
+            }
+            else if (string[i] == '+')
+            {
+                processed_char = '+';
+            }
+            else if (string[i] == '*')
+            {
+                processed_char = '*';
+            }
+            else if (string[i] == '?')
+            {
+                processed_char = '?';
+            }
             else if (string[i] == '-' && parsing_set)
             {
                 processed_char = '-';
