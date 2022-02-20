@@ -20,7 +20,7 @@ typedef enum
     eBP_ENUM,
     eBP_BIT_CONST,
     eBP_BIT_LIT,
-    eBP_ELLIPSIS
+    eBP_ELLIPSIS,
 } BPTYPE_t;
 
 
