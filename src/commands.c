@@ -318,7 +318,8 @@ int command_opcode(data_t *id, data_t *pattern, data_t *opcode_id, bool is_const
                 eBP_BIT_LIT,
                 ((bit_elem_t *)(current->user_data))->width,
                 resolved_opcode_id);
-
+            new_bit_elem->index_mnemonic = -1;
+            new_bit_elem->index_opcode = ((bit_elem_t *)(current->user_data))->index_opcode;
             list_element = list_init(eBP_BIT_LIT, (void *)new_bit_elem, current->data_type);
         }
         else

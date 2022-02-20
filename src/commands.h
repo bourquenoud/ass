@@ -16,6 +16,7 @@ typedef struct pattern_s
 
 typedef struct
 {
+    int token_id;
     linked_list_t *pattern_list;
     int width;
     char name[]; // Flexible array
@@ -23,6 +24,7 @@ typedef struct
 
 typedef struct
 {
+    int token_id;
     char *text_pattern;
     linked_list_t *bit_pattern;
 } opcode_t;
