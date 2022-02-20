@@ -2,47 +2,361 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdarg.h>
+#include <string.h>
 
-/*  */
-//!! token_enum !!//
+// REMOVE ME
+#define ASS_U_NONE 0
+#define ASS_U_DATA 1
 
-const char const * ASS_token_names[] = //!! token_names !!//
+/********************* struct and unions *********************/
+/*!! data_union !!*/
 
-/* Lexer */
-typedef uint32_t ASS_state_t;
-ASS_state_t ASS_lexer_state = 0;
+typedef struct
+{
+    int first_line;
+    int first_column;
+    int last_line;
+    int last_column;
+} ASS_location_t;
+
+typedef struct
+{
+    int type;
+    ASS_data_t (*action)(void);
+} ASS_action_t;
+
+typedef struct
+{
+    char *name;
+    uint64_t value;
+} ASS_symbol_t;
+
+typedef struct
+{
+    bool absolute;
+    char *symbol_name;
+    int index;
+    int bit_offset;
+    int bit_width;
+} ASS_ref_t;
+
+typedef struct
+{
+    int address;
+    uint64_t data;
+} ASS_opcode_t; // TODO: more representative name
+
+/********************* general globals *********************/
+char *ASS_text = NULL;
+int ASS_current_address = 0;
+
+/********************* log system *********************/
+#define ASS_INFO_COLOUR 94
+#define ASS_WARN_COLOUR 93
+#define ASS_ERRO_COLOUR 91
+#define ASS_MAX_LINE_LENGTH 1024
+
+void ASS_log_error(const char *, ...);
+void ASS_log_warning(const char *, ...);
+void ASS_log_info(const char *, ...);
+void ASS_show_line(int);
+
+ASS_location_t ASS_loc = {1, 0, 1, 0};
+int ASS_col_pos = 0;
+int ASS_line_pos = 1;
+char ASS_line[ASS_MAX_LINE_LENGTH];
+int ASS_line_ptr = 0;
+int ASS_info_count = 0;
+int ASS_warning_count = 0;
+int ASS_error_count = 0;
+
+/********************* tokens *********************/
+// Special token
+#define ASS_EOF -1
+
+/*!! token_enum !!*/
+
+/*!! token_names !!*/
+
+/********************* stacks *********************/
+#define ASS_DEFAULT_STACK_DEPTH 1024
+
+// Lexer
+int *ASS_lexer_stack;
+int ASS_lexer_stack_size = 0;
+int ASS_lexer_stack_ptr = 0;
+void ASS_lexer_stack_push(int);
+int ASS_lexer_stack_pop(void);
+
+// Parser
+ASS_data_t *ASS_parser_stack;
+int ASS_parser_stack_size = 0;
+int ASS_parser_stack_ptr = 0;
+void ASS_parser_stack_push(ASS_data_t);
+ASS_data_t ASS_parser_stack_pop(void);
+
+// Symbol
+ASS_symbol_t *ASS_symbol_stack;
+int ASS_symbol_stack_size = 0;
+int ASS_symbol_stack_ptr = 0;
+void ASS_symbol_stack_push(ASS_symbol_t);
+ASS_symbol_t ASS_symbol_stack_pop(void);
+
+// Binary
+ASS_opcode_t *ASS_binary_stack;
+int ASS_binary_stack_size = 0;
+int ASS_binary_stack_ptr = 0;
+void ASS_binary_stack_push(ASS_opcode_t);
+ASS_opcode_t ASS_binary_stack_pop(void);
+
+// Reference
+ASS_ref_t *ASS_ref_stack;
+int ASS_ref_stack_size = 0;
+int ASS_ref_stack_ptr = 0;
+void ASS_ref_stack_push(ASS_ref_t);
+ASS_ref_t ASS_ref_stack_pop(void);
+
+/********************* lexer *********************/
+
+/*!! lexer_actions !!*/
+
+/*!! lexer_action_list !!*/
+
+int ASS_lexer_state = 0;
 bool ASS_lexer_valid = false;
 bool ASS_lexer_processed = false;
-int ASS_lexer_output = -1;
+ASS_token_t ASS_lexer_output = -1;
 int ASS_lexer_token;
+bool ASS_lexer_output_ready = false;
 
-/* Location tracking */
-//TODO: make a bison-style location system
-int ASS_column = 0;
-int ASS_line = 1;
+/********************* parser *********************/
 
-// Called when
+/*!! parser_actions !!*/
+
+/*!! parser_action_list !!*/
+
+int ASS_parser_state = 0;
+bool ASS_parser_valid = false;
+bool ASS_parser_processed = false;
+int ASS_parser_output = -1;
+ASS_token_t ASS_parser_token;
+bool ASS_parser_output_ready = false;
+
+/***********************************************************************************************************/
+/*                                                   STACKS                                                */
+/***********************************************************************************************************/
+
+// Lexer
+void ASS_lexer_stack_push(int val)
+{
+    // Resize the stack if necessary
+    if (ASS_lexer_stack_size == 0)
+    {
+        ASS_lexer_stack = malloc(sizeof(ASS_token_t) * ASS_DEFAULT_STACK_DEPTH);
+        ASS_lexer_stack_size = ASS_DEFAULT_STACK_DEPTH;
+    }
+    else if (ASS_lexer_stack_size <= ASS_lexer_stack_ptr)
+    {
+        ASS_lexer_stack = malloc(ASS_lexer_stack_size * 2);
+        ASS_lexer_stack_size *= 2;
+    }
+
+    ASS_lexer_stack[ASS_lexer_stack_ptr++] = val;
+}
+
+int ASS_lexer_stack_pop(void)
+{
+    return ASS_lexer_stack[--ASS_lexer_stack_ptr];
+}
+
+// Parser
+void ASS_parser_stack_push(ASS_data_t val)
+{
+    // Resize the stack if necessary
+    if (ASS_parser_stack_size == 0)
+    {
+        ASS_parser_stack = malloc(sizeof(ASS_data_t) * ASS_DEFAULT_STACK_DEPTH);
+        ASS_parser_stack_size = ASS_DEFAULT_STACK_DEPTH;
+    }
+    else if (ASS_parser_stack_size <= ASS_parser_stack_ptr)
+    {
+        ASS_parser_stack = malloc(ASS_parser_stack_size * 2);
+        ASS_parser_stack_size *= 2;
+    }
+
+    ASS_parser_stack[ASS_parser_stack_ptr++] = val;
+}
+
+ASS_data_t ASS_parser_stack_pop(void)
+{
+    return ASS_parser_stack[--ASS_parser_stack_ptr];
+}
+
+// Symbol
+void ASS_symbol_stack_push(ASS_symbol_t val)
+{
+    // Resize the stack if necessary
+    if (ASS_symbol_stack_size == 0)
+    {
+        ASS_symbol_stack = malloc(sizeof(ASS_symbol_t) * ASS_DEFAULT_STACK_DEPTH);
+        ASS_symbol_stack_size = ASS_DEFAULT_STACK_DEPTH;
+    }
+    else if (ASS_symbol_stack_size <= ASS_symbol_stack_ptr)
+    {
+        ASS_symbol_stack = malloc(ASS_symbol_stack_size * 2);
+        ASS_symbol_stack_size *= 2;
+    }
+
+    ASS_symbol_stack[ASS_symbol_stack_ptr++] = val;
+}
+
+ASS_symbol_t ASS_symbol_stack_pop(void)
+{
+    return ASS_symbol_stack[--ASS_symbol_stack_ptr];
+}
+
+// binary
+void ASS_binary_stack_push(ASS_opcode_t val)
+{
+    // Resize the stack if necessary
+    if (ASS_binary_stack_size == 0)
+    {
+        ASS_binary_stack = malloc(sizeof(ASS_opcode_t) * ASS_DEFAULT_STACK_DEPTH);
+        ASS_binary_stack_size = ASS_DEFAULT_STACK_DEPTH;
+    }
+    else if (ASS_binary_stack_size <= ASS_binary_stack_ptr)
+    {
+        ASS_binary_stack = malloc(ASS_binary_stack_size * 2);
+        ASS_binary_stack_size *= 2;
+    }
+
+    ASS_binary_stack[ASS_binary_stack_ptr++] = val;
+}
+
+ASS_opcode_t ASS_binary_stack_pop(void)
+{
+    return ASS_binary_stack[--ASS_binary_stack_ptr];
+}
+
+// ref
+void ASS_ref_stack_push(ASS_ref_t val)
+{
+    // Resize the stack if necessary
+    if (ASS_ref_stack_size == 0)
+    {
+        ASS_ref_stack = malloc(sizeof(ASS_ref_t) * ASS_DEFAULT_STACK_DEPTH);
+        ASS_ref_stack_size = ASS_DEFAULT_STACK_DEPTH;
+    }
+    else if (ASS_ref_stack_size <= ASS_ref_stack_ptr)
+    {
+        ASS_ref_stack = malloc(ASS_ref_stack_size * 2);
+        ASS_ref_stack_size *= 2;
+    }
+
+    ASS_ref_stack[ASS_ref_stack_ptr++] = val;
+}
+
+ASS_ref_t ASS_ref_stack_pop(void)
+{
+    return ASS_ref_stack[--ASS_ref_stack_ptr];
+}
+
+/***********************************************************************************************************/
+/*                                                   LEXER                                                 */
+/***********************************************************************************************************/
+
+// Called when the lexer exit from a valid end state
 void ASS_lexer_exit_point()
 {
+    // Push the NULL character to terminate the string
+    ASS_lexer_stack_push('\0');
+
+    // Allocate the memory
+    if (ASS_text != NULL)
+        free(ASS_text);
+    ASS_text = malloc(ASS_lexer_stack_ptr + 1);
+
+    // Copy the string to free the stack
+    for (size_t i = 0; i < ASS_lexer_stack_ptr; i++)
+    {
+        ASS_text[i] = ASS_lexer_stack[i];
+    }
+
     ASS_lexer_state = 0;
     ASS_lexer_processed = false;
     ASS_lexer_valid = false;
-    printf("Extracted token %s\n", ASS_token_names[ASS_lexer_output]);
+    ASS_lexer_output_ready = true;
 }
 
 // Called when encountered an invalid token
 void ASS_lexer_invalid_token()
 {
-    fprintf(stderr, "Lexical error at %i:%i\n", ASS_line, ASS_column);
+    ASS_loc = (ASS_location_t){ASS_line_pos, ASS_col_pos, ASS_line_pos, ASS_col_pos};
+    if (ASS_lexer_token >= ' ' && ASS_lexer_token <= '~') // Pritable tokens
+        ASS_log_error("Lexical error, unexpected '%c'", ASS_lexer_token);
+    else if (ASS_lexer_token == ASS_EOF)
+        ASS_log_error("Lexical error, unexpected EOF");
+    else
+        ASS_log_error("Lexical error, unexpected %#x", ASS_lexer_token);
     exit(EXIT_FAILURE);
+}
+
+void ASS_lexer_action()
+{
+    ASS_data_t data = ASS_lexer_action_list[ASS_lexer_output].action();
+    if (ASS_lexer_action_list[ASS_lexer_output].type != ASS_U_NONE)
+        ASS_parser_stack_push(data);
+    ASS_lexer_stack_ptr = 0;
 }
 
 // State machine
 void ASS_lexer()
 {
     ASS_lexer_processed = true;
-    //!! lexer_switch !!//
+
+    /*!! lexer_switch !!*/
+
+    if (ASS_lexer_processed)
+        ASS_lexer_stack_push(ASS_lexer_token);
 }
+
+/***********************************************************************************************************/
+/*                                                   PARSER                                                */
+/***********************************************************************************************************/
+
+// Called when the lexer exit from a valid end state
+void ASS_parser_exit_point()
+{
+    ASS_parser_state = 0;
+    ASS_parser_processed = false;
+    ASS_parser_valid = false;
+    ASS_parser_output_ready = true;
+}
+
+// Called when encountered an invalid token
+void ASS_parser_invalid_token()
+{
+    ASS_log_error("Syntax error, unexpected %s", ASS_token_names[ASS_parser_token]);
+    exit(EXIT_FAILURE);
+}
+
+void ASS_parser_action()
+{
+    ASS_parser_action_list[ASS_parser_output].action();
+    ASS_parser_stack_ptr = 0;
+}
+
+void ASS_parser()
+{
+    ASS_parser_processed = true;
+
+    /*!! parser_switch !!*/
+}
+
+/***********************************************************************************************************/
+/*                                                    MAIN                                                 */
+/***********************************************************************************************************/
 
 int main(int argc, char const *argv[])
 {
@@ -54,35 +368,265 @@ int main(int argc, char const *argv[])
     else
         fd = fopen(argv[1], "r");
 
-    while (true)
+    // load the first line
+    ASS_line_ptr = 0;
+    if (fgets(ASS_line, ASS_MAX_LINE_LENGTH, fd) == NULL)
     {
-        // Run one step of the state machine
+        ASS_log_info("Empty file.");
+        return 0;
+    }
 
-        if ((ASS_lexer_token = fgetc(fd)) == EOF)
-            break;
+    bool run = true;
+    while (run)
+    {
+        // Read the next character
+        ASS_lexer_token = ASS_line[ASS_line_ptr++];
+
+        // Load the next line
+        if (ASS_lexer_token == '\0')
+        {
+            ASS_line_ptr = 0;
+
+            // Stop when no more data
+            if (fgets(ASS_line, ASS_MAX_LINE_LENGTH, fd) == NULL)
+            {
+                // Process the end of file token then exit
+                ASS_lexer_token = ASS_EOF;
+                run = false;
+            }
+            else
+                continue;
+        }
 
         // Mark the token as unprocessed
         ASS_lexer_processed = false;
 
+        // Run the lexer machine until the token has been processed
+        while (!ASS_lexer_processed)
+        {
+            ASS_lexer_output_ready = false;
+            ASS_lexer();
+
+            // Run the parser if the lexer has matched a token
+            if (ASS_lexer_output_ready)
+            {
+                // Save the token's end position
+                ASS_loc.last_line = ASS_line_pos - 1;
+                ASS_loc.last_column = ASS_col_pos - 1;
+
+                // Process any non-whitespace token
+                if (ASS_lexer_output != ASS_T_WHITESPACE)
+                {
+                    ASS_parser_processed = false;
+                    ASS_parser_token = ASS_lexer_output;
+
+                    while (!ASS_parser_processed)
+                    {
+                        ASS_parser_output_ready = false;
+                        ASS_parser();
+
+                        if (ASS_parser_output_ready)
+                            ASS_parser_action();
+                    }
+                }
+
+                // Execute the token action, only after the rule action has been executed
+                ASS_lexer_action();
+
+                // The end of the last token is the beginning of the next
+                ASS_loc.first_line = ASS_line_pos;
+                ASS_loc.first_column = ASS_col_pos;
+            }
+        }
+
         // Keep track of the position
         if (ASS_lexer_token == '\n')
         {
-            ASS_column = -1;
-            ASS_line++;
+            ASS_col_pos = -1;
+            ASS_line_pos++;
         }
-        else if (ASS_lexer_token == '\r') //Because windows, I guess...
+        else if (ASS_lexer_token == '\r') // Because windows, I guess...
         {
-            ASS_column = -1;
+            ASS_col_pos = -1;
         }
-        
-        ASS_column++;
-
-        // Run the lexer machine until the token has been processed
-        while (!ASS_lexer_processed)
-            ASS_lexer();
+        ASS_col_pos++;
     }
 
-    printf("File parsed\n");
+    fclose(fd);
+
+    printf("******************************\n");
+    for (size_t i = 0; i < ASS_symbol_stack_ptr; i++)
+    {
+        printf("Symbol : %s | address : %#x\n", ASS_symbol_stack[i].name, ASS_symbol_stack[i].value);
+    }
+
+    printf("******************************\n");
+    for (size_t i = 0; i < ASS_ref_stack_ptr; i++)
+    {
+        printf("'%s'\n\tIndex : %i\n\tAddress : %#08x\n\tOffset : %i\n\tWidth : %i\n",
+               ASS_ref_stack[i].symbol_name,
+               ASS_ref_stack[i].index,
+               ASS_binary_stack[ASS_ref_stack[i].index],
+               // ASS_ref_stack[i].absolute ? "absolute" : "relative",
+               ASS_ref_stack[i].bit_offset,
+               ASS_ref_stack[i].bit_width);
+    }
+
+    printf("******************************\n");
+    for (size_t i = 0; i < ASS_binary_stack_ptr; i++)
+    {
+        printf("%#08x:\t%#08x\n", ASS_binary_stack[i].address, ASS_binary_stack[i].data);
+    }
+
+    // Resolve references
+    for (size_t i = 0; i < ASS_ref_stack_ptr; i++)
+    {
+        ASS_ref_t *ref = ASS_ref_stack + i;
+
+        // Search in the symbol table
+        uint64_t address = 0;
+        bool found = false;
+        for (size_t j = 0; j < ASS_symbol_stack_ptr; j++)
+        {
+            if (strcmp(ref->symbol_name, ASS_symbol_stack[j].name) == 0)
+            {
+                address = ASS_symbol_stack[j].value;
+                found = true;
+                break;
+            }
+        }
+
+        // Update the opcode value
+        if (!found)
+        {
+            ASS_log_error("Symbol '%s' not found", ref->symbol_name);
+        }
+        else
+        {
+            uint64_t mask;
+            ASS_opcode_t *opcode = ASS_binary_stack + ref->index;
+            mask = (0xFFFFFFFFFFFFFFFFLLU << (ref->bit_width + ref->bit_offset));
+            mask |= ~(0xFFFFFFFFFFFFFFFFLLU << (ref->bit_offset));
+            opcode->data &= mask;
+
+            // Compute the relative position if necessarry
+            if (ref->absolute)
+                opcode->data |= (~mask & (address << (ref->bit_offset)));
+            else
+                opcode->data |= (~mask & (((int64_t)address - (int64_t)opcode->address) << (ref->bit_offset)));
+        }
+    }
+
+    printf("******************************\n");
+    for (size_t i = 0; i < ASS_binary_stack_ptr; i++)
+    {
+        printf("%#08x:\t%#08x\n", ASS_binary_stack[i].address, ASS_binary_stack[i].data);
+    }
+
+    fd = fopen("out.hex", "w");
+
+    for (size_t i = 0; i < ASS_binary_stack_ptr; i++)
+    {
+        uint8_t msb, lsb;
+        msb = (ASS_binary_stack[i].data >> 8) & (0xFF);
+        lsb = (ASS_binary_stack[i].data) & (0xFF);
+        fprintf(fd, ":02%04X00%02X%02XFF\n", ASS_binary_stack[i].address * 2, lsb, msb);
+    }
+    fprintf(fd, ":00000001FF\n");
+
+    fclose(fd);
 
     return 0;
+}
+
+/***********************************************************************************************************/
+/*                                                LOG SYSTEM                                               */
+/***********************************************************************************************************/
+
+void ASS_log_info(const char *format, ...)
+{
+    ASS_info_count++;
+
+    va_list args;
+    va_start(args, format);
+    fprintf(stdout, "\033[%im", ASS_INFO_COLOUR);
+    fprintf(stderr, "INFO line %i : ", ASS_loc.first_line);
+    vfprintf(stdout, format, args);
+    fputs("\033[0m\n", stdout);
+    va_end(args);
+
+    ASS_show_line(ASS_INFO_COLOUR);
+    fputc('\n', stderr);
+}
+
+void ASS_log_warning(const char *format, ...)
+{
+    ASS_warning_count++;
+
+    va_list args;
+    va_start(args, format);
+    fprintf(stderr, "\033[%im", ASS_WARN_COLOUR);
+    fprintf(stderr, "WARNING line %i : ", ASS_loc.first_line);
+    vfprintf(stderr, format, args);
+    fputs("\033[0m\n", stderr);
+    va_end(args);
+
+    ASS_show_line(ASS_WARN_COLOUR);
+    fputc('\n', stderr);
+}
+
+// Write a message before exiting
+void ASS_log_error(const char *format, ...)
+{
+    ASS_error_count++;
+
+    va_list args;
+    va_start(args, format);
+    fprintf(stderr, "\033[%im", ASS_ERRO_COLOUR);
+    fprintf(stderr, "ERROR line %i : ", ASS_loc.first_line);
+    vfprintf(stderr, format, args);
+    fputs("\033[0m\n\n", stderr);
+    va_end(args);
+
+    ASS_show_line(ASS_ERRO_COLOUR);
+    fputc('\n', stderr);
+
+    // exit(EXIT_FAILURE);
+}
+
+void ASS_show_line(int colourCode)
+{
+    int i;
+
+    fprintf(stderr, "%6i |", ASS_loc.first_line);
+
+    for (i = 0; i < ASS_loc.first_column && ASS_line[i]; i++)
+    {
+        fputc(ASS_line[i], stderr);
+    }
+    fprintf(stderr, "\033[%im", colourCode);
+    for (i = ASS_loc.first_column; i < ASS_loc.last_column + 1 && ASS_line[i] && ASS_line[i] != '\n' && ASS_line[i] != '\r'; i++)
+    {
+        fputc(ASS_line[i], stderr);
+    }
+    fputs("\033[0m", stderr);
+    while (ASS_line[i] != '\n' && ASS_line[i] != '\r' && ASS_line[i] != '\0')
+    {
+        fputc(ASS_line[i++], stderr);
+    }
+
+    fputs("\n       |", stderr);
+    for (i = 0; i < ASS_loc.first_column; i++)
+    {
+        fputc(' ', stderr);
+    }
+    fprintf(stderr, "\033[%im", colourCode);
+    for (i = ASS_loc.first_column; i < ASS_loc.last_column + 1; i++)
+    {
+        if (i == ASS_loc.first_column)
+            fputc('^', stderr);
+        else
+            fputc('~', stderr);
+    }
+    fputs("\033[0m\n", stderr);
 }

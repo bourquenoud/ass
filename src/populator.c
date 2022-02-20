@@ -55,7 +55,7 @@ void generate(FILE *fd)
         }
 
         // If we match a replace pattern, read the target name
-        if (sl_buff[0] == '/' && sl_buff[1] == '/' && sl_buff[2] == '!' && sl_buff[3] == '!')
+        if (sl_buff[0] == '/' && sl_buff[1] == '*' && sl_buff[2] == '!' && sl_buff[3] == '!')
         {
             // Skip leading spaces
             int index = 0;
@@ -86,7 +86,7 @@ void generate(FILE *fd)
             name_buff[index] = '\0';
 
             // Read until we match the closing pattern
-            while (sl_buff[0] != '!' || sl_buff[1] != '!' || sl_buff[2] != '/' || sl_buff[3] != '/')
+            while (sl_buff[0] != '!' || sl_buff[1] != '!' || sl_buff[2] != '*' || sl_buff[3] != '/')
             {
                 sl_buff[0] = sl_buff[1];
                 sl_buff[1] = sl_buff[2];
