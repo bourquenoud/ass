@@ -44,12 +44,20 @@ void generator_generate_lexer(int count, const token_def_t *_tokens);
 void generator_generate_parser(int count, const rule_def_t **_rules);
 
 /**
+ * @brief Generate the token action for a specific enum pattern
+ * 
+ * @param pattern Pointer to the reference pattern
+ * @return char* Return a string of C code
+ */
+char *generator_generate_pattern_action(pattern_t* pattern);
+
+/**
  * @brief Generate the rule action for a specific opcode
  * 
  * @param opcode Reference opcode to use
  * @return char* Return a string of C code
  */
-char *generator_generate_action(opcode_t opcode);
+char *generator_generate_opcode_action(opcode_t opcode);
 
 /**************************************************/
 /*                   CALLBACKS                    */

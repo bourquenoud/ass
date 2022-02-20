@@ -82,7 +82,26 @@ void generator_generate_parser(int count, const rule_def_t **_rules)
     // state_machine_destroy(&nfa);
 }
 
-char *generator_generate_action(opcode_t opcode)
+char *generator_generate_pattern_action(pattern_t *pattern)
+{
+    darray_t **buff = alloca(sizeof(sizeof(darray_t *)));
+    *buff = darray_init(1);    
+    
+    // Because of the way "darray_add" is implemented, we can't pass it rvalues
+    char tmp = '\0';
+    darray_add(buff, tmp); // Start the buffer as an empty string
+
+
+    // TODO: free the dynamic array. Make "darray_destroy" first
+    bprintf(buff, "    ASS_data_t data;");
+    bprintf(buff, "    data.iVal = 0x%X;", pattern->bit_const.val);
+    bprintf(buff, "    return data;");
+    xmalloc_set_handler(xmalloc_callback);
+    char *result = xmalloc((*buff)->count);
+    strcpy(result, (char *)((*buff)->element_list));
+}
+
+char *generator_generate_opcode_action(opcode_t opcode)
 {
     uint32_t offset = 0;
     darray_t **buff = alloca(sizeof(sizeof(darray_t *)));
@@ -119,6 +138,7 @@ char *generator_generate_action(opcode_t opcode)
 
                 switch (bit_elem->type)
                 {
+                    // TODO: resolve mask at generation time
                 case eBP_IMMEDIATE:
                     bprintf(buff, "    /**eBP_IMMEDIATE**/");
                     bprintf(buff, "    mask = (0xFFFFFFFFFFFFFFFFLLU << %u);", bit_elem->width + offset);
@@ -145,6 +165,12 @@ char *generator_generate_action(opcode_t opcode)
                     bprintf(buff, "    new_ref.bit_width = %i;", bit_elem->width + offset);
                     bprintf(buff, "    ASS_ref_stack_push(new_ref);");
                 case eBP_ENUM:
+                    bprintf(buff, "    /**eBP_ENUM**/");
+                    bprintf(buff, "    mask = (0xFFFFFFFFFFFFFFFFLLU << %u);", bit_elem->width + offset);
+                    bprintf(buff, "    mask |= ~(0xFFFFFFFFFFFFFFFFLLU << %u);", offset);
+                    bprintf(buff, "    data = ASS_parser_stack[%i].iVal;", bit_elem->index_mnemonic);
+                    bprintf(buff, "    opcode.data &= mask;");
+                    bprintf(buff, "    opcode.data |= (~mask & (data << %u));", offset);
                     break;
                 case eBP_ID:
                     fprintf(stderr, "Unresolved ID\n");
@@ -178,6 +204,8 @@ char *generator_generate_action(opcode_t opcode)
             current = current->next;
         }
     }
+
+    // TODO: free the dynamic array. Make "darray_destroy" first
     bprintf(buff, "");
     bprintf(buff, "    ASS_binary_stack_push(opcode);");
     bprintf(buff, "    ASS_current_address++;");
