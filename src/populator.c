@@ -4,6 +4,9 @@
 
 #define MAX_NAME_LENGHT 64
 
+// Automatically add "generator_" before the name
+#define register_function(name) hash_add(function_table, #name, generator_ ## name)
+
 typedef void (*callable_t)(int);
 hash_t *function_table;
 
@@ -12,9 +15,21 @@ void generate(FILE *fd)
     int wait_index = 3;
 
     function_table = hash_init(64);
+    /*
     hash_add(function_table, "lexer_switch", generator_lexer_switch);
     hash_add(function_table, "token_enum", generator_token_enum);
     hash_add(function_table, "token_names", generator_token_names);
+    hash_add(function_table, "parser_switch", generator_parser_switch);
+    */
+    register_function(data_union);
+    register_function(lexer_actions);
+    register_function(lexer_action_list);
+    register_function(lexer_switch);
+    register_function(parser_actions);
+    register_function(parser_action_list);
+    register_function(parser_switch);
+    register_function(token_enum);
+    register_function(token_names);
 
     int line = 1;
     int column = 1;
