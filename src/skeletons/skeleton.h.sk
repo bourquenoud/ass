@@ -376,26 +376,45 @@ int main(int argc, char const *argv[])
         return 0;
     }
 
+    // TODO : make it not need a last newline
+    int last_newline = 0;
     bool run = true;
     while (run)
     {
-        // Read the next character
-        ASS_lexer_token = ASS_line[ASS_line_ptr++];
 
-        // Load the next line
-        if (ASS_lexer_token == '\0')
+        if (last_newline)
         {
-            ASS_line_ptr = 0;
-
-            // Stop when no more data
-            if (fgets(ASS_line, ASS_MAX_LINE_LENGTH, fd) == NULL)
+            if (last_newline == 1)
             {
-                // Process the end of file token then exit
-                ASS_lexer_token = ASS_EOF;
                 run = false;
+                ASS_lexer_token = ASS_EOF;
             }
             else
-                continue;
+            {
+                last_newline--;
+                ASS_lexer_token = '\n';
+            }
+        }
+        else
+        {
+            // Read the next character
+            ASS_lexer_token = ASS_line[ASS_line_ptr++];
+
+            // Load the next line
+            if (ASS_lexer_token == '\0')
+            {
+                ASS_line_ptr = 0;
+
+                // Stop when no more data
+                if (fgets(ASS_line, ASS_MAX_LINE_LENGTH, fd) == NULL)
+                {
+                    // HACK: Push a bunch of linefeed character before feeding the EOF and then closing
+                    ASS_lexer_token = '\n';
+                    last_newline = 3;
+                }
+                else
+                    continue;
+            }
         }
 
         // Mark the token as unprocessed
@@ -454,30 +473,6 @@ int main(int argc, char const *argv[])
 
     fclose(fd);
 
-    printf("******************************\n");
-    for (size_t i = 0; i < ASS_symbol_stack_ptr; i++)
-    {
-        printf("Symbol : %s | address : %#x\n", ASS_symbol_stack[i].name, ASS_symbol_stack[i].value);
-    }
-
-    printf("******************************\n");
-    for (size_t i = 0; i < ASS_ref_stack_ptr; i++)
-    {
-        printf("'%s'\n\tIndex : %i\n\tAddress : %#08x\n\tOffset : %i\n\tWidth : %i\n",
-               ASS_ref_stack[i].symbol_name,
-               ASS_ref_stack[i].index,
-               ASS_binary_stack[ASS_ref_stack[i].index],
-               // ASS_ref_stack[i].absolute ? "absolute" : "relative",
-               ASS_ref_stack[i].bit_offset,
-               ASS_ref_stack[i].bit_width);
-    }
-
-    printf("******************************\n");
-    for (size_t i = 0; i < ASS_binary_stack_ptr; i++)
-    {
-        printf("%#08x:\t%#08x\n", ASS_binary_stack[i].address, ASS_binary_stack[i].data);
-    }
-
     // Resolve references
     for (size_t i = 0; i < ASS_ref_stack_ptr; i++)
     {
@@ -517,14 +512,10 @@ int main(int argc, char const *argv[])
         }
     }
 
-    printf("******************************\n");
-    for (size_t i = 0; i < ASS_binary_stack_ptr; i++)
-    {
-        printf("%#08x:\t%#08x\n", ASS_binary_stack[i].address, ASS_binary_stack[i].data);
-    }
+    // TODO: check for address collisions
 
+    // HACK: Invalid checksum
     fd = fopen("out.hex", "w");
-
     for (size_t i = 0; i < ASS_binary_stack_ptr; i++)
     {
         uint8_t msb, lsb;
@@ -533,7 +524,6 @@ int main(int argc, char const *argv[])
         fprintf(fd, ":02%04X00%02X%02XFF\n", ASS_binary_stack[i].address * 2, lsb, msb);
     }
     fprintf(fd, ":00000001FF\n");
-
     fclose(fd);
 
     return 0;
