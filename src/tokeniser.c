@@ -2,18 +2,18 @@
 
 #include "failure.h"
 
-state_machine_t tokeniser_array_to_nfa(int count, const token_def_t *tokens)
+state_machine_t tokeniser_array_to_nfa(int count, const token_def_t *tokens_array)
 {
     state_machine_t new_state_machine;
     state_machine_t merged_state_machine;
 
     // Generate the first fsm
-    merged_state_machine = tokeniser_token_to_nfa(tokens[0]);
+    merged_state_machine = tokeniser_token_to_nfa(tokens_array[0]);
 
     for (size_t i = 1; i < count; i++)
     {
         // Generate a new state machine and reduce if possible
-        new_state_machine = tokeniser_token_to_nfa(tokens[i]);
+        new_state_machine = tokeniser_token_to_nfa(tokens_array[i]);
         merged_state_machine = state_machine_merge(&merged_state_machine, &new_state_machine);
         state_machine_reduce(&merged_state_machine);
     }
