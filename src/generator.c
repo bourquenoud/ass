@@ -73,12 +73,6 @@ void generator_generate_parser(int count, const rule_def_t **_rules)
     *parser_dfa = state_machine_make_deterministic(&nfa);
     state_machine_reduce(parser_dfa);
 
-    // XXX: REMOVE ME from here..
-    FILE *fd = fopen("graph.dot", "w");
-    state_machine_print(parser_dfa, fd);
-    fclose(fd);
-    // XXX: ...to here
-
     // state_machine_destroy(&nfa);
 }
 
