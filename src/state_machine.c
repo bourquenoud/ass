@@ -32,6 +32,7 @@ state_t *state_machine_add_state(state_machine_t *state_machine, int end_state)
 
     // Get the first available state id
     // NOTE: O(N²), but not a big problem as the state machine will remain relatively small
+    // TODO: Optimise
     int new_id;
     for (new_id = 0; new_id < MAX_STATE; new_id++)
     {
