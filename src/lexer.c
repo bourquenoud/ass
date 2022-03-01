@@ -148,6 +148,8 @@ void lexer_generate()
         new_token = *((token_def_t *)darray_get_ptr(&tokens, i));
         printf("Name : %s | Id : %i | Pattern : %s\n", new_token.name, new_token.id, new_token.pattern);
     }
+
+    generator_generate_lexer(tokens->count, (token_def_t *)tokens->element_list);
 }
 
 char *name_from_pattern(const char *str)
