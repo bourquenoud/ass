@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <stdarg.h>
 
+#include "parser.h"
 #include "state_machine.h"
 #include "hash_array.h"
 #include "dynamic_array.h"

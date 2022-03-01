@@ -5,7 +5,7 @@
 static FILE *fd = NULL;
 
 static state_machine_t *lexer_dfa;
-static const token_def_t *tokens;
+static const token_def_t *tokens_array;
 static int token_count;
 
 static state_machine_t *parser_dfa;
@@ -52,7 +52,7 @@ void generator_set_file_descriptor(FILE *file_descriptor)
 void generator_generate_lexer(int count, const token_def_t *_tokens)
 {
     token_count = count;
-    tokens = _tokens;
+    tokens_array = _tokens;
     xmalloc_set_handler(xmalloc_callback);
     lexer_dfa = xmalloc(sizeof(state_machine_t));
     state_machine_t nfa = tokeniser_array_to_nfa(count, _tokens);
@@ -233,7 +233,7 @@ void generator_lexer_actions(int indent)
         bool duplicated = false;
         for (size_t j = 0; j < i; j++)
         {
-            if (duplicates[j] == tokens[i].id)
+            if (duplicates[j] == tokens_array[i].id)
             {
                 duplicated = true;
                 break;
@@ -241,22 +241,22 @@ void generator_lexer_actions(int indent)
         }
 
         // Save the the id
-        duplicates[i] = tokens[i].id;
+        duplicates[i] = tokens_array[i].id;
 
         // Generate the token id if it is not a duplicate
         if (!duplicated)
         {
-            if (tokens[i].action != NULL)
+            if (tokens_array[i].action != NULL)
             {
-                iprintf(0 + indent, "ASS_data_t ASS_TA_%s()", tokens[i].name);
+                iprintf(0 + indent, "ASS_data_t ASS_TA_%s()", tokens_array[i].name);
                 iprintf(0 + indent, "{");
-                iprintf(0, "%s", tokens[i].action);
+                iprintf(0, "%s", tokens_array[i].action);
                 iprintf(0 + indent, "}");
             }
             else
             {
                 iprintf(0 + indent, "// Empty action");
-                iprintf(0 + indent, "ASS_data_t ASS_TA_%s()", tokens[i].name);
+                iprintf(0 + indent, "ASS_data_t ASS_TA_%s()", tokens_array[i].name);
                 iprintf(0 + indent, "{");
                 iprintf(1 + indent, "return (ASS_data_t)(uint64_t)0;");
                 iprintf(0 + indent, "}");
@@ -278,7 +278,7 @@ void generator_lexer_action_list(int indent)
         bool duplicated = false;
         for (size_t j = 0; j < i; j++)
         {
-            if (duplicates[j] == tokens[i].id)
+            if (duplicates[j] == tokens_array[i].id)
             {
                 duplicated = true;
                 break;
@@ -286,16 +286,16 @@ void generator_lexer_action_list(int indent)
         }
 
         // Save the the id
-        duplicates[i] = tokens[i].id;
+        duplicates[i] = tokens_array[i].id;
 
         // Generate the token id if it is not a duplicate
         if (!duplicated)
         {
             iprintf(1 + indent,
                     "[ASS_T_%s] = (ASS_action_t){.action = ASS_TA_%s, .type = %s},",
-                    tokens[i].name,
-                    tokens[i].name,
-                    tokens[i].action == NULL ? "ASS_U_NONE" : "ASS_U_DATA");
+                    tokens_array[i].name,
+                    tokens_array[i].name,
+                    tokens_array[i].action == NULL ? "ASS_U_NONE" : "ASS_U_DATA");
         }
     }
     iprintf(0 + indent, "};");
@@ -388,7 +388,7 @@ void generator_token_enum(int indent)
         bool duplicated = false;
         for (size_t j = 0; j < i; j++)
         {
-            if (duplicates[j] == tokens[i].id)
+            if (duplicates[j] == tokens_array[i].id)
             {
                 duplicated = true;
                 break;
@@ -396,11 +396,11 @@ void generator_token_enum(int indent)
         }
 
         // Save the the id
-        duplicates[i] = tokens[i].id;
+        duplicates[i] = tokens_array[i].id;
 
         // Generate the token id if it is not a duplicate
         if (!duplicated)
-            iprintf(1 + indent, "ASS_T_%s = %i,", tokens[i].name, tokens[i].id);
+            iprintf(1 + indent, "ASS_T_%s = %i,", tokens_array[i].name, tokens_array[i].id);
     }
     iprintf(0 + indent, "} ASS_token_t;");
 }
@@ -410,7 +410,7 @@ void generator_token_names(int indent)
     iprintf(0, "const char const *ASS_token_names[] = {");
     for (size_t i = 0; i < token_count; i++)
     {
-        iprintf(1 + indent, "[ASS_T_%s] = \"%s\",", tokens[i].name, tokens[i].name);
+        iprintf(1 + indent, "[ASS_T_%s] = \"%s\",", tokens_array[i].name, tokens_array[i].name);
     }
     iprintf(0 + indent, "};");
 }
