@@ -72,7 +72,7 @@ To compile an assembler file using our newly built assembler use :
 
 ```bash
 cd ~/myfirstassembler
-basic_assembler -o output.hex ../ass/examples/basic_assembler.asm
+./basic_assembler -o output.hex ../ass/examples/basic_assembler.asm
 ```
 
 # Documentation
