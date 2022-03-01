@@ -3,6 +3,8 @@
 #include "state_machine.h"
 #include "pattern_compiler.h"
 
+extern darray_t *rule_list_tint;
+
 typedef struct
 {
     int id;
