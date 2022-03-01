@@ -208,7 +208,6 @@ page:                 %empty
 
 %%
 
-
 char** files;
 int totalFiles;
 int currentFileIndex;
@@ -247,15 +246,15 @@ int parse_file(int argc, char** argv)
     /*Open the first file, or read from stdin*/
     if(readFromStdin)
         yyin = stdin;
-    else
-        if (yywrap() == 1) exit(-1);
+    else if (yywrap() == 1)
+        exit(-1);
+    
+    //Parse all files
 	do
     {
 		yyparse();
 	}
     while(!feof(yyin));
-
-    printf("DONE\n");
 
     free(files);
     return 0;

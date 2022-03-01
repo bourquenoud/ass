@@ -42,7 +42,7 @@ int main(int argc, char **argv)
     // Parse the file and generate all data
     parse_file(file_count, file_list);
 
-    // Fill default parameters
+    // Fill parameters that have not been set
     param_fill_unset();
 
     // Generate the lexer
