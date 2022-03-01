@@ -1,5 +1,6 @@
 # Assembly Syntax Synthesiser
-Or ASS for short. This tool enables one to create a simple assembler in mere minutes, along with its documentation. 
+
+This tool can generate an assembler in C based on simple opcode and mnemonics descriptions. 
 
 ## License
 
@@ -8,16 +9,16 @@ Please note that this software is licensed under the GPLv3. As the generated fil
 
 # Getting started
 
-***DISCLAIMER*** *: It has only been tested on Linux. It probably does not work in MacOS or in Windows.*
+***DISCLAIMER*** *: It has only been tested on Linux. As it requires POSIX and GNU libraries it probably won't compile for MacOS, and certainly won't for Windows. However, the generated code is portable across all three OS*
 
 ## Build and install
 
-***INFO*** *: The following commands assume you are working in your home directory.*
+***INFO*** *: The following commands assume you are working in your home directory on a Debian ditribution.*
 
 Install the dependencies first, using `apt` or your prefered package manager.
 
 ```bash
-sudo apt install bison flex texlive gcc make
+sudo apt install bison flex gcc make
 ```
 
 Clone the repository.
@@ -26,13 +27,7 @@ cd ~/
 git clone https://github.com/elzaidir/ass.git
 ```
 
-Then launch the configuration script. It will check for dependencies.
-```bash
-cd ~/ass
-./configure
-```
-
-Build `ASS` with make.
+Build `ass` with make.
 
 ```bash
 cd ~/ass
@@ -43,35 +38,41 @@ You can also install it, but it is not required.
 
 ```bash
 cd ~/ass
-make install
+sudo make install
 ```
 
 ## Building a basic assembler
 
-Once `ASS` has been built you can generate an assembler C project from an example. Create a directory for your assembler project, this will contain the source file of the generated assembler. We then call `ASS`.
+***INFO*** *: The following commands assume you have installed `ass`.*
+
+Once `ass` has been built you can generate an assembler C project from an example. Create a directory for your assembler project, this will contain the source file of the generated assembler. We then call `ass`.
 
 ```bash
 cd ~
 mkdir myfirstassembler
-ass -o myfirstassembler/ ass/examples/basic_assembler.ass
+ass -o myfirstassembler/basic_assembler.c ass/examples/basic_assembler.ass
 ```
 
-Then we can simply call `make` from the directory. The Makefile is automatically generated.
+We can then compile the generated file. It only requires the standard libraries.
+
+Here we use `gcc` but you can use any standard compliant C compiler.
 
 ```bash
-cd ~/myfirstassembler
-make
+cd ~/myfirstassembler/
+gcc -o basic_assembler basic_assembler.c
 ```
 
 If everything went well, you now have a `basic_assembler` executable in your project directory.
 
 ## Using the assembler
 
-To assemble a file using our newly built assembler use :
+***INFO*** *: The generated assemblers can currently only output [Intel HEX](https://en.wikipedia.org/wiki/Intel_HEX) files. More format will be added in the near future. For now you can use a converter from HEX to the format you want.*
+
+To compile an assembler file using our newly built assembler use :
 
 ```bash
 cd ~/myfirstassembler
-basic_assembler -o output.elf ../ass/examples/basic_assembler.asm
+basic_assembler -o output.hex ../ass/examples/basic_assembler.asm
 ```
 
 # Documentation
@@ -79,10 +80,6 @@ basic_assembler -o output.elf ../ass/examples/basic_assembler.asm
 ## ASS documentation
 
 A syntax summary is available here : <https://github.com/elzaidir/ass/blob/master/doc/ass_syntax.md>
-
-## Assembler documentation
-
-You can generate the documentation of your assembler when generating it. It will add the description of your the different opcode formats, register configuration, sections and the built-in macros along with the syntax structure. It first generates a `.tex` file that is converted to a `.pdf`.
 
 # License
 
