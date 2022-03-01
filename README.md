@@ -18,7 +18,7 @@ Please note that this software is licensed under the GPLv3. As the generated fil
 Install the dependencies first, using `apt` or your prefered package manager.
 
 ```bash
-sudo apt install bison flex gcc make git
+sudo apt install bison flex gcc make git xxd
 ```
 
 Clone the repository.
