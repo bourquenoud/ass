@@ -96,3 +96,14 @@ clean:
 		@rm -rf $(obj_dir)/
 		@rm -rf $(src_dir)/$(gen_dir)/
 		@echo cleaned
+
+########################################################################
+#                              INSTALL                                 #
+########################################################################
+#Install
+install:
+		cp $(output_dir)/$(output_file) /usr/bin/ass
+
+#Uninstall
+uninstall:
+		rm /usr/bin/ass
