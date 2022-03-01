@@ -5,6 +5,12 @@
 #include <stdarg.h>
 #include <string.h>
 
+enum
+{
+    ASS_OUT_HEX,
+    ASS_OUT_COE,
+};
+
 // REMOVE ME
 #define ASS_U_NONE 0
 #define ASS_U_DATA 1
@@ -50,6 +56,7 @@ typedef struct
 /********************* general globals *********************/
 char *ASS_text = NULL;
 int ASS_current_address = 0;
+bool ASS_option_verbose = false;
 
 /********************* log system *********************/
 #define ASS_INFO_COLOUR 94
@@ -360,13 +367,72 @@ void ASS_parser()
 
 int main(int argc, char const *argv[])
 {
-
     FILE *fd;
+    char const *output_file = NULL;
+    char const *input_file = NULL;
 
-    if (argc == 1)
+    // Output in hex format by default
+    int output_format = ASS_OUT_HEX;
+    bool format_set = false;
+
+    // Parse the arguments
+    // NOTE: Handcrafted for portability.
+    for (size_t i = 1; i < argc; i++)
+    {
+        int len = strlen(argv[i]);
+        if (len >= 2 && argv[i][0] == '-') // Is an option
+        {
+            // Parse all options
+            for (size_t j = 1; j < len; j++)
+            {
+                switch (argv[i][j])
+                {
+                case 'o': // Output file
+                    if (++i >= argc || (strlen(argv[i]) >= 2 && argv[i][0] == '-'))
+                    {
+                        printf("ERROR : option 'o' requires a parameter.\n");
+                        exit(EXIT_FAILURE);
+                    }
+                    output_file = argv[i];
+                    break;
+                case 'x': // Output in hex format
+                    if (format_set)
+                    {
+                        printf("ERROR : Multiple format option\n");
+                        exit(EXIT_FAILURE);
+                    }
+                    output_format = ASS_OUT_HEX;
+                    format_set = true;
+                    break;
+                case 'c': // Output in coe
+                    if (format_set)
+                    {
+                        printf("ERROR : Multiple format option\n");
+                        exit(EXIT_FAILURE);
+                    }
+                    output_format = ASS_OUT_COE;
+                    format_set = true;
+                    break;
+                case 'v': // Enable verbose mode
+                    ASS_option_verbose = true;
+                    break;
+                default:
+                    break;
+                }
+            }
+        }
+        else // Is not an option, then it's an input file
+        {
+            // TODO: support multiple files
+            if (input_file == NULL)
+                input_file = argv[i];
+        }
+    }
+
+    if (input_file == NULL || strcmp(input_file, "-") == 0)
         fd = stdin;
     else
-        fd = fopen(argv[1], "r");
+        fd = fopen(input_file, "r");
 
     // load the first line
     ASS_line_ptr = 0;
@@ -376,7 +442,7 @@ int main(int argc, char const *argv[])
         return 0;
     }
 
-    // TODO : make it not need a last newline
+    // TODO : make it not need multiple newlines at the end
     int last_newline = 0;
     bool run = true;
     while (run)
@@ -405,7 +471,7 @@ int main(int argc, char const *argv[])
             {
                 ASS_line_ptr = 0;
 
-                // Stop when no more data
+                // Stop when no more data is available
                 if (fgets(ASS_line, ASS_MAX_LINE_LENGTH, fd) == NULL)
                 {
                     // HACK: Push a bunch of linefeed character before feeding the EOF and then closing
@@ -514,16 +580,32 @@ int main(int argc, char const *argv[])
 
     // TODO: check for address collisions
 
-    // HACK: Invalid checksum
-    fd = fopen("out.hex", "w");
-    for (size_t i = 0; i < ASS_binary_stack_ptr; i++)
+    if (output_file == NULL || strcmp(output_file, "-") == 0)
+        fd = stdout;
+    else
+        fd = fopen(output_file, "w");
+
+    if (output_format == ASS_OUT_HEX)
     {
-        uint8_t msb, lsb;
-        msb = (ASS_binary_stack[i].data >> 8) & (0xFF);
-        lsb = (ASS_binary_stack[i].data) & (0xFF);
-        fprintf(fd, ":02%04X00%02X%02XFF\n", ASS_binary_stack[i].address * 2, lsb, msb);
+        printf("WARING: hex format checksum not implemented.\n");
+
+        // HACK: Checksum is not computed
+        for (size_t i = 0; i < ASS_binary_stack_ptr; i++)
+        {
+            uint8_t msb, lsb;
+            msb = (ASS_binary_stack[i].data >> 8) & (0xFF);
+            lsb = (ASS_binary_stack[i].data) & (0xFF);
+            fprintf(fd, ":02%04X00%02X%02XFF\n", ASS_binary_stack[i].address * 2, lsb, msb);
+        }
+        fprintf(fd, ":00000001FF\n");
     }
-    fprintf(fd, ":00000001FF\n");
+    else if (output_format == ASS_OUT_COE)
+    {
+        printf("WARING: coe format not implemented.\n");
+        fprintf(fd, "memory_initialization_radix=16;\n");
+        fprintf(fd, "memory_initialization_vector=\n");
+    }
+
     fclose(fd);
 
     return 0;
@@ -536,6 +618,10 @@ int main(int argc, char const *argv[])
 void ASS_log_info(const char *format, ...)
 {
     ASS_info_count++;
+
+    // Show info only in verbose mode
+    if (!ASS_option_verbose)
+        return;
 
     va_list args;
     va_start(args, format);
