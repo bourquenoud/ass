@@ -48,6 +48,7 @@ state_machine_t tokeniser_token_to_nfa(const token_def_t token)
     {
         if (escaped)
         {
+            char *new_ptr;
             switch (string[i])
             {
             case '`':  //GNU's POSIX extension for EOF
@@ -76,7 +77,6 @@ state_machine_t tokeniser_token_to_nfa(const token_def_t token)
                 processed_char = '\r';
                 break;
             case 'x': // Enter hex escape sequence
-                char *new_ptr;
                 processed_char = strtoul(string + i + 1, &new_ptr, 16);
                 i = (int)((ptrdiff_t)new_ptr - (ptrdiff_t)string) - 1;
                 break;
