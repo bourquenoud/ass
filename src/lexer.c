@@ -1,5 +1,7 @@
 #include "lexer.h"
 
+#include "failure.h"
+
 // Default token actions
 char *action_parse_uint =
     "    ASS_data_t data;\n"
@@ -143,11 +145,13 @@ void lexer_generate()
     new_token = (token_def_t){.name = "IDENTIFIER", .id = id++, .pattern = "[a-zA-Z_][a-zA-Z0-9_]*", .action = action_parse_str};
     darray_add(&tokens, new_token);
 
+    fail_detail("****Tokens****");
     for (size_t i = 0; i < tokens->count; i++)
     {
         new_token = *((token_def_t *)darray_get_ptr(&tokens, i));
-        printf("Name : %s | Id : %i | Pattern : %s\n", new_token.name, new_token.id, new_token.pattern);
+        fail_detail("  Name : %s | Id : %i | Pattern : %s", new_token.name, new_token.id, new_token.pattern);
     }
+    fail_detail("**************");
 
     generator_generate_lexer(tokens->count, (token_def_t *)tokens->element_list);
 }

@@ -2,6 +2,8 @@
 #include "state_machine.h"
 #include "bitarray.h"
 
+#include "failure.h"
+
 #define MAX_STATE 1024
 
 static void xmalloc_callback(int err);
@@ -235,7 +237,7 @@ state_machine_t state_machine_merge(state_machine_t *state_machine_a, state_mach
     }
     else if (new_state->end_state && old_state->end_state && old_state->output != new_state->output)
     {
-        fprintf(stderr, "Conflicting empty tokens");
+        fail_error("Conflicting empty tokens");
         exit(EXIT_FAILURE);
     }
 
@@ -345,7 +347,7 @@ state_machine_t state_machine_make_deterministic(state_machine_t *nfa)
         // Make sure it is the correct id
         if (dfa_current_state->id != i)
         {
-            fprintf(stderr, "The id should be equal to the index. Got %i, expected %i\n", dfa_current_state->id, generated_state_table->count - 1);
+            fail_error("The id should be equal to the index. Got %i, expected %i", dfa_current_state->id, generated_state_table->count - 1);
             abort();
         }
 
@@ -364,7 +366,12 @@ state_machine_t state_machine_make_deterministic(state_machine_t *nfa)
                     // Priority to the lowest id
                     if (output != -1 && nfa_state_array[j].output != output)
                     {
-                        fprintf(stdout, "Output confliting for state %i and %i, outputing %i and %i\n", last_id, nfa_state_array[j].id, output, nfa_state_array[j].output);
+                        last_id, nfa_state_array[j].id;
+
+                        // TODO: show token name
+                        fail_detail("Tokens (ID %i) and (ID %i) conflict. Priority given to the lowest ID.",
+                                    output,
+                                    nfa_state_array[j].output);
                         output = (output < nfa_state_array[j].output) ? output : nfa_state_array[j].output;
                     }
                     else

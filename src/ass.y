@@ -142,40 +142,40 @@ param_args:           T_IDENTIFIER                              { $$ = list_init
                     | param_args T_BIT_CONSTANT                 { $$ = $1; list_append($1, list_init(YYSYMBOL_T_BIT_CONSTANT, $2, eDATA)); }
 ;
 
-param:                T_PARAM param_args endline                { fail_set_loc(@$); command_param($2); }
+param:                T_PARAM param_args endline                { fail_set_loc(@$); fail_show_loc(true); command_param($2); }
 ;
 
-constant:             T_CONSTANT T_IDENTIFIER T_BIT_LIT endline { fail_set_loc(@$); command_bit_const($2, $3); }
-                    | T_CONSTANT T_IDENTIFIER T_INTEGER endline { fail_set_loc(@$); command_int_const($2, $3); }
-                    | T_CONSTANT T_IDENTIFIER T_STRING endline { fail_set_loc(@$); command_str_const($2, $3); }
+constant:             T_CONSTANT T_IDENTIFIER T_BIT_LIT endline { fail_set_loc(@$); fail_show_loc(true); command_bit_const($2, $3); }
+                    | T_CONSTANT T_IDENTIFIER T_INTEGER endline { fail_set_loc(@$); fail_show_loc(true); command_int_const($2, $3); }
+                    | T_CONSTANT T_IDENTIFIER T_STRING endline { fail_set_loc(@$); fail_show_loc(true); command_str_const($2, $3); }
 ;
 
-enum:                 T_ENUM T_IDENTIFIER T_INTEGER endline     { fail_set_loc(@$); command_enum($2, $3); }
+enum:                 T_ENUM T_IDENTIFIER T_INTEGER endline     { fail_set_loc(@$); fail_show_loc(true); command_enum($2, $3); }
 ;
 
-pattern:              T_PATTERN T_IDENTIFIER T_STRING T_BIT_CONSTANT endline { fail_set_loc(@$); command_pattern($2, $3, $4); }
-                    | T_PATTERN T_IDENTIFIER T_STRING T_BIT_LIT endline { fail_set_loc(@$); command_pattern($2, $3, $4); }
+pattern:              T_PATTERN T_IDENTIFIER T_STRING T_BIT_CONSTANT endline { fail_set_loc(@$); fail_show_loc(true); command_pattern($2, $3, $4); }
+                    | T_PATTERN T_IDENTIFIER T_STRING T_BIT_LIT endline { fail_set_loc(@$); fail_show_loc(true); command_pattern($2, $3, $4); }
 ;
 
 order_args:           T_INTEGER                 { $$ = list_init(YYSYMBOL_T_INTEGER, $1, eDATA); }
                     | order_args T_INTEGER      { $$ = $1; list_append($1, list_init(YYSYMBOL_T_INTEGER, $2, eDATA)); }
 ;
 
-order:                T_ORDER T_IDENTIFIER order_args endline           { fail_set_loc(@$); command_order($2, $3); }
+order:                T_ORDER T_IDENTIFIER order_args endline           { fail_set_loc(@$); fail_show_loc(true); command_order($2, $3); }
 ;
 
-opcode:               T_OPCODE T_IDENTIFIER T_STRING T_BIT_LIT endline          { fail_set_loc(@$); command_opcode($2, $3, $4, false); }
-                    | T_OPCODE T_IDENTIFIER T_STRING T_BIT_CONSTANT endline     { fail_set_loc(@$); command_opcode($2, $3, $4, true); }
-                    | T_OPCODE T_IDENTIFIER T_STRING endline                    { fail_set_loc(@$); command_opcode($2, $3, NULL, false); }
+opcode:               T_OPCODE T_IDENTIFIER T_STRING T_BIT_LIT endline          { fail_set_loc(@$); fail_show_loc(true); command_opcode($2, $3, $4, false); }
+                    | T_OPCODE T_IDENTIFIER T_STRING T_BIT_CONSTANT endline     { fail_set_loc(@$); fail_show_loc(true); command_opcode($2, $3, $4, true); }
+                    | T_OPCODE T_IDENTIFIER T_STRING endline                    { fail_set_loc(@$); fail_show_loc(true); command_opcode($2, $3, NULL, false); }
 ;
 
 expr:                 T_LEFTPAR T_RIGHPAR
 ;
 
-subst:                T_SUBST T_LEFTPAR T_INTEGER T_RIGHPAR             { fail_set_loc(@$); $$ = subst($1, $3); }
+subst:                T_SUBST T_LEFTPAR T_INTEGER T_RIGHPAR             { fail_set_loc(@$); fail_show_loc(true); $$ = subst($1, $3); }
 ;
 
-format:               T_FORMAT T_IDENTIFIER bit_pattern endline         { fail_set_loc(@$); command_format($2, $3); }
+format:               T_FORMAT T_IDENTIFIER bit_pattern endline         { fail_set_loc(@$); fail_show_loc(true); command_format($2, $3); }
 ;
 
 bit_pattern:          T_LEFTSQBRACK bit_pattern_args T_RIGHSQBRACK      { $$ = $2; }
@@ -220,8 +220,15 @@ int yywrap()
     /*Open next file only if one or more remain and we are not reading from stdin*/
     if(currentFileIndex < totalFiles && !readFromStdin)
     {
-        yyin = fopen( files[currentFileIndex], "r" );
+        fail_show_loc(false);
+        fail_detail("Reading file '%s'", files[currentFileIndex]);
+        yyin = fopen(files[currentFileIndex], "r" );
         currentFileIndex++;
+        if(yyin == NULL)
+        {
+            fail_error("Unable to open '%s'");
+            exit(EXIT_FAILURE);
+        }
         return 0;
     }
     return 1;
