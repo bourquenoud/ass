@@ -377,6 +377,7 @@ int main(int argc, char const *argv[])
 
     // Parse the arguments
     // NOTE: Handcrafted for portability.
+    // TODO: use the library optparse instead (https://github.com/skeeto/optparse, compatible license)
     for (size_t i = 1; i < argc; i++)
     {
         int len = strlen(argv[i]);
@@ -515,7 +516,7 @@ int main(int argc, char const *argv[])
                     }
                 }
 
-                // Execute the token action, only after the rule action has been executed
+                // Execute the token action only after the rule action has been executed
                 ASS_lexer_action();
 
                 // The end of the last token is the beginning of the next
@@ -587,9 +588,9 @@ int main(int argc, char const *argv[])
 
     if (output_format == ASS_OUT_HEX)
     {
-        printf("WARING: hex format checksum not implemented.\n");
+        printf("WARNING: hex format checksum not implemented.\n");
 
-        // HACK: Checksum is not computed
+        // TODO: Compute checksum
         for (size_t i = 0; i < ASS_binary_stack_ptr; i++)
         {
             uint8_t msb, lsb;
@@ -601,7 +602,8 @@ int main(int argc, char const *argv[])
     }
     else if (output_format == ASS_OUT_COE)
     {
-        printf("WARING: coe format not implemented.\n");
+        //TODO: Implement COE format
+        printf("WARNING: coe format not implemented.\n");
         fprintf(fd, "memory_initialization_radix=16;\n");
         fprintf(fd, "memory_initialization_vector=\n");
     }
@@ -614,6 +616,8 @@ int main(int argc, char const *argv[])
 /***********************************************************************************************************/
 /*                                                LOG SYSTEM                                               */
 /***********************************************************************************************************/
+
+// TODO: Upgrade to the new version
 
 void ASS_log_info(const char *format, ...)
 {
