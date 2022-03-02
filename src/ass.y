@@ -204,6 +204,7 @@ command:              param
 page:                 %empty 
                     | page command 
                     | page endline 
+                    | page error endline
 ;
 
 %%
