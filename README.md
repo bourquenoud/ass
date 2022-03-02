@@ -89,7 +89,7 @@ I have made a very simple extension for Visual Studio Code, available here : <ht
 
 ## Known bugs and missing features
 
- - ASS will consider escaped double quotes as invalid escape sequence, will still escaping them.
+ - ASS will consider escaped double quotes as invalid escape sequences, wHile still escaping them.
  - ASS only accept partial regex, the "|", any grouping and look-head aren't supported.
  - ASS will accept multiple ID substitutions in a bit template, even though it is an undefined behaviour.
  - ASS will sometime crash when using multi-line comments.
