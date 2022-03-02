@@ -75,11 +75,43 @@ cd ~/myfirstassembler
 ./simple_assembler -o output.hex ../ass/examples/pic16f887.asm
 ```
 
-# Documentation
+# More
 
 ## ASS documentation
 
 A syntax summary is available here : <https://github.com/elzaidir/ass/blob/master/doc/ass_syntax.md>
+
+An API documention is on its way.
+
+## Syntax highlighting
+
+I have made a very simple extension for Visual Studio Code, available here : <https://github.com/elzaidir/ass-highlighter>
+
+## Known bugs and missing features
+
+ - ASS will consider escaped double quote as invalid escape sequence, will still escaping it.
+ - ASS will accept multiple ID substitutions in a bit template, even though it is an undefined behaviour.
+ - ASS will sometime crash when using multi-line comments.
+ - ASS won't report if a pattern is fully occluded by another.
+ - Most parameters are unused, and default to 16 bits width and 64bit address space.
+ - If any state machine at any point has more than 1024 states during generation, the generation will silently fail. For comparison, the example "pic16f887.ass" reaches 199 states for the lexer.
+ - Generated assemblers can only output Intel HEX files, and checksum is wrong.
+ - Generated assemblers never check for address collisions.
+ - Generated assemblers will accept mutiple files as arguments, but will only parse the first one.
+
+## Future
+
+We can't declare macros for now, this will be a priority after fixing the current bugs and missing features.
+
+To increase the flexibility, I will make it possible to insert code from the ASS file. This programm is heavily inspired by GNU Bison, and the ability to insert custom code the same way it is done in Bison would help a lot. Syntax will change, but you can expect your old code to remain compatible with newer versions of ASS.
+
+The state machines are implemented using **very** large switch case statements. I'll change it to table based state machines to improve code compactness if performances don't suffer too much.
+
+I'm planning on implementing an automatic documentation generator. Doc being quite important, this is something I'll implement in the near future if I find it easy to do.
+
+Being able to generate linkable files could be useful, but as this software targets mostly small processors.
+
+I want to implement a way to generate an emulator from the opcode descriptions, but this will probably need a lot of work. This may or may not be implemented one day, but don't expect anything.
 
 # License
 
