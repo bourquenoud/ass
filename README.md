@@ -79,7 +79,7 @@ cd ~/myfirstassembler
 
 ## ASS documentation
 
-A syntax summary is available here : <https://github.com/elzaidir/ass/blob/master/doc/ass_syntax.md>
+A syntax summary is available here : <https://github.com/elzaidir/ass/blob/master/docs/ass_syntax.md>
 
 An API documention is on its way.
 
