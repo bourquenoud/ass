@@ -220,7 +220,6 @@ int yywrap()
     /*Open next file only if one or more remain and we are not reading from stdin*/
     if(currentFileIndex < totalFiles && !readFromStdin)
     {
-        printf("Reading file %s\n", files[currentFileIndex]);
         yyin = fopen( files[currentFileIndex], "r" );
         currentFileIndex++;
         return 0;
@@ -228,8 +227,11 @@ int yywrap()
     return 1;
 }
 
-int parse_file(int totalFiles, char** files)
-{
+int parse_file(int _totalFiles, char** _files)
+{   
+    totalFiles = _totalFiles;
+    files = _files;
+    
     currentFileIndex = 0;                       //Start at the first file
     
     /*Detect if we should read from stdin/write to stdout*/
@@ -238,9 +240,15 @@ int parse_file(int totalFiles, char** files)
 
     /*Open the first file, or read from stdin*/
     if(readFromStdin)
+    {
         yyin = stdin;
+        printf(">");
+    }
     else if (yywrap() == 1)
-        exit(-1);
+    {
+        printf("ERROR : no input file.\n");
+        exit(EXIT_FAILURE);
+    }
     
     //Parse all files
 	do
