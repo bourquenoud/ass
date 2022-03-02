@@ -249,7 +249,6 @@ int parse_file(int totalFiles, char** files)
 	}
     while(!feof(yyin));
 
-    free(files);
     return 0;
 }
 
