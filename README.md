@@ -41,7 +41,7 @@ cd ~/ass
 sudo make install
 ```
 
-## Building a basic assembler
+## Building a simple assembler
 
 ***INFO*** *: The following commands assume you have installed `ass`.*
 
@@ -50,7 +50,7 @@ Once `ass` has been built you can generate an assembler C project from an exampl
 ```bash
 cd ~
 mkdir myfirstassembler
-ass -o myfirstassembler/basic_assembler.c ass/examples/basic_assembler.ass
+ass -o myfirstassembler/simple_assembler.c ass/examples/pic16f887.ass
 ```
 
 We can then compile the generated file. It only requires the standard libraries.
@@ -59,10 +59,10 @@ Here we use `gcc` but you can use any standard compliant C compiler.
 
 ```bash
 cd ~/myfirstassembler/
-gcc -o basic_assembler basic_assembler.c
+gcc -o simple_assembler simple_assembler.c
 ```
 
-If everything went well, you now have a `basic_assembler` executable in your project directory.
+If everything went well, you now have a `simple_assembler` executable in your project directory.
 
 ## Using the assembler
 
@@ -72,7 +72,7 @@ To compile an assembler file using our newly built assembler use :
 
 ```bash
 cd ~/myfirstassembler
-./basic_assembler -o output.hex ../ass/examples/basic_assembler.asm
+./simple_assembler -o output.hex ../ass/examples/pic16f887.asm
 ```
 
 # Documentation
