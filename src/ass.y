@@ -15,7 +15,7 @@
     #include "../ast_node.h"
     #include "../bitpattern.h"
 
-    int parse_file(int argc, char** argv);
+    int parse_file(int, char**);
     const char *getTypeName(int type);
 }
 
@@ -228,16 +228,9 @@ int yywrap()
     return 1;
 }
 
-int parse_file(int argc, char** argv)
+int parse_file(int totalFiles, char** files)
 {
-    /*Allocate memory for the files paths*/
-    totalFiles = argc - 1;                      //Don't count argv[0] (programm name)
     currentFileIndex = 0;                       //Start at the first file
-    files = malloc(sizeof(char*) * totalFiles);              // and allocate the memory for the paths
-    for(int i = 0; i < totalFiles; i++)         
-    {
-        files[i] = argv[i + 1];                     //Register all file paths. Note that it is a pointer to argv
-    }
     
     /*Detect if we should read from stdin/write to stdout*/
     readFromStdin = totalFiles <= 0 || !isatty(fileno(stdin));

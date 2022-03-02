@@ -26,7 +26,7 @@ int main(int argc, char **argv)
     char *file_list[argc];
     int file_count = 0;
 
-    for (int i = 0; i < argc; i++)
+    for (int i = 1; i < argc; i++)
     {
         file_list[file_count] = argv[i];
         file_count++;
