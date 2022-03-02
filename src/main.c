@@ -32,10 +32,12 @@ int main(int argc, char **argv)
     int opt;
 
     // Parse options
-    while ((opt = getopt(argc, argv, ":o:")) != -1)
+    while ((opt = getopt(argc, argv, ":o:v")) != -1)
     {
         switch (opt)
         {
+        case 'v': // Verbose
+            fail_set_verbose(3);
         case 'o': // Output file
             printf("Setting output file as %s\n", optarg);
             if (output_file != NULL)

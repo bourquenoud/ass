@@ -3,6 +3,7 @@
 #include "generated/ass.tab.h"
 
 void fail_set_loc(YYLTYPE);
+void fail_set_verbose(int);
 
 int fail_get_info_count(void);
 int fail_get_warning_count(void);

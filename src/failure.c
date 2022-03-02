@@ -6,7 +6,22 @@
 
 static YYLTYPE loc;
 
-//Encaplsulated to have a more realiable error system
+/**
+ * @brief Level of verbosity for the logging system
+ *
+ * @details Levels :
+ *              0 -> Supress everything
+ *              1 -> Only show errors
+ *              2 -> Show errors and warnings (default)
+ *              3 -> Show errors, warnings and infos
+ */
+static int verbositiy = 2;
+
+// Encaplsulated to have a more realiable error system
+void fail_set_verbose(int _verbositiy)
+{
+    verbositiy = _verbositiy;
+}
 static int info_count = 0;
 int fail_get_info_count()
 {
