@@ -1,24 +1,30 @@
-***DISCAIMER*** *: not done yet, this is just information thrown in without sorting or anything*
+***DISCAIMER*** *: the following informations may not be up to date. Refer to the examples if needed*
 
 ***INFO*** *: name between `<` and `>` mean they are to be replaced with their corresponding value*
 
 # Naming convention
 
-An **opcode** is a number correspondig to a machine instruction.
+An **opcode** is a serie of bits correspondig to an hardware instruction.
 
-A **menemonic** is a string corresponding to one or multiple opcodes.
+A **mnemonic** is a keyword, possibly followed by arguments, that represent an opcode.
 
 # Syntax
 
 ## General syntax
 
-Comments are in the form of ` //<comment> ` for single lines and ` /*<comment>*/ ` for multi-lines.
+Comments are in the form of ` //<comment> ` for single lines and ` /*<comment>*/ ` for multi-lines. They can only be inserted at the end of a line, or on their own lines. 
 
 Documentation comments are in the form of ` ///<comment> `
 
-Integers are constants used outside of bit patterns. They are in base 10 (decimal). Example : `10 423 -84`
+***NOTE*** *: Documentation comments are treated as normal comments for now. This may change in the future.*
 
-Strings are constants used outside of bit patterns. They are enclosed in double quotes `""`, which can be escaped with a backslash `\`. Example : `"This is a string" "ab" "" "\"escaped quote"`
+Integers are constants or literals used outside of bit templates. They are in base 10 (decimal). Example : `10 423 -84`
+
+Strings are constants used outside of bit templates. They are enclosed in double quotes `""`, which can be escaped with a backslash `\`. Example : `"This is a string" "ab" "" "\"escaped quote"`
+
+Identifiers are alphanumerical strings *not* enclosed in double quotes `""`.
+
+***BUG*** *: escaped double quotes sometimes makes the lexer generator crash.*
 
 ## Command
 
@@ -31,33 +37,9 @@ Example :
 %enum reg 4
 ```
 
-## Substitution
-
-Substitutions are in all caps, they used for ...blabla... bit length in parenthesis.
-
-Example :
-
-```
-%format jmp_format [$0010,reg,reg,IMMEDIATE(8)]    // IMMEDIATE(8) will be substituted for an immediate value of 8 bits during assembly
-%format jmp_format [reg,LABEL_REL(10),io,..]       // LABEL_REL(10) will be substituted for an offset with computed from a label name
-```
-
-## Enumeration
-
-Enumeration start with a letter in small caps, and can use any letter or number, or an underscore after that. Enumeration pattern are enclosed in double quotes `"`, they can use any letter, numbers or symbols except white spaces. Double quotes `"` need to be escaped with a backslash `\`. Enumerations are not checked against pattern collison (for now). Use the directive 
-
-Example:
-
-```
-%enum reg 4                 // Declaring an enum called "reg" of a lenght of 4 bits
-%pattern reg "ax" $1001     // Anytime the assembler find "ax" where a reg enum is expected, it will replace the 4 bits with 1001
-%pattern reg "bx" $1011     // Anytime the assembler find "bx" where a reg enum is expected, it will replace the 4 bits with 1011
-%pattern reg "cx" $1111     // Anytime the assembler find "cx" where a reg enum is expected, it will replace the 4 bits with 1101
-```
-
 ## Bit constant
 
-Bit constants start with an `$`. With no postfix the value is considered to be in base 2, postfixes of 'h', 'o', 'b' respectively mean hexadecimal, octal, binary. You can either use a numerical value, or define a constant using the directive `%constant`. Defined constants have to be written in small caps and cannot include numbers or symbols except underscodes `_`, but they cannot start with an underscore. They are defined without a leading dollars `$` but needs it when used.
+Bit constants start with an `$`. With no postfix the value is considered to be in base 2, postfixes of 'h', 'o', 'b' respectively mean hexadecimal, octal, binary. You can either use a numerical value, or define a constant using the directive `%constant`. Defined constants have to be written in small caps and cannot include numbers or symbols except underscodes `_`, but they cannot start with an underscore. They are defined without a leading dollars `$` but need one when used.
 
 Example:
 
@@ -68,9 +50,20 @@ Example:
 %format rrr [$cnt,$32d,$format_0]     // Equivalent to "%format rrr [$541Fh,$32d,$0010]"
 ```
 
-## Bit pattern
+## Substitution
 
-Bit patterns are enclosed in square brackets `[]`. You can use a constant, a substitution or an enumeration, they must be separated by a comma `,`. The bit pattern must be of exactly the correct size, or be filled with 0 using an ellipis `...`. 
+Substitutions are in all caps, followed by a number enclosed in parenthesis. They are special bit sequences substituted for other values. The number in parenthesis represent the width of the substitution in bits.
+
+Example :
+
+```
+%format jmp_format [$0010,reg,reg,IMMEDIATE(8)]    // IMMEDIATE(8) will be substituted for an immediate value of 8 bits during assembly
+%format jmp_format [reg,LABEL_REL(10),io,..]       // LABEL_REL(10) will be substituted for an offset of 10 bits computed from a label name
+```
+
+## Bit template
+
+Bit templates are enclosed in square brackets `[]`. You can use a constant, a substitution or an enumeration, they must be separated by a comma `,`. The bit template must be of the exact width, or be automatically filled with 0 using an ellipis `...`.
 
 Examples :
 ```
@@ -78,30 +71,55 @@ Examples :
 %format jmp_format [$001,ID(2),LABEL_ABS(16),...]         // The remaining bits will be replaced with zeros
 ```
 
-# Directives
+# Commands
+
+## Enumeration
+
+Enumeration start with a letter in small caps, and can use any letter or number, or an underscore after that. Enumeration pattern are enclosed in double quotes `"`, they can use any letter, numbers or symbols except white spaces.
+
+To use an enumeration, first declare the enumration itself using the `%enum` command, specifing its name and bit width. Then you can add any number of pattern you want to the enumeration using the `%pattern` command. 
+
+Usage : `%enum <enum name> <width>`
+
+Enumeration patterns behave like a constant during assembly, with the difference that it can only be used where it is expected. This is useful for things like registers where we don't want a register name to be used as any constant.
+
+Usage : `%pattern <enum name> <pattern> <bit value>`
+
+Example:
+
+```
+%enum reg 4                 // Declare an enum called "reg" with a lenght of 4 bits
+%pattern reg "ax" $1001     // Anytime the assembler find "ax" where a reg enum is expected, it will replace the 4 bits with 1001
+%pattern reg "bx" $1011     // Anytime the assembler find "bx" where a reg enum is expected, it will replace the 4 bits with 1011
+%pattern reg "cx" $1111     // Anytime the assembler find "cx" where a reg enum is expected, it will replace the 4 bits with 1101
+```
 
 ## Opcode formats
 
-Opcode formats are declared using the directive `%format`. This directive declare an opcode format and its corresponding mnemonic format. By default the mnemonic parameters are in the same order as the bit pattern parameters. A format declared without an `ID()` substitution can only be used by one opcode.
+Opcode formats are declared using the directive `%format`. This directive declare an opcode format and its corresponding mnemonic format. By default the mnemonic parameters are in the same order as the bit template parameters. A format declared without an `ID()` substitution can only be used by one opcode. The format command is the core of the system, as they represent the way the assembler will build the instructions based on the mnemonics.
 
-Usage : `%format <format name> <bit pattern> `
+Usage : `%format <format name> <bit template> `
 
 Example :
 ```
-[blabla some examples]
+// Declare a format called "lit_format" with the 2 MSBs set to 1,
+//  the 4 following bit identify the opcode,
+//  and the last 8 bits contain an immediate
+// This format accepts 1 argument in the form of an immediate value
+%format lit_format [$11,ID(4),IMMEDIATE(8)]
 ```
 
 ## Reordering parameters
 
 Sometimes we don't want the mnemonic paramters to have the same order as the opcode parameters. They can be reordered using the `%order` directive. The ellipsis `...` and the contants are also indexed but cannot be used as arguments. The substitution `ID()` cannot be used as a parameter. Index starts at 0.
 
-Usage : `%order <format name> <first parameter index> <second parameter index> <third parameter index>`
+Usage : `%order <format name> <first parameter index> <second parameter index> <third parameter index> <etc...>`
 
 Example :
 ```
 //Valid
-%format cmpld_f   [$0010,reg,reg,IMMEDIATE(8)]     // Mnemonic would be "cmpld <register1> <register2> <immediate>"
-%order  cmpld_f   3 2 1                            // Mnemonic would now be "cmpld <immediate> <register2> <register1>
+%format cmpld_f   [$0010,reg,reg,IMMEDIATE(8)]     // Mnemonic would be "cmpld <register1>,<register2>,<immediate>"
+%order  cmpld_f   3 2 1                            // Mnemonic would now be "cmpld <immediate>,<register2>,<register1>"
 
 //Not valid
 %format format_add [$0110,reg,reg,...,ID(4)]
@@ -109,7 +127,7 @@ Example :
 ```
 
 ## Opcodes
-Opcodes and mnemonics are declared using the directive `%opcode`. Opcode patterns are enclosed in double quotes `"`, they can use any letter, numbers or symbols except white spaces. They are not check against collision. The id is a bit constant representing the type of instruction inside the opcode format.
+Opcodes and mnemonics are declared using the directive `%opcode`. Opcode patterns are enclosed in double quotes `"`, they can use any letter, numbers or symbols except white spaces. The id is a bit constant representing the type of instruction inside the opcode format.
 
 Usage : `%opcode <opcode name> <mnemonic pattern> <id>`
 
@@ -124,8 +142,10 @@ Example :
 
 # Substitutions list
 
- - `LABEL_REL()` compute a relative jump from a label in 2's complement. -1 jump means stay where it is, and 0 means go to next instruction, truncated to length
- - `IMMEDIATE()` expecte an immediate value, trucated to length
+ - `ID` Subsituted for the opcode ID, extended/trucated to width. Expects no arguments.
+ - `LABEL_ABS` Substituted for the address of label, extended/trucated to width. Expects a label.
+ - `LABEL_REL` Substituted for a relative jump from a label in 2's complement. 0 jump means stay where it is. Sign extended/trucated to width. Expects a label.
+ - `IMMEDIATE` Substituted for an immediate value, extended/trucated to width. Expects a value which can be an hexadecimal by prefixing it with `0x`, a decimal value by default, an octal value by prefixing it with `0`(zero), a binary value by prefixing with `0b`, or a ASCII char by enclosing it in quotes `'`
 
 
 # Parameters list
@@ -140,6 +160,12 @@ List of parameters :
 
 | Mandatory | Name                           | Argument                         | Description                    |
 | :-------: | ------------------------------ | -------------------------------- | ------------------------------ |
-|    YES    | `opcode_width <width>`         | width (integer)                  | Configure the width of the opcodes in bits. This value is fixed, meaning you can not have variable lenght opcodes|
-|    YES    | `address_width <width>`        | width (integer)                  | Configure the width of the address bus. |
-|    NO    | `separators <seprator>`         | separator (string)               | Define the separtor used betweem arguments for mnemonics. By default they are separated by a space. The separator used is the first character in the string sequence.
+|    YES    | `opcode_width <width>`         | width (integer)                  | The width of the opcodes in bits. This value is fixed, meaning you can not have variable length opcodes|
+|    YES    | `memory_width <width>`         | width (integer)                  | The width of the programm memory in bits. |
+|    YES    | `alignment <width>`            | width (integer)                  | The opcode alignment. |
+|    YES    | `address_width <width>`        | width (integer)                  | The width of the address bus. |
+|    YES    | `address_start <address>`      | address (integer)                | The address were the programm memory starts. Inclusive. |
+|    YES    | `address_stop <address>`       | address (integer)                | The address were the programm memory stops. Inclusive. |
+|    YES    | `endianness <endianness>`      | endianness (string)              | The endianness of the opcodes. Either "big" or "little". Big endian means LSB first (bit order is reversed), little endian means MSB first. |
+|    NO    | `args_separator <separator>`    | separator (string)               | Define the separator used betweem arguments for mnemonics. By default they are separated by a comma. The separator used is the first character in the string sequence.
+|    NO    | `label_postfix <postfix>`       | postfix (string)               | Define the postfix for declaring labels. By default labels end with a colon `:`. The postfix used is the first character in the string.
