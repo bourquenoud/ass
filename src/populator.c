@@ -15,12 +15,8 @@ void generate(FILE *fd)
     int wait_index = 3;
 
     function_table = hash_init(64);
-    /*
-    hash_add(function_table, "lexer_switch", generator_lexer_switch);
-    hash_add(function_table, "token_enum", generator_token_enum);
-    hash_add(function_table, "token_names", generator_token_names);
-    hash_add(function_table, "parser_switch", generator_parser_switch);
-    */
+
+    register_function(notice);
     register_function(data_union);
     register_function(lexer_actions);
     register_function(lexer_action_list);
