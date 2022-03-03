@@ -98,11 +98,13 @@ I have made a very simple extension for Visual Studio Code, available here : <ht
  - ASS memory is never freed anywhere. As it is short-lived it isn't a huge problem, but this should be taken into account.
  - Most parameters are unused, and default to 16 bits width and 64bit address space.
  - If any state machine at any point has more than 1024 states during generation, the generation will silently fail. For comparison, the example "pic16f887.ass" reaches 199 states for the lexer.
- - Relative labels are not implented and will silently fail.
  - Generated assemblers can only output Intel HEX files, and checksum is wrong.
  - Generated assemblers never check for address collisions.
  - Generated assemblers will accept mutiple files as arguments, but will only parse the first one.
  - Generated assemblers don't really respect POSIX option parsing, and may even crash with valid arguments.
+ - Generated assemblers will display a line number on errors/warnings/etc... even when the message isn't comming from a specific line.
+ - Generated assemblers don't show helps messages
+ - Generated assemblers CLI isn't POSIX or GNU compliant, for example `--` won't stop option parsing.
 
 ## Future
 
