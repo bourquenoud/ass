@@ -72,7 +72,8 @@ To compile an assembler file using our newly built assembler use :
 
 ```bash
 cd ~/myfirstassembler
-./simple_assembler -o output.hex ../ass/examples/pic16f887.asm
+cp ../ass/examples/pic16f887.asm pic16f887.asm
+./simple_assembler -o output.hex pic16f887.asm
 ```
 
 # More
