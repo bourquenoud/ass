@@ -29,7 +29,11 @@ define uniq =
   ${seen}
 endef
 
-all: $(output_dir)$(output_file)
+#Increase the build count and update the build date before building
+all:
+	@awk -i inplace '{if($$2 == "VERSION_BUILD") print $$1 " " $$2 " " $$3+1; else print $$0;}' $(src_dir)/version.h
+	@awk -i inplace '{if($$2 == "VERSION_BUILD_DATE") print $$1 " " $$2 " $(shell date +"%Y%m%d")"; else print $$0;}' $(src_dir)/version.h
+	$(MAKE) $(output_dir)/$(output_file)
 
 ########################################################################
 #                            DIRECTORIES                               #
@@ -79,23 +83,46 @@ $(obj_dir)/$(gen_dir)/ass.yy.o $(obj_dir)/$(gen_dir)/ass.tab.o : $(src_dir)/$(ge
 ########################################################################
 
 #Compile all files except the generated ones. Include the header
-$(OBJS): $(SRCS) $(src_dir)/$(gen_dir)/ass.tab.h $(obj_dir)/$(gen_dir)/ass.yy.o $(obj_dir)/$(gen_dir)/ass.tab.o $(src_dir)/$(gen_dir)/skeleton.h | $(OBJSDIRS)
+$(OBJS): $(SRCS) $(src_dir)/$(gen_dir)/ass.tab.h $(obj_dir)/$(gen_dir)/ass.yy.o $(obj_dir)/$(gen_dir)/ass.tab.o $(src_dir)/$(gen_dir)/skeleton.h $(src_dir)/version.h | $(OBJSDIRS)
 		@$(foreach file, $@,\
 		echo gcc $(CFLAGS) -c -o $(file) $(patsubst $(obj_dir)%.o,$(src_dir)%.c,$(file));\
 		gcc $(CFLAGS) -c -o $(file) $(patsubst $(obj_dir)%.o,$(src_dir)%.c,$(file));\
 		)
 
 #Link
-$(output_dir)$(output_file): $(OBJS) | $(output_dir)
+$(output_dir)/$(output_file): $(OBJS) | $(output_dir)
 	gcc -o $(output_dir)/$(output_file) $(LDFLAGS) $(shell find $(obj_dir) -name '*.o')
 
 ########################################################################
 #                               CLEAN                                  #
 ########################################################################
 clean:
-		@rm -rf $(obj_dir)/
-		@rm -rf $(src_dir)/$(gen_dir)/
-		@echo cleaned
+	@rm -rf $(obj_dir)/
+	@rm -rf $(src_dir)/$(gen_dir)/
+	@echo cleaned
+
+
+########################################################################
+#                              VERSION                                 #
+########################################################################
+
+# Increase the major version
+major:
+	@awk -i inplace '{if($$2 == "VERSION_MAJOR") print $$1 " " $$2 " " $$3+1; else print $$0;}' $(src_dir)/version.h
+	@awk -i inplace '{if($$2 == "VERSION_MINOR") print $$1 " " $$2 " " 0; else print $$0;}' $(src_dir)/version.h
+	@awk -i inplace '{if($$2 == "VERSION_REVISION") print $$1 " " $$2 " " 0; else print $$0;}' $(src_dir)/version.h
+	@awk -i inplace '{if($$2 == "VERSION_BUILD") print $$1 " " $$2 " " 0; else print $$0;}' $(src_dir)/version.h
+
+# Increase the minor version
+minor:
+	@awk -i inplace '{if($$2 == "VERSION_MINOR") print $$1 " " $$2 " " $$3+1; else print $$0;}' $(src_dir)/version.h
+	@awk -i inplace '{if($$2 == "VERSION_REVISION") print $$1 " " $$2 " " 0; else print $$0;}' $(src_dir)/version.h
+	@awk -i inplace '{if($$2 == "VERSION_BUILD") print $$1 " " $$2 " " 0; else print $$0;}' $(src_dir)/version.h
+
+# Increase the revision version
+rev:
+	@awk -i inplace '{if($$2 == "VERSION_REVISION") print $$1 " " $$2 " " $$3+1; else print $$0;}' $(src_dir)/version.h
+	@awk -i inplace '{if($$2 == "VERSION_BUILD") print $$1 " " $$2 " " 0; else print $$0;}' $(src_dir)/version.h
 
 ########################################################################
 #                              INSTALL                                 #

@@ -5,6 +5,7 @@
 #include <string.h>
 #include <errno.h>
 
+#include "version.h"
 #include "generated/ass.tab.h"
 #include "commands.h"
 #include "hash_array.h"
@@ -21,6 +22,31 @@
 #include "parser.h"
 #include "parser_gen.h"
 
+char const *const help_message =
+    "Usage: %s [OPTION]... -o OUTPUT_FILE INTPUT_FILES\n"
+    "This tool can generate an assembler in C\n"
+    "based on simple opcode and mnemonics descriptions.\n"
+    "\n"
+    "Options:\n"
+    "  -o <FILE>   set the output file\n"
+    "  -h          display this help and exit\n"
+    "  -V          output version information and exit\n"
+    "  -v          set verbosity level to INFOS\n"
+    "  -vv         set verbosity level to DETAILS\n"
+    "  -W          suppress warnings by setting verbosity level to ERRORS\n"
+    "  -s          silent mode\n"
+    "  -C          suppress colours\n";
+
+char const *const version_message =
+    "ass (Assembly Syntax Synthesiser) %i.%i.%i, build %i-%i\n"
+    "Written by Mathieu Bourquenoud.\n"
+    "\n"
+    "Copyright (C) 2022 Mathieu Bourquenoud.\n"
+    "This program comes with ABSOLUTELY NO WARRANTY; not even for\n"
+    "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n"
+    "This is free software, and you are welcome to redistribute it\n"
+    "under certain conditions; refer to the license for details.\n";
+
 int main(int argc, char **argv)
 {
     // File descriptor for the output file
@@ -35,10 +61,18 @@ int main(int argc, char **argv)
 
     // Parse options
     fail_show_loc(false);
-    while ((opt = getopt(argc, argv, ":sWCvo:")) != -1)
+    while ((opt = getopt(argc, argv, ":hVsWCvo:")) != -1)
     {
         switch (opt)
         {
+        case 'h': // Show help
+            printf(help_message, argv[0]);
+            exit(EXIT_SUCCESS);
+            break;
+        case 'V': // Show version
+            printf(version_message, VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION, VERSION_BUILD_DATE, VERSION_BUILD);
+            exit(EXIT_SUCCESS);
+            break;
         case 's': // Silent, suppress all outputs
             supressed = true;
             fail_set_verbose(0);
