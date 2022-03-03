@@ -696,21 +696,24 @@ int main(int argc, char const *argv[])
             ASS_log_warning("Very large memory is being written as serialised data (>1Gio)");
 
         fprintf(fd, "memory_initialization_radix=16;\n");
-        fprintf(fd, "memory_initialization_vector=\n");
+        fprintf(fd, "memory_initialization_vector=");
 
         int instruction_index = 0;
         for (uint64_t i = ASS_P_address_start; i <= ASS_P_address_stop; i++)
         {
+            if(i!=0)
+                fputc(',', fd);
             if (ASS_binary_stack[instruction_index].address == i && instruction_index < ASS_binary_stack_ptr)
             {
-                fprintf(fd, "%04X,\n", ASS_binary_stack[instruction_index].data);
+                fprintf(fd, "\n%04X", ASS_binary_stack[instruction_index].data);
                 instruction_index++;
             }
             else
             {
-                fprintf(fd, "0000,\n", ASS_binary_stack[instruction_index].data);
+                fprintf(fd, "\n0000", ASS_binary_stack[instruction_index].data);
             }
         }
+        fputc(';', fd);
     }
 
     fclose(fd);
