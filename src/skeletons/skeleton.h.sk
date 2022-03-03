@@ -413,7 +413,7 @@ int main(int argc, char const *argv[])
     char const *input_file = NULL;
 
     // Output in hex format by default
-    int output_format = ASS_OUT_HEX;
+    int output_format = ASS_OUT_HEX; // TODO: make configurable from ass file
     bool format_set = false;
 
     // Parse the arguments
@@ -425,40 +425,53 @@ int main(int argc, char const *argv[])
         if (len >= 2 && argv[i][0] == '-') // Is an option
         {
             // Parse all options
-            for (size_t j = 1; j < len; j++)
+            bool is_long_arg = false;
+            for (size_t j = 1; j < len && !is_long_arg; j++)
             {
                 switch (argv[i][j])
                 {
                 case 'o': // Output file
                     if (++i >= argc || (strlen(argv[i]) >= 2 && argv[i][0] == '-'))
                     {
-                        printf("ERROR : option 'o' requires a parameter.\n");
+                        ASS_log_error("option 'o' requires a parameter.");
                         exit(EXIT_FAILURE);
                     }
                     output_file = argv[i];
                     break;
-                case 'x': // Output in hex format
-                    if (format_set)
-                    {
-                        printf("ERROR : Multiple format option\n");
-                        exit(EXIT_FAILURE);
-                    }
-                    output_format = ASS_OUT_HEX;
-                    format_set = true;
-                    break;
-                case 'c': // Output in coe
-                    if (format_set)
-                    {
-                        printf("ERROR : Multiple format option\n");
-                        exit(EXIT_FAILURE);
-                    }
-                    output_format = ASS_OUT_COE;
-                    format_set = true;
-                    break;
                 case 'v': // Enable verbose mode
                     ASS_option_verbose = true;
                     break;
+                case 'f': // Format
+                    if (++i >= argc || (strlen(argv[i]) >= 2 && argv[i][0] == '-'))
+                    {
+                        ASS_log_error("option 'f' requires a parameter.");
+                        exit(EXIT_FAILURE);
+                    }
+                    if (format_set)
+                    {
+                        ASS_log_error("Multiple format option");
+                        exit(EXIT_FAILURE);
+                    }
+
+                    if (strcmp(argv[i], "coe") == 0)
+                    {
+                        output_format = ASS_OUT_COE;
+                    }
+                    else if (strcmp(argv[i], "hex") == 0)
+                    {
+                        output_format = ASS_OUT_HEX;
+                    }
+                    else
+                    {
+                        ASS_log_error("unkown format '%s'", argv[i]);
+                        exit(EXIT_FAILURE);
+                    }
+
+                    format_set = true;
+                    break;
                 default:
+                    ASS_log_error("unkown option '%c'", argv[i][j]);
+                    exit(EXIT_FAILURE);
                     break;
                 }
             }
@@ -693,7 +706,7 @@ int main(int argc, char const *argv[])
     else if (output_format == ASS_OUT_COE)
     {
         if ((ASS_P_address_stop - ASS_P_address_start) * ASS_P_memory_width / 8 > 1024LLU * 1024LLU * 1024LLU)
-            ASS_log_warning("Very large memory is being written as serialised data (>1Gio)");
+            ASS_log_warning("Very large memory is being written as serialised data (>1GiB)");
 
         fprintf(fd, "memory_initialization_radix=16;\n");
         fprintf(fd, "memory_initialization_vector=");
@@ -701,16 +714,16 @@ int main(int argc, char const *argv[])
         int instruction_index = 0;
         for (uint64_t i = ASS_P_address_start; i <= ASS_P_address_stop; i++)
         {
-            if(i!=0)
+            if (i != 0)
                 fputc(',', fd);
             if (ASS_binary_stack[instruction_index].address == i && instruction_index < ASS_binary_stack_ptr)
             {
-                fprintf(fd, "\n%04X", ASS_binary_stack[instruction_index].data);
+                fprintf(fd, "\n%llX", ASS_binary_stack[instruction_index].data);
                 instruction_index++;
             }
             else
             {
-                fprintf(fd, "\n0000", ASS_binary_stack[instruction_index].data);
+                fprintf(fd, "\n0", ASS_binary_stack[instruction_index].data);
             }
         }
         fputc(';', fd);
@@ -718,7 +731,16 @@ int main(int argc, char const *argv[])
 
     fclose(fd);
 
-    return 0;
+    if(ASS_error_count == 0)
+    {
+        ASS_log_info("Success");
+        exit(EXIT_SUCCESS);
+    }
+    else
+    {
+        ASS_log_error("Error");
+        exit(EXIT_FAILURE);
+    }
 }
 
 /***********************************************************************************************************/
@@ -737,14 +759,14 @@ void ASS_log_info(const char *format, ...)
 
     va_list args;
     va_start(args, format);
-    fprintf(stdout, "\033[%im", ASS_INFO_COLOUR);
+    fprintf(stderr, "\033[%im", ASS_INFO_COLOUR);
     fprintf(stderr, "INFO line %i : ", ASS_loc.first_line);
-    vfprintf(stdout, format, args);
-    fputs("\033[0m\n", stdout);
+    vfprintf(stderr, format, args);
+    fputs("\033[0m\n", stderr);
     va_end(args);
 
     ASS_show_line(ASS_INFO_COLOUR);
-    fputc('\n', stderr);
+    fputc('\n', stdout);
 }
 
 void ASS_log_warning(const char *format, ...)
