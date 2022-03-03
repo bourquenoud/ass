@@ -24,7 +24,7 @@ sudo apt install bison flex gcc make git xxd
 Clone the repository.
 ```bash
 cd ~/
-git clone https://github.com/elzaidir/ass.git
+git clone https://github.com/bourquenoud/ass.git
 ```
 
 Build `ass` with make.
@@ -79,13 +79,13 @@ cd ~/myfirstassembler
 
 ## ASS documentation
 
-A syntax summary is available here : <https://github.com/elzaidir/ass/blob/master/docs/ass_syntax.md>
+A syntax summary is available here : <https://github.com/bourquenoud/ass/blob/master/docs/ass_syntax.md>
 
 An API documention is on its way.
 
 ## Syntax highlighting
 
-I have made a very simple extension for Visual Studio Code, available here : <https://github.com/elzaidir/ass-highlighter>
+I have made a very simple extension for Visual Studio Code, available here : <https://github.com/bourquenoud/ass-highlighter>
 
 ## Known bugs and missing features
 
