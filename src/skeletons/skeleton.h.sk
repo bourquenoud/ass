@@ -440,7 +440,7 @@ int main(int argc, char const *argv[])
     if (fgets(ASS_line, ASS_MAX_LINE_LENGTH, fd) == NULL)
     {
         ASS_log_info("Empty file.");
-        return 0;
+        exit(EXIT_SUCCESS);
     }
 
     // TODO : make it not need multiple newlines at the end
@@ -579,7 +579,57 @@ int main(int argc, char const *argv[])
         }
     }
 
-    // TODO: check for address collisions
+    // Exit if no data
+    if (ASS_binary_stack_ptr == 0)
+    {
+        ASS_log_info("No instructions. Exiting")
+            exit(EXIT_SUCCESS);
+    }
+
+    typedef struct
+    {
+        uint64_t start;
+        uint64_t stop;
+    } address_range_t;
+
+    // Generate address ranges
+    size_t address_ranges_count = 1;
+    uint64_t last_address;
+
+    address_range_t *address_range_array = malloc(sizeof(address_range_t));
+    last_address = ASS_binary_stack_ptr[0];
+    address_range_array[0].start = last_address;
+
+    for (size_t i = 1; i < ASS_binary_stack_ptr; i++)
+    {
+        // If we get an address jump then we count it as a different address range
+        if (last_address + 1 != ASS_binary_stack_ptr[i])
+        {
+            address_range_array[i - 1].stop = last_address;
+            last_address = ASS_binary_stack_ptr[i];
+            address_ranges_count++;
+            address_range_array = realloc(address_range_array, sizeof(address_range_t) * address_ranges_count); // TODO: realloc less frequently
+            address_range_array[i].start = last_address;
+        }
+    }
+    address_range_array[i - 1].stop = last_address;
+
+    // Check for address collisions
+    for (size_t i = 0; i < address_ranges_count - 1; i++)
+    {
+        for (size_t j = i + 1; j < address_ranges_count; j++)
+        {
+            // If range overlap
+            if ((address_range_array[i].start <= address_range_array[j].stop) && (address_range_array[i].stop >= address_range_array[j].stop))
+            {
+                ASS_log_error("Colliding address ranges. Address from 0x%X to 0x%X are overlapping. Exiting"
+                    (address_range_array[i].start < address_range_array[j].start) ? address_range_array[i].start : address_range_array[j].start,
+                    (address_range_array[i].stop > address_range_array[j].stop) ? address_range_array[i].stop : address_range_array[j].stop
+                );
+                exit(EXIT_FAILURE);
+            }
+        }
+    }
 
     if (output_file == NULL || strcmp(output_file, "-") == 0)
         fd = stdout;
@@ -588,21 +638,19 @@ int main(int argc, char const *argv[])
 
     if (output_format == ASS_OUT_HEX)
     {
-        printf("WARNING: hex format checksum not implemented.\n");
-
-        // TODO: Compute checksum
         for (size_t i = 0; i < ASS_binary_stack_ptr; i++)
         {
-            uint8_t msb, lsb;
+            uint8_t msb, lsb, chksum;
             msb = (ASS_binary_stack[i].data >> 8) & (0xFF);
             lsb = (ASS_binary_stack[i].data) & (0xFF);
-            fprintf(fd, ":02%04X00%02X%02XFF\n", ASS_binary_stack[i].address * 2, lsb, msb);
+            chksum = 2 + ((ASS_binary_stack[i].address * 2) & 0xFF) + (((ASS_binary_stack[i].address * 2) >> 8) & 0xFF) + lsb + msb;
+            fprintf(fd, ":02%04X00%02X%02X%02X\n", ASS_binary_stack[i].address * 2, lsb, msb, chksum);
         }
         fprintf(fd, ":00000001FF\n");
     }
     else if (output_format == ASS_OUT_COE)
     {
-        //TODO: Implement COE format
+        // TODO: Implement COE format
         printf("WARNING: coe format not implemented.\n");
         fprintf(fd, "memory_initialization_radix=16;\n");
         fprintf(fd, "memory_initialization_vector=\n");
