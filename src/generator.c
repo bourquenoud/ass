@@ -79,12 +79,11 @@ void generator_generate_parser(int count, const rule_def_t **_rules)
 char *generator_generate_pattern_action(pattern_t *pattern)
 {
     darray_t **buff = alloca(sizeof(sizeof(darray_t *)));
-    *buff = darray_init(1);    
-    
+    *buff = darray_init(1);
+
     // Because of the way "darray_add" is implemented, we can't pass it rvalues
     char tmp = '\0';
     darray_add(buff, tmp); // Start the buffer as an empty string
-
 
     // TODO: free the dynamic array. Make "darray_destroy" first
     bprintf(buff, "    ASS_data_t data;");
@@ -211,6 +210,24 @@ char *generator_generate_opcode_action(opcode_t opcode)
 /**************************************************/
 /*                   CALLBACKS                    */
 /**************************************************/
+
+void generator_notice(int indent)
+{
+    iprintf(0, "/* A free assembler, made by ASS %i.%i.%i */", VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION);
+}
+
+void generator_parameters(int indent)
+{
+    iprintf(0, "int64_t const ASS_P_opcode_width = %lli;", parameters.opcode_width);
+    iprintf(0 + indent, "int64_t const ASS_P_memory_width = %lli;", parameters.memory_width);
+    iprintf(0 + indent, "int64_t const ASS_P_alignment = %lli;", parameters.alignment);
+    iprintf(0 + indent, "int64_t const ASS_P_address_width = %lli;", parameters.address_width);
+    iprintf(0 + indent, "int64_t const ASS_P_address_start = %lli;", parameters.address_start);
+    iprintf(0 + indent, "int64_t const ASS_P_address_stop = %lli;", parameters.address_stop);
+    iprintf(0 + indent, "int const ASS_P_endianness = %i;", parameters.endianness);
+    iprintf(0 + indent, "char const ASS_P_args_separator = '%c';", parameters.args_separator);
+    iprintf(0 + indent, "char const ASS_P_label_postfix = '%c';", parameters.label_postfix);
+}
 
 void generator_data_union(int indent)
 {

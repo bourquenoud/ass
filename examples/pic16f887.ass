@@ -4,7 +4,7 @@
 %param alignment       16
 %param address_width   14
 %param address_start   0
-%param address_stop    0
+%param address_stop    1023
 %param endianness      "big"
 
 //Syntax parameters

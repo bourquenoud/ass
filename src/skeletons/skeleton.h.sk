@@ -24,15 +24,20 @@
 #include <stdarg.h>
 #include <string.h>
 
+/***************** enums, defines and consts *****************/
 enum
 {
     ASS_OUT_HEX,
     ASS_OUT_COE,
 };
 
-// REMOVE ME
-#define ASS_U_NONE 0
-#define ASS_U_DATA 1
+enum
+{
+    ASS_U_NONE = 0,
+    ASS_U_DATA = 1,
+};
+
+/*!! parameters !!*/
 
 /********************* struct and unions *********************/
 /*!! data_union !!*/
@@ -70,7 +75,13 @@ typedef struct
 {
     int address;
     uint64_t data;
-} ASS_opcode_t; // TODO: more representative name
+} ASS_opcode_t; // TODO: more meaningful name
+
+typedef struct
+{
+    uint64_t start;
+    uint64_t stop;
+} address_range_t;
 
 /********************* general globals *********************/
 char *ASS_text = NULL;
@@ -130,6 +141,7 @@ void ASS_symbol_stack_push(ASS_symbol_t);
 ASS_symbol_t ASS_symbol_stack_pop(void);
 
 // Binary
+// TODO: rename to ASS_instruction_stack
 ASS_opcode_t *ASS_binary_stack;
 int ASS_binary_stack_size = 0;
 int ASS_binary_stack_ptr = 0;
@@ -384,6 +396,16 @@ void ASS_parser()
 /*                                                    MAIN                                                 */
 /***********************************************************************************************************/
 
+int ASS_address_range_cmp(const void *a, const void *b)
+{
+    return (*(address_range_t *)a).start - (*(address_range_t *)b).start;
+}
+
+int ASS_opcode_cmp(const void *a, const void *b)
+{
+    return (*(ASS_opcode_t *)a).address - (*(ASS_opcode_t *)b).address;
+}
+
 int main(int argc, char const *argv[])
 {
     FILE *fd;
@@ -601,37 +623,31 @@ int main(int argc, char const *argv[])
     // Exit if no data
     if (ASS_binary_stack_ptr == 0)
     {
-        ASS_log_info("No instructions. Exiting")
-            exit(EXIT_SUCCESS);
+        ASS_log_info("No instructions. Exiting");
+        exit(EXIT_SUCCESS);
     }
-
-    typedef struct
-    {
-        uint64_t start;
-        uint64_t stop;
-    } address_range_t;
 
     // Generate address ranges
     size_t address_ranges_count = 1;
     uint64_t last_address;
 
     address_range_t *address_range_array = malloc(sizeof(address_range_t));
-    last_address = ASS_binary_stack_ptr[0];
+    last_address = ASS_binary_stack[0].address;
     address_range_array[0].start = last_address;
 
     for (size_t i = 1; i < ASS_binary_stack_ptr; i++)
     {
         // If we get an address jump then we count it as a different address range
-        if (last_address + 1 != ASS_binary_stack_ptr[i])
+        if (last_address + 1 != ASS_binary_stack[i].address)
         {
-            address_range_array[i - 1].stop = last_address;
-            last_address = ASS_binary_stack_ptr[i];
+            address_range_array[address_ranges_count - 1].stop = last_address;
+            address_range_array = realloc(address_range_array, sizeof(address_range_t) * (address_ranges_count + 1)); // TODO: realloc less frequently
+            address_range_array[address_ranges_count].start = ASS_binary_stack[i].address;
             address_ranges_count++;
-            address_range_array = realloc(address_range_array, sizeof(address_range_t) * address_ranges_count); // TODO: realloc less frequently
-            address_range_array[i].start = last_address;
         }
+        last_address = ASS_binary_stack[i].address;
     }
-    address_range_array[i - 1].stop = last_address;
+    address_range_array[address_ranges_count - 1].stop = last_address;
 
     // Check for address collisions
     for (size_t i = 0; i < address_ranges_count - 1; i++)
@@ -639,16 +655,22 @@ int main(int argc, char const *argv[])
         for (size_t j = i + 1; j < address_ranges_count; j++)
         {
             // If range overlap
-            if ((address_range_array[i].start <= address_range_array[j].stop) && (address_range_array[i].stop >= address_range_array[j].stop))
+            if ((address_range_array[i].start <= address_range_array[j].stop) && (address_range_array[i].stop >= address_range_array[j].start))
             {
-                ASS_log_error("Colliding address ranges. Address from 0x%X to 0x%X are overlapping. Exiting"
-                    (address_range_array[i].start < address_range_array[j].start) ? address_range_array[i].start : address_range_array[j].start,
-                    (address_range_array[i].stop > address_range_array[j].stop) ? address_range_array[i].stop : address_range_array[j].stop
-                );
+                ASS_log_error("Colliding address ranges. Address from 0x%X to 0x%X are overlapping. Exiting",
+                              (address_range_array[i].start > address_range_array[j].start) ? address_range_array[i].start : address_range_array[j].start,
+                              (address_range_array[i].stop < address_range_array[j].stop) ? address_range_array[i].stop : address_range_array[j].stop);
                 exit(EXIT_FAILURE);
             }
         }
     }
+
+    // Sort the instructions by address
+    qsort(ASS_binary_stack, ASS_binary_stack_ptr, sizeof(*ASS_binary_stack), ASS_opcode_cmp);
+
+    // Sort address ranges
+    // TODO: could be removed by sorting the instructions before generating ranges
+    qsort(address_range_array, address_ranges_count, sizeof(*address_range_array), ASS_address_range_cmp);
 
     if (output_file == NULL || strcmp(output_file, "-") == 0)
         fd = stdout;
@@ -659,20 +681,36 @@ int main(int argc, char const *argv[])
     {
         for (size_t i = 0; i < ASS_binary_stack_ptr; i++)
         {
-            uint8_t msb, lsb, chksum;
+            uint8_t msb, lsb;
+            int chksum;
             msb = (ASS_binary_stack[i].data >> 8) & (0xFF);
             lsb = (ASS_binary_stack[i].data) & (0xFF);
             chksum = 2 + ((ASS_binary_stack[i].address * 2) & 0xFF) + (((ASS_binary_stack[i].address * 2) >> 8) & 0xFF) + lsb + msb;
-            fprintf(fd, ":02%04X00%02X%02X%02X\n", ASS_binary_stack[i].address * 2, lsb, msb, chksum);
+            fprintf(fd, ":02%04X00%02X%02X%02X\n", ASS_binary_stack[i].address * 2, lsb, msb, (-chksum) & 0xFF);
         }
         fprintf(fd, ":00000001FF\n");
     }
     else if (output_format == ASS_OUT_COE)
     {
-        // TODO: Implement COE format
-        printf("WARNING: coe format not implemented.\n");
+        if ((ASS_P_address_stop - ASS_P_address_start) * ASS_P_memory_width / 8 > 1024LLU * 1024LLU * 1024LLU)
+            ASS_log_warning("Very large memory is being written as serialised data (>1Gio)");
+
         fprintf(fd, "memory_initialization_radix=16;\n");
         fprintf(fd, "memory_initialization_vector=\n");
+
+        int instruction_index = 0;
+        for (uint64_t i = ASS_P_address_start; i <= ASS_P_address_stop; i++)
+        {
+            if (ASS_binary_stack[instruction_index].address == i && instruction_index < ASS_binary_stack_ptr)
+            {
+                fprintf(fd, "%04X,\n", ASS_binary_stack[instruction_index].data);
+                instruction_index++;
+            }
+            else
+            {
+                fprintf(fd, "0000,\n", ASS_binary_stack[instruction_index].data);
+            }
+        }
     }
 
     fclose(fd);
