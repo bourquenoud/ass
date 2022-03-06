@@ -29,6 +29,7 @@ enum
 {
     ASS_OUT_HEX,
     ASS_OUT_COE,
+    ASS_OUT_VHDL,
 };
 
 enum
@@ -180,6 +181,10 @@ bool ASS_parser_processed = false;
 int ASS_parser_output = -1;
 ASS_token_t ASS_parser_token;
 bool ASS_parser_output_ready = false;
+
+/******************** helpers ********************/
+
+void print_bits(FILE *fd, size_t const size, void const *const ptr);
 
 /***********************************************************************************************************/
 /*                                                   STACKS                                                */
@@ -461,6 +466,10 @@ int main(int argc, char const *argv[])
                     {
                         output_format = ASS_OUT_HEX;
                     }
+                    else if (strcmp(argv[i], "vhdl") == 0)
+                    {
+                        output_format = ASS_OUT_VHDL;
+                    }
                     else
                     {
                         ASS_log_error("unkown format '%s'", argv[i]);
@@ -728,10 +737,33 @@ int main(int argc, char const *argv[])
         }
         fputc(';', fd);
     }
+    else if (output_format == ASS_OUT_VHDL)
+    {
+        if ((ASS_P_address_stop - ASS_P_address_start) * ASS_P_memory_width / 8 > 1024LLU * 1024LLU * 1024LLU)
+            ASS_log_warning("Very large memory is being written as serialised data (>1GiB)");
+        
+        // Print the first data, because of the comma
+        fprintf(fd, "(\n    %i => \"", ASS_binary_stack[i].address);
+        print_bits(fd, ASS_P_opcode_width / 8, &(ASS_binary_stack[i].data));
+        fprintf(fd, "\"");
+
+        // Print everything else
+        for (size_t i = 1; i < ASS_binary_stack_ptr; i++)
+        {
+            fprintf(fd, ",\n    %i => \"", ASS_binary_stack[i].address);
+            print_bits(fd, ASS_P_opcode_width / 8, &(ASS_binary_stack[i].data));
+            fprintf(fd, "\"");
+        }
+
+        // Fill with zeros
+        fprintf(fd, "\n\n, others => \"");
+        print_bits(fd, ASS_P_opcode_width / 8, 0); 
+        fprintf("\"\n);");
+    }
 
     fclose(fd);
 
-    if(ASS_error_count == 0)
+    if (ASS_error_count == 0)
     {
         ASS_log_info("Success");
         exit(EXIT_SUCCESS);
@@ -839,4 +871,25 @@ void ASS_show_line(int colourCode)
             fputc('~', stderr);
     }
     fputs("\033[0m\n", stderr);
+}
+
+/***********************************************************************************************************/
+/*                                                 HELPERS                                                 */
+/***********************************************************************************************************/
+
+// TODO: use the number of bits instead of the number of bytes for the size
+void print_bits(FILE *fd, size_t const size, void const *const ptr)
+{
+    unsigned char *b = (unsigned char *)ptr;
+    unsigned char byte;
+    int i, j;
+
+    for (i = size - 1; i >= 0; i--)
+    {
+        for (j = 7; j >= 0; j--)
+        {
+            byte = (b[i] >> j) & 0b1;
+            fprintf(fd, "%u", byte);
+        }
+    }
 }
