@@ -743,8 +743,8 @@ int main(int argc, char const *argv[])
             ASS_log_warning("Very large memory is being written as serialised data (>1GiB)");
         
         // Print the first data, because of the comma
-        fprintf(fd, "(\n    %i => \"", ASS_binary_stack[i].address);
-        print_bits(fd, ASS_P_opcode_width / 8, &(ASS_binary_stack[i].data));
+        fprintf(fd, "(\n    %i => \"", ASS_binary_stack[0].address);
+        print_bits(fd, ASS_P_opcode_width / 8, &(ASS_binary_stack[0].data));
         fprintf(fd, "\"");
 
         // Print everything else
@@ -756,9 +756,10 @@ int main(int argc, char const *argv[])
         }
 
         // Fill with zeros
-        fprintf(fd, "\n\n, others => \"");
-        print_bits(fd, ASS_P_opcode_width / 8, 0); 
-        fprintf("\"\n);");
+        fprintf(fd, ",\n\n    others => \"");
+        int zero = 0;
+        print_bits(fd, ASS_P_opcode_width / 8, &zero); 
+        fprintf(fd, "\"\n);\n");
     }
 
     fclose(fd);
