@@ -97,12 +97,12 @@ void param_fill_unset()
     // Set default values
     if (parameters.args_separator == '\0')
     {
-        fail_info("args_separator never set, failling back to default ('%c')", default_parameters.args_separator);
+        fail_info("args_separator never set, falling back to default ('%c')", default_parameters.args_separator);
         parameters.args_separator = default_parameters.args_separator;
     }
     if (parameters.label_postfix == '\0')
     {
-        fail_info("label_postfix never set, failling back to default ('%c')", default_parameters.label_postfix);
+        fail_info("label_postfix never set, falling back to default ('%c')", default_parameters.label_postfix);
         parameters.label_postfix = default_parameters.label_postfix;
     }
 }
