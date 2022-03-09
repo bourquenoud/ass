@@ -124,8 +124,8 @@ void lexer_generate()
 
     // TODO: make pattern a parameter
     token_id_lookup[eT_LABEL] = id;
-    new_token = (token_def_t){.name = "LABEL", .id = id++, .pattern = xmalloc(strlen("[a-zA-Z_][0-9a-zA-Z]*:")), .action = action_parse_str};
-    strcpy(new_token.pattern, "[a-zA-Z_][0-9a-zA-Z]*:");
+    new_token = (token_def_t){.name = "LABEL", .id = id++, .pattern = xmalloc(strlen("[a-zA-Z_][0-9a-zA-Z_]*:")), .action = action_parse_str};
+    strcpy(new_token.pattern, "[a-zA-Z_][0-9a-zA-Z_]*:");
     new_token.pattern[strlen(new_token.pattern) - 1] = parameters.label_postfix;
     darray_add(&tokens, new_token);
 
