@@ -183,6 +183,12 @@ int ASS_parser_output = -1;
 ASS_token_t ASS_parser_token;
 bool ASS_parser_output_ready = false;
 
+/******************** output ********************/
+
+void ASS_output_hex(FILE *fd);
+void ASS_output_coe(FILE *fd);
+void ASS_output_vhdl(FILE *fd);
+
 /******************** helpers ********************/
 
 void print_bits(FILE *fd, size_t const size, void const *const ptr);
@@ -423,7 +429,7 @@ int main(int argc, char const *argv[])
     // Output in hex format by default
     int output_format = ASS_OUT_HEX; // TODO: make configurable from ass file
     bool format_set = false;
-    ASS_show_loc = false; //Disable line display
+    ASS_show_loc = false; // Disable line display
 
     // Parse the arguments
     // NOTE: Handcrafted for portability.
@@ -513,7 +519,7 @@ int main(int argc, char const *argv[])
         exit(EXIT_SUCCESS);
     }
 
-    ASS_show_loc = true; //Enable line display
+    ASS_show_loc = true; // Enable line display
     // TODO : make it not need multiple newlines at the end
     int last_newline = 0;
     bool run = true;
@@ -610,7 +616,7 @@ int main(int argc, char const *argv[])
     }
 
     fclose(fd);
-    ASS_show_loc = false; //Disable line display
+    ASS_show_loc = false; // Disable line display
 
     // Resolve references
     for (size_t i = 0; i < ASS_ref_stack_ptr; i++)
@@ -708,67 +714,21 @@ int main(int argc, char const *argv[])
     else
         fd = fopen(output_file, "w");
 
-    if (output_format == ASS_OUT_HEX)
+    // Generate outputs file
+    switch (output_format)
     {
-        for (size_t i = 0; i < ASS_binary_stack_ptr; i++)
-        {
-            uint8_t msb, lsb;
-            int chksum;
-            msb = (ASS_binary_stack[i].data >> 8) & (0xFF);
-            lsb = (ASS_binary_stack[i].data) & (0xFF);
-            chksum = 2 + ((ASS_binary_stack[i].address * 2) & 0xFF) + (((ASS_binary_stack[i].address * 2) >> 8) & 0xFF) + lsb + msb;
-            fprintf(fd, ":02%04X00%02X%02X%02X\n", ASS_binary_stack[i].address * 2, lsb, msb, (-chksum) & 0xFF);
-        }
-        fprintf(fd, ":00000001FF\n");
-    }
-    else if (output_format == ASS_OUT_COE)
-    {
-        if ((ASS_P_address_stop - ASS_P_address_start) * ASS_P_memory_width / 8 > 1024LLU * 1024LLU * 1024LLU)
-            ASS_log_warning("Very large memory is being written as serialised data (>1GiB)");
-
-        fprintf(fd, "memory_initialization_radix=16;\n");
-        fprintf(fd, "memory_initialization_vector=");
-
-        int instruction_index = 0;
-        for (uint64_t i = ASS_P_address_start; i <= ASS_P_address_stop; i++)
-        {
-            if (i != 0)
-                fputc(',', fd);
-            if (ASS_binary_stack[instruction_index].address == i && instruction_index < ASS_binary_stack_ptr)
-            {
-                fprintf(fd, "\n%llX", ASS_binary_stack[instruction_index].data);
-                instruction_index++;
-            }
-            else
-            {
-                fprintf(fd, "\n0", ASS_binary_stack[instruction_index].data);
-            }
-        }
-        fputc(';', fd);
-    }
-    else if (output_format == ASS_OUT_VHDL)
-    {
-        if ((ASS_P_address_stop - ASS_P_address_start) * ASS_P_memory_width / 8 > 1024LLU * 1024LLU * 1024LLU)
-            ASS_log_warning("Very large memory is being written as serialised data (>1GiB)");
-
-        // Print the first data, because of the comma
-        fprintf(fd, "(\n    %i => \"", ASS_binary_stack[0].address);
-        print_bits(fd, ASS_P_opcode_width / 8, &(ASS_binary_stack[0].data));
-        fprintf(fd, "\"");
-
-        // Print everything else
-        for (size_t i = 1; i < ASS_binary_stack_ptr; i++)
-        {
-            fprintf(fd, ",\n    %i => \"", ASS_binary_stack[i].address);
-            print_bits(fd, ASS_P_opcode_width / 8, &(ASS_binary_stack[i].data));
-            fprintf(fd, "\"");
-        }
-
-        // Fill with zeros
-        fprintf(fd, ",\n\n    others => \"");
-        int zero = 0;
-        print_bits(fd, ASS_P_opcode_width / 8, &zero);
-        fprintf(fd, "\"\n);\n");
+    case ASS_OUT_HEX:
+        ASS_output_hex(fd);
+        break;
+    case ASS_OUT_COE:
+        ASS_output_coe(fd);
+        break;
+    case ASS_OUT_VHDL:
+        ASS_output_vhdl(fd);
+        break;
+    default:
+        ASS_log_error("Output format file error.");
+        break;
     }
 
     fclose(fd);
@@ -784,6 +744,77 @@ int main(int argc, char const *argv[])
         exit(EXIT_FAILURE);
     }
 }
+
+/***********************************************************************************************************/
+/*                                                 OUTPUT                                                  */
+/***********************************************************************************************************/
+
+void ASS_output_hex(FILE *fd)
+{
+    for (size_t i = 0; i < ASS_binary_stack_ptr; i++)
+    {
+        uint8_t msb, lsb;
+        int chksum;
+        msb = (ASS_binary_stack[i].data >> 8) & (0xFF);
+        lsb = (ASS_binary_stack[i].data) & (0xFF);
+        chksum = 2 + ((ASS_binary_stack[i].address * 2) & 0xFF) + (((ASS_binary_stack[i].address * 2) >> 8) & 0xFF) + lsb + msb;
+        fprintf(fd, ":02%04X00%02X%02X%02X\n", ASS_binary_stack[i].address * 2, lsb, msb, (-chksum) & 0xFF);
+    }
+    fprintf(fd, ":00000001FF\n");
+}
+
+void ASS_output_coe(FILE *fd)
+{
+    if ((ASS_P_address_stop - ASS_P_address_start) * ASS_P_memory_width / 8 > 1024LLU * 1024LLU * 1024LLU)
+        ASS_log_warning("Very large memory is being written as serialised data (>1GiB)");
+
+    fprintf(fd, "memory_initialization_radix=16;\n");
+    fprintf(fd, "memory_initialization_vector=");
+
+    int instruction_index = 0;
+    for (uint64_t i = ASS_P_address_start; i <= ASS_P_address_stop; i++)
+    {
+        if (i != 0)
+            fputc(',', fd);
+        if (ASS_binary_stack[instruction_index].address == i && instruction_index < ASS_binary_stack_ptr)
+        {
+            fprintf(fd, "\n%llX", ASS_binary_stack[instruction_index].data);
+            instruction_index++;
+        }
+        else
+        {
+            fprintf(fd, "\n0", ASS_binary_stack[instruction_index].data);
+        }
+    }
+    fputc(';', fd);
+}
+
+void ASS_output_vhdl(FILE *fd)
+{
+    if ((ASS_P_address_stop - ASS_P_address_start) * ASS_P_memory_width / 8 > 1024LLU * 1024LLU * 1024LLU)
+        ASS_log_warning("Very large memory is being written as serialised data (>1GiB)");
+
+    // Print the first data, because of the comma
+    fprintf(fd, "(\n    %i => \"", ASS_binary_stack[0].address);
+    print_bits(fd, ASS_P_opcode_width / 8, &(ASS_binary_stack[0].data));
+    fprintf(fd, "\"");
+
+    // Print everything else
+    for (size_t i = 1; i < ASS_binary_stack_ptr; i++)
+    {
+        fprintf(fd, ",\n    %i => \"", ASS_binary_stack[i].address);
+        print_bits(fd, ASS_P_opcode_width / 8, &(ASS_binary_stack[i].data));
+        fprintf(fd, "\"");
+    }
+
+    // Fill with zeros
+    fprintf(fd, ",\n\n    others => \"");
+    int zero = 0;
+    print_bits(fd, ASS_P_opcode_width / 8, &zero);
+    fprintf(fd, "\"\n);\n");
+}
+
+// TODO: Add support for custom output format
 
 /***********************************************************************************************************/
 /*                                                LOG SYSTEM                                               */
