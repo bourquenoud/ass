@@ -128,7 +128,7 @@ int main(int argc, char **argv)
 
     // Open the output stream, catching errors earlier
     if (output_file == NULL)
-        fd = stdin;
+        fd = stdout;
     else
         fd = fopen(output_file, "w");
 
