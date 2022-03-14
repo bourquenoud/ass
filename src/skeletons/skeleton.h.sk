@@ -88,6 +88,7 @@ typedef struct
 char *ASS_text = NULL;
 int ASS_current_address = 0;
 bool ASS_option_verbose = false;
+bool ASS_show_loc = false;
 
 /********************* log system *********************/
 #define ASS_INFO_COLOUR 94
@@ -420,6 +421,7 @@ int main(int argc, char const *argv[])
     // Output in hex format by default
     int output_format = ASS_OUT_HEX; // TODO: make configurable from ass file
     bool format_set = false;
+    ASS_show_loc = false; //Disable line display
 
     // Parse the arguments
     // NOTE: Handcrafted for portability.
@@ -435,7 +437,7 @@ int main(int argc, char const *argv[])
             {
                 switch (argv[i][j])
                 {
-                case 'h': //Help message
+                case 'h': // Help message
                     printf("Help message not implemented.");
                     exit(EXIT_SUCCESS);
                 case 'o': // Output file
@@ -509,6 +511,7 @@ int main(int argc, char const *argv[])
         exit(EXIT_SUCCESS);
     }
 
+    ASS_show_loc = true; //Enable line display
     // TODO : make it not need multiple newlines at the end
     int last_newline = 0;
     bool run = true;
@@ -605,6 +608,7 @@ int main(int argc, char const *argv[])
     }
 
     fclose(fd);
+    ASS_show_loc = false; //Disable line display
 
     // Resolve references
     for (size_t i = 0; i < ASS_ref_stack_ptr; i++)
@@ -744,7 +748,7 @@ int main(int argc, char const *argv[])
     {
         if ((ASS_P_address_stop - ASS_P_address_start) * ASS_P_memory_width / 8 > 1024LLU * 1024LLU * 1024LLU)
             ASS_log_warning("Very large memory is being written as serialised data (>1GiB)");
-        
+
         // Print the first data, because of the comma
         fprintf(fd, "(\n    %i => \"", ASS_binary_stack[0].address);
         print_bits(fd, ASS_P_opcode_width / 8, &(ASS_binary_stack[0].data));
@@ -761,7 +765,7 @@ int main(int argc, char const *argv[])
         // Fill with zeros
         fprintf(fd, ",\n\n    others => \"");
         int zero = 0;
-        print_bits(fd, ASS_P_opcode_width / 8, &zero); 
+        print_bits(fd, ASS_P_opcode_width / 8, &zero);
         fprintf(fd, "\"\n);\n");
     }
 
@@ -783,8 +787,6 @@ int main(int argc, char const *argv[])
 /*                                                LOG SYSTEM                                               */
 /***********************************************************************************************************/
 
-// TODO: Upgrade to the new version
-
 void ASS_log_info(const char *format, ...)
 {
     ASS_info_count++;
@@ -796,7 +798,11 @@ void ASS_log_info(const char *format, ...)
     va_list args;
     va_start(args, format);
     fprintf(stderr, "\033[%im", ASS_INFO_COLOUR);
-    fprintf(stderr, "INFO line %i : ", ASS_loc.first_line);
+
+    if (ASS_show_loc)
+        fprintf(stderr, "INFO line %i : ", ASS_loc.first_line);
+    else
+        fprintf(stderr, "INFO : ");
     vfprintf(stderr, format, args);
     fputs("\033[0m\n", stderr);
     va_end(args);
@@ -812,7 +818,12 @@ void ASS_log_warning(const char *format, ...)
     va_list args;
     va_start(args, format);
     fprintf(stderr, "\033[%im", ASS_WARN_COLOUR);
-    fprintf(stderr, "WARNING line %i : ", ASS_loc.first_line);
+
+    if (ASS_show_loc)
+        fprintf(stderr, "WARNING line %i : ", ASS_loc.first_line);
+    else
+        fprintf(stderr, "WARNING : ");
+
     vfprintf(stderr, format, args);
     fputs("\033[0m\n", stderr);
     va_end(args);
@@ -829,7 +840,12 @@ void ASS_log_error(const char *format, ...)
     va_list args;
     va_start(args, format);
     fprintf(stderr, "\033[%im", ASS_ERRO_COLOUR);
-    fprintf(stderr, "ERROR line %i : ", ASS_loc.first_line);
+
+    if (ASS_show_loc)
+        fprintf(stderr, "ERROR line %i : ", ASS_loc.first_line);
+    else
+        fprintf(stderr, "ERROR : ");
+
     vfprintf(stderr, format, args);
     fputs("\033[0m\n\n", stderr);
     va_end(args);
@@ -843,6 +859,9 @@ void ASS_log_error(const char *format, ...)
 void ASS_show_line(int colourCode)
 {
     int i;
+
+    if (!ASS_show_loc)
+        return;
 
     fprintf(stderr, "%6i |", ASS_loc.first_line);
 
