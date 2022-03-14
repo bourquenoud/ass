@@ -402,11 +402,13 @@ void ASS_parser()
 /*                                                    MAIN                                                 */
 /***********************************************************************************************************/
 
+// Callback for qsort
 int ASS_address_range_cmp(const void *a, const void *b)
 {
     return (*(address_range_t *)a).start - (*(address_range_t *)b).start;
 }
 
+// Callback for qsort
 int ASS_opcode_cmp(const void *a, const void *b)
 {
     return (*(ASS_opcode_t *)a).address - (*(ASS_opcode_t *)b).address;
