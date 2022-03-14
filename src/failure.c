@@ -91,13 +91,13 @@ void fail_detail(const char *format, ...)
     set_colour(DETA_COLOUR);
 
     if (showLoc)
-        fprintf(stdout, "DETAIL line %i : ", loc.first_line);
+        fprintf(stderr, "DETAIL line %i : ", loc.first_line);
     else
-        fprintf(stdout, "DETAIL : ");
+        fprintf(stderr, "DETAIL : ");
 
-    vfprintf(stdout, format, args);
+    vfprintf(stderr, format, args);
     set_colour(RESET_COLOUR);
-    fputc('\n', stdout);
+    fputc('\n', stderr);
     va_end(args);
 }
 
@@ -113,12 +113,12 @@ void fail_info(const char *format, ...)
     set_colour(INFO_COLOUR);
 
     if (showLoc)
-        fprintf(stdout, "INFO line %i : ", loc.first_line);
+        fprintf(stderr, "INFO line %i : ", loc.first_line);
     else
-        fprintf(stdout, "INFO : ");
-    vfprintf(stdout, format, args);
+        fprintf(stderr, "INFO : ");
+    vfprintf(stderr, format, args);
     set_colour(RESET_COLOUR);
-    fputc('\n', stdout);
+    fputc('\n', stderr);
     va_end(args);
 }
 
@@ -134,13 +134,13 @@ void fail_warning(const char *format, ...)
     set_colour(WARN_COLOUR);
 
     if (showLoc)
-        fprintf(stdout, "WARNING line %i : ", loc.first_line);
+        fprintf(stderr, "WARNING line %i : ", loc.first_line);
     else
-        fprintf(stdout, "WARNING : ");
+        fprintf(stderr, "WARNING : ");
 
-    vfprintf(stdout, format, args);
+    vfprintf(stderr, format, args);
     set_colour(RESET_COLOUR);
-    fputc('\n', stdout);
+    fputc('\n', stderr);
     va_end(args);
 }
 
@@ -157,13 +157,13 @@ void fail_error(const char *format, ...)
     set_colour(ERRO_COLOUR);
 
     if (showLoc)
-        fprintf(stdout, "ERROR line %i : ", loc.first_line);
+        fprintf(stderr, "ERROR line %i : ", loc.first_line);
     else
-        fprintf(stdout, "ERROR : ");
+        fprintf(stderr, "ERROR : ");
 
-    vfprintf(stdout, format, args);
+    vfprintf(stderr, format, args);
     set_colour(RESET_COLOUR);
-    fputc('\n', stdout);
+    fputc('\n', stderr);
     va_end(args);
     // exit(EXIT_FAILURE);
 }
@@ -171,5 +171,5 @@ void fail_error(const char *format, ...)
 void set_colour(int colour)
 {
     if (showColour)
-        fprintf(stdout, "\033[%im", colour);
+        fprintf(stderr, "\033[%im", colour);
 }
