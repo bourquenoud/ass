@@ -89,7 +89,7 @@ typedef struct
 typedef struct
 {
     uint64_t val;
-    char* name;
+    char *name;
 } ASS_const_t;
 
 /********************* general globals *********************/
@@ -346,11 +346,11 @@ ASS_const_t ASS_const_stack_pop(void)
 /*                                                   CONST                                                 */
 /***********************************************************************************************************/
 
-uint64_t ASS_resolve_const(char* name)
+uint64_t ASS_resolve_const(char *name)
 {
-    for(int i = 0; i < ASS_const_stack_ptr; i++)
+    for (int i = 0; i < ASS_const_stack_ptr; i++)
     {
-        if(strcmp(ASS_const_stack[i].name, name) == 0)
+        if (strcmp(ASS_const_stack[i].name, name) == 0)
             return ASS_const_stack[i].val;
     }
 
@@ -769,32 +769,35 @@ int main(int argc, char const *argv[])
         fd = fopen(output_file, "w");
 
     // Generate outputs file
-    switch (output_format)
+    if (ASS_error_count == 0)
     {
-    case ASS_OUT_HEX:
-        ASS_output_hex(fd);
-        break;
-    case ASS_OUT_COE:
-        ASS_output_coe(fd);
-        break;
-    case ASS_OUT_VHDL:
-        ASS_output_vhdl(fd);
-        break;
-    default:
-        ASS_log_error("Output format file error.");
-        break;
+        switch (output_format)
+        {
+        case ASS_OUT_HEX:
+            ASS_output_hex(fd);
+            break;
+        case ASS_OUT_COE:
+            ASS_output_coe(fd);
+            break;
+        case ASS_OUT_VHDL:
+            ASS_output_vhdl(fd);
+            break;
+        default:
+            ASS_log_error("Output format file error.");
+            break;
+        }
     }
 
     fclose(fd);
 
     if (ASS_error_count == 0)
     {
-        ASS_log_info("Success");
+        ASS_log_info("Success.");
         exit(EXIT_SUCCESS);
     }
     else
     {
-        ASS_log_error("Error");
+        ASS_log_error("Assembly process failed.");
         exit(EXIT_FAILURE);
     }
 }

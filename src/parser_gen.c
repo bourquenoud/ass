@@ -20,13 +20,6 @@ char *action_address =
     "    ASS_current_address = (int)ASS_parser_stack_pop().uVal;\n"
     "    return (ASS_data_t){ASS_DT_NULL, (uint64_t)0};";
 
-char *action_opcode_DEBUG =
-    "    ASS_opcode_t new_opcode;\n"
-    "    new_opcode.address = ASS_current_address++;\n"
-    "    new_opcode.data = 0;\n"
-    "    ASS_binary_stack_push(new_opcode);\n"
-    "    return (ASS_data_t){ASS_DT_NULL, (uint64_t)0};";
-
 char *action_constant = 
     "    ASS_const_t new_const;\n"
     "    new_const.val = ASS_parser_stack_pop().uVal;\n"
