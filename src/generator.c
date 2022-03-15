@@ -233,7 +233,7 @@ void generator_data_union(int indent)
 {
     iprintf(0, "typedef struct");
     iprintf(0 + indent, "{");
-    iprintf(1 + indent, "int type;");
+    iprintf(1 + indent, "ASS_DT_t type;");
     iprintf(1 + indent, "union {");
     iprintf(2 + indent, "uint64_t uVal;");
     iprintf(2 + indent, "int64_t iVal;");
@@ -241,6 +241,16 @@ void generator_data_union(int indent)
     iprintf(1 + indent, "};");
     iprintf(0 + indent, "} ASS_data_t;");
 }
+
+void generator_data_types(int indent)
+{
+    iprintf(0, "typedef enum {");
+    iprintf(1 + indent, "ASS_DT_NULL,");
+    iprintf(1 + indent, "ASS_DT_UNSIGNED,");
+    iprintf(1 + indent, "ASS_DT_SIGNED,");
+    iprintf(1 + indent, "ASS_DT_STRING,");
+    iprintf(1 + indent, "} ASS_DT_t;");
+} 
 
 void generator_lexer_actions(int indent)
 {
@@ -278,7 +288,7 @@ void generator_lexer_actions(int indent)
                 iprintf(0 + indent, "// Empty action");
                 iprintf(0 + indent, "ASS_data_t ASS_TA_%s()", tokens_array[i].name);
                 iprintf(0 + indent, "{");
-                iprintf(1 + indent, "return (ASS_data_t){0, (uint64_t)0};");
+                iprintf(1 + indent, "return (ASS_data_t){ASS_DT_NULL, (uint64_t)0};");
                 iprintf(0 + indent, "}");
             }
         }
@@ -358,7 +368,7 @@ void generator_parser_actions(int indent)
                 iprintf(0 + indent, "// Empty action");
                 iprintf(0 + indent, "ASS_data_t ASS_RA_%s()", rules[i]->name);
                 iprintf(0 + indent, "{");
-                iprintf(1 + indent, "return (ASS_data_t){0, (uint64_t)0};");
+                iprintf(1 + indent, "return (ASS_data_t){ASS_DT_NULL, (uint64_t)0};");
                 iprintf(0 + indent, "}");
             }
         }
