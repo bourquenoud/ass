@@ -14,18 +14,18 @@ char *action_label =
     "    new_symbol.name[len - 1] = '\\0';\n"
     "    new_symbol.value = ASS_current_address;\n"
     "    ASS_symbol_stack_push(new_symbol);\n"
-    "    return (ASS_data_t)(uint64_t)0;";
+    "    return (ASS_data_t){0, (uint64_t)0};";
 
 char *action_address =
     "    ASS_current_address = (int)ASS_parser_stack_pop().uVal;\n"
-    "    return (ASS_data_t)(uint64_t)0;";
+    "    return (ASS_data_t){0, (uint64_t)0};";
 
 char *action_opcode_DEBUG =
     "    ASS_opcode_t new_opcode;\n"
     "    new_opcode.address = ASS_current_address++;\n"
     "    new_opcode.data = 0;\n"
     "    ASS_binary_stack_push(new_opcode);\n"
-    "    return (ASS_data_t)(uint64_t)0;";
+    "    return (ASS_data_t){0, (uint64_t)0};";
 
 darray_t *rule_list_tint;
 

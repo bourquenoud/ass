@@ -231,11 +231,14 @@ void generator_parameters(int indent)
 
 void generator_data_union(int indent)
 {
-    iprintf(0, "typedef union");
+    iprintf(0, "typedef struct");
     iprintf(0 + indent, "{");
-    iprintf(1 + indent, "uint64_t uVal;");
-    iprintf(1 + indent, "int64_t iVal;");
-    iprintf(1 + indent, "char *sVal;");
+    iprintf(1 + indent, "int type;");
+    iprintf(1 + indent, "union {");
+    iprintf(2 + indent, "uint64_t uVal;");
+    iprintf(2 + indent, "int64_t iVal;");
+    iprintf(2 + indent, "char *sVal;");
+    iprintf(1 + indent, "};");
     iprintf(0 + indent, "} ASS_data_t;");
 }
 
@@ -275,7 +278,7 @@ void generator_lexer_actions(int indent)
                 iprintf(0 + indent, "// Empty action");
                 iprintf(0 + indent, "ASS_data_t ASS_TA_%s()", tokens_array[i].name);
                 iprintf(0 + indent, "{");
-                iprintf(1 + indent, "return (ASS_data_t)(uint64_t)0;");
+                iprintf(1 + indent, "return (ASS_data_t){0, (uint64_t)0};");
                 iprintf(0 + indent, "}");
             }
         }
@@ -355,7 +358,7 @@ void generator_parser_actions(int indent)
                 iprintf(0 + indent, "// Empty action");
                 iprintf(0 + indent, "ASS_data_t ASS_RA_%s()", rules[i]->name);
                 iprintf(0 + indent, "{");
-                iprintf(1 + indent, "return (ASS_data_t)(uint64_t)0;");
+                iprintf(1 + indent, "return (ASS_data_t){0, (uint64_t)0};");
                 iprintf(0 + indent, "}");
             }
         }
