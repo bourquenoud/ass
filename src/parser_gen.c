@@ -27,6 +27,16 @@ char *action_opcode_DEBUG =
     "    ASS_binary_stack_push(new_opcode);\n"
     "    return (ASS_data_t){ASS_DT_NULL, (uint64_t)0};";
 
+char *action_constant = 
+    "    ASS_const_t new_const;\n"
+    "    new_const.val = ASS_parser_stack_pop().uVal;\n"
+    "    char* str = ASS_parser_stack_pop().sVal;\n"
+    "    int len = strlen(str);\n"
+    "    new_const.name = malloc(len);\n"
+    "    strncpy(new_const.name, str, len);\n"
+    "    ASS_const_stack_push(new_const);\n"
+    "    return (ASS_data_t){ASS_DT_NULL, (uint64_t)0};";
+
 darray_t *rule_list_tint;
 
 void parser_init()
@@ -148,25 +158,44 @@ void parser_generate()
     }
 
     int x = 0;
-    rule_def_t *new_rule = xmalloc(sizeof(rule_def_t) + 1);
+    rule_def_t *new_rule;
+
+    //HACK: Hardcoded constant directive
+    new_rule = xmalloc(sizeof(rule_def_t) + 8 * sizeof(int));
+    new_rule->id = opcode_count + x;
+    new_rule->count = 8;
+    new_rule->name = "constant";
+    new_rule->action = action_constant;
+    new_rule->tokens[0] = token_id_lookup[eT_CONSTANT_DIR];
+    new_rule->tokens[1] = token_id_lookup[eT_IDENTIFIER];
+    new_rule->tokens[2] = token_id_lookup[eT_ARG_SEPARATOR];
+    new_rule->tokens[3] = -(int)'['; //Open a set
+    new_rule->tokens[4] = token_id_lookup[eT_IMMEDIATE_CHAR];
+    new_rule->tokens[5] = token_id_lookup[eT_IMMEDIATE_INT];
+    new_rule->tokens[6] = -(int)']'; //Close the set
+    new_rule->tokens[7] = token_id_lookup[eT_NEWLINE];
+    rules[opcode_count + x] = new_rule;
+    x++;
+
+    new_rule = xmalloc(sizeof(rule_def_t) + sizeof(int));
     new_rule->id = opcode_count + x;
     new_rule->count = 1;
-    new_rule->name = "empty_comment";
+    new_rule->name = "single_comment";
     new_rule->action = NULL;
     new_rule->tokens[0] = token_id_lookup[eT_COMMENT];
     rules[opcode_count + x] = new_rule;
     x++;
 
-    new_rule = xmalloc(sizeof(rule_def_t) + 1);
+    new_rule = xmalloc(sizeof(rule_def_t) + sizeof(int));
     new_rule->id = opcode_count + x;
     new_rule->count = 1;
-    new_rule->name = "empty_newline";
+    new_rule->name = "single_newline";
     new_rule->action = NULL;
     new_rule->tokens[0] = token_id_lookup[eT_NEWLINE];
     rules[opcode_count + x] = new_rule;
     x++;
 
-    new_rule = xmalloc(sizeof(rule_def_t) + 1);
+    new_rule = xmalloc(sizeof(rule_def_t) + sizeof(int));
     new_rule->id = opcode_count + x;
     new_rule->count = 1;
     new_rule->name = "label";
@@ -181,15 +210,6 @@ void parser_generate()
     new_rule->name = "address";
     new_rule->action = action_address;
     new_rule->tokens[0] = token_id_lookup[eT_ADDRESS];
-    rules[opcode_count + x] = new_rule;
-    x++;
-
-    new_rule = xmalloc(sizeof(rule_def_t) + 1);
-    new_rule->id = opcode_count + x;
-    new_rule->count = 1;
-    new_rule->name = "section";
-    new_rule->action = NULL;
-    new_rule->tokens[0] = token_id_lookup[eT_SECTION];
     rules[opcode_count + x] = new_rule;
     x++;
 

@@ -20,7 +20,7 @@ enum
     eT_IMMEDIATE_INT,
     eT_IMMEDIATE_CHAR,
     eT_IDENTIFIER,
-    eT_SECTION,
+    eT_CONSTANT_DIR,
 };
 
 int extern token_id_lookup[];

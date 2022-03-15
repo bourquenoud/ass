@@ -40,7 +40,7 @@ int token_id_lookup[] =
         [eT_IMMEDIATE_INT] = -1,
         [eT_IMMEDIATE_CHAR] = -1,
         [eT_IDENTIFIER] = -1,
-        [eT_SECTION] = -1,
+        [eT_CONSTANT_DIR] = -1,
 };
 
 darray_t *tokens;
@@ -133,6 +133,7 @@ void lexer_generate()
     new_token.pattern[strlen(new_token.pattern) - 1] = parameters.label_postfix;
     darray_add(&tokens, new_token);
 
+    // FIXME : only matches hex numbers
     token_id_lookup[eT_IMMEDIATE_INT] = id;
     new_token = (token_def_t){.name = "IMMEDIATE_INT", .id = id++, .pattern = "0x[0-9a-fA-F]+", .action = action_parse_int};
     darray_add(&tokens, new_token);
@@ -141,8 +142,8 @@ void lexer_generate()
     new_token = (token_def_t){.name = "IMMEDIATE_CHAR", .id = id++, .pattern = "'[ -~]'", .action = action_parse_char};
     darray_add(&tokens, new_token);
 
-    token_id_lookup[eT_SECTION] = id;
-    new_token = (token_def_t){.name = "SECTION", .id = id++, .pattern = "\\.[a-zA-Z_][a-zA-Z0-9_]*", .action = action_parse_str};
+    token_id_lookup[eT_CONSTANT_DIR] = id;
+    new_token = (token_def_t){.name = "CONSTANT_DIR", .id = id++, .pattern = "\\.constant", .action = NULL};
     darray_add(&tokens, new_token);
 
     token_id_lookup[eT_IDENTIFIER] = id;

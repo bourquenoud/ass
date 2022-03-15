@@ -476,9 +476,6 @@ int ASS_opcode_cmp(const void *a, const void *b)
 
 int main(int argc, char const *argv[])
 {
-    //XXX: REMOVEME
-    ASS_const_stack_push((ASS_const_t){.name = "blabla", .val = 0x50});
-
     FILE *fd;
     char const *output_file = NULL;
     char const *input_file = NULL;
