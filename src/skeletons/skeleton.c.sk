@@ -58,15 +58,7 @@ char const *const ASS_help_message =
     "               coe    Xilinx COE\n"
     "               vhdl   VHDL data array\n";
 
-char const *const ASS_version_message =
-    "[Name] [Version]\n"
-    "Written by [Author].\n"
-    "\n"
-    "Copyright (C) [Copyright].\n"
-    "This program comes with ABSOLUTELY NO WARRANTY; not even for\n"
-    "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n"
-    "This is free software, and you are welcome to redistribute it\n"
-    "under certain conditions; refer to the license for details.\n";
+/*!! version_message !!*/
 
 /********************* struct and unions *********************/
 /*!! data_union !!*/

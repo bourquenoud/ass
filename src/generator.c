@@ -210,6 +210,19 @@ char *generator_generate_opcode_action(opcode_t opcode)
 /*                   CALLBACKS                    */
 /**************************************************/
 
+void generator_version_message(int indent)
+{
+    iprintf(1 + indent, "char const *const ASS_version_message =");
+    iprintf(1 + indent, "\"%s %s\\n\"", parameters.name, parameters.version);
+    iprintf(1 + indent, "\"Written by %s.\\n\"", parameters.author);
+    iprintf(1 + indent, "\"\\n\"");
+    iprintf(1 + indent, "\"Copyright (C) %s.\\n\"", parameters.copyright);
+    iprintf(1 + indent, "\"This program comes with ABSOLUTELY NO WARRANTY; not even for\\n\"");
+    iprintf(1 + indent, "\"MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\\n\"");
+    iprintf(1 + indent, "\"This is free software, and you are welcome to redistribute it\\n\"");
+    iprintf(1 + indent, "\"under certain conditions; refer to the license for details.\\n\";");
+}
+
 void generator_notice(int indent)
 {
     iprintf(0, "/* A free assembler, made by ASS %i.%i.%i */", VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION);

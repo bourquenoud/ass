@@ -16,6 +16,7 @@ void generate(FILE *fd)
 
     function_table = hash_init(64);
 
+    register_function(version_message);
     register_function(notice);
     register_function(parameters);
     register_function(data_union);

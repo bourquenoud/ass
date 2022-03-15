@@ -18,6 +18,10 @@ enum
     ePARAM_ARGS_SEPARATOR,
     ePARAM_LABEL_POSTFIX,
     ePARAM_CONSTANT_DIRECTIVE,
+    ePARAM_AUTHOR,
+    ePARAM_NAME,
+    ePARAM_VERSION,
+    ePARAM_COPYRIGHT,
     ePARAM_len
 };
 
@@ -43,6 +47,12 @@ typedef struct
     char args_separator; // The character used to separate the arguments of a mnemonic
     char label_postfix; // The character at the end of a label declaration (':' by default)
     char* constant_dir; // Directive for constant declaration
+
+    // Version parameters, all optional
+    char* author;
+    char* version;
+    char* name;
+    char* copyright;
 } parameters_t;
 
 extern parameters_t parameters;

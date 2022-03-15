@@ -1,3 +1,10 @@
+// Version and name for the generated assembler
+// Note that a GPLv3 notice is automatically inserted
+%param name "Example assembler"
+%param author "Mathieu Bourquenoud"
+%param version "1.0.0"
+%param copyright "2022 Mathieu Bourquenoud"
+
 //Memory parameters
 %param opcode_width    14
 %param memory_width    16

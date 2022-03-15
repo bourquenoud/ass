@@ -32,6 +32,10 @@ const parameters_t start_parameters =
         .args_separator = '\0',
         .label_postfix = '\0',
         .constant_dir = NULL,
+        .author = NULL,
+        .version = NULL,
+        .name = NULL,
+        .copyright = NULL,
 };
 
 /**
@@ -53,6 +57,10 @@ const parameters_t default_parameters =
         .args_separator = ',',
         .label_postfix = ':',
         .constant_dir = "\\.constant",
+        .author = "[NOT SET]",
+        .version = "[NOT SET]",
+        .name = "[NOT SET]",
+        .copyright = "[NOT SET]",
 };
 
 static const char *const param_names[] =
@@ -67,6 +75,10 @@ static const char *const param_names[] =
         [ePARAM_ARGS_SEPARATOR] = "args_separator",
         [ePARAM_LABEL_POSTFIX] = "label_postfix",
         [ePARAM_CONSTANT_DIRECTIVE] = "constant_directive",
+        [ePARAM_AUTHOR] = "author",
+        [ePARAM_NAME] = "name",
+        [ePARAM_VERSION] = "version",
+        [ePARAM_COPYRIGHT] = "copyright",
 };
 
 int search_match(const char *const string_list[], int n_strings, const char *pattern);
@@ -114,6 +126,26 @@ void param_fill_unset()
     {
         fail_info("constant_directive never set, falling back to default ('%s')", default_parameters.constant_dir);
         parameters.constant_dir = default_parameters.constant_dir;
+    }
+    if (parameters.author == NULL)
+    {
+        fail_info("Author never set, falling back to default ('%s')", default_parameters.author);
+        parameters.author = default_parameters.author;
+    }
+    if (parameters.version == NULL)
+    {
+        fail_info("Version never set, falling back to default ('%s')", default_parameters.version);
+        parameters.version = default_parameters.version;
+    }
+    if (parameters.name == NULL)
+    {
+        fail_info("Name never set, falling back to default ('%s')", default_parameters.name);
+        parameters.name = default_parameters.name;
+    }
+    if (parameters.copyright == NULL)
+    {
+        fail_info("Copyright never set, falling back to default ('%s')", default_parameters.copyright);
+        parameters.copyright = default_parameters.copyright;
     }
 }
 
@@ -319,11 +351,71 @@ int command_param(linked_list_t *args)
         if (strlen(str) <= 0)
         {
             fail_error("Constant directive is too short.");
-            return 1; //Error
+            return 1; // Error
         }
 
-        parameters.constant_dir = str; //Passed by ref, may need to be copied for stability
-        return 0; //Success
+        parameters.constant_dir = str; // Passed by ref, may need to be copied for stability
+        return 0;                      // Success
+        break;
+
+    case ePARAM_AUTHOR:
+        if (len != 2)
+            fail_error("Parameter '%s' expects one string.", param_name);
+
+        arg_array[0] = list_get_at(args, 1);
+        if (!try_get_string(arg_array[0], &str))
+            fail_error("Parameter '%s' expects one string.", param_name);
+
+        if (parameters.constant_dir != NULL)
+            fail_warning("Parameter '%s' set more than once.", param_name);
+
+        parameters.author = str; // Passed by ref, may need to be copied for stability
+        return 0;                // Success
+        break;
+
+    case ePARAM_VERSION:
+        if (len != 2)
+            fail_error("Parameter '%s' expects one string.", param_name);
+
+        arg_array[0] = list_get_at(args, 1);
+        if (!try_get_string(arg_array[0], &str))
+            fail_error("Parameter '%s' expects one string.", param_name);
+
+        if (parameters.constant_dir != NULL)
+            fail_warning("Parameter '%s' set more than once.", param_name);
+
+        parameters.version = str; // Passed by ref, may need to be copied for stability
+        return 0;                 // Success
+        break;
+
+    case ePARAM_NAME:
+        if (len != 2)
+            fail_error("Parameter '%s' expects one string.", param_name);
+
+        arg_array[0] = list_get_at(args, 1);
+        if (!try_get_string(arg_array[0], &str))
+            fail_error("Parameter '%s' expects one string.", param_name);
+
+        if (parameters.constant_dir != NULL)
+            fail_warning("Parameter '%s' set more than once.", param_name);
+
+        parameters.name = str; // Passed by ref, may need to be copied for stability
+        return 0;              // Success
+        break;
+
+    case ePARAM_COPYRIGHT:
+        if (len != 2)
+            fail_error("Parameter '%s' expects one string.", param_name);
+
+        arg_array[0] = list_get_at(args, 1);
+        if (!try_get_string(arg_array[0], &str))
+            fail_error("Parameter '%s' expects one string.", param_name);
+
+        if (parameters.constant_dir != NULL)
+            fail_warning("Parameter '%s' set more than once.", param_name);
+
+        parameters.copyright = str; // Passed by ref, may need to be copied for stability
+        return 0;                   // Success
         break;
 
     default:
