@@ -42,6 +42,32 @@ enum
 
 /*!! data_types !!*/
 
+char const *const ASS_help_message =
+    "Usage: %s [OPTION]... -o OUTPUT_FILE INPUT_FILE\n"
+    "A simple assembler.\n"
+    "\n"
+    "Options:\n"
+    "  -o <FILE>    set the output file\n"
+    "  -h           display this help and exit\n"
+    "  -V           output version information and exit\n"
+    "  -v           show info messages\n"
+    "\n"
+    "  -f <FORMAT>  set the format for the output file\n"
+    "               the available formats are\n"
+    "               hex    Intel HEX (default)\n"
+    "               coe    Xilinx COE\n"
+    "               vhdl   VHDL data array\n";
+
+char const *const ASS_version_message =
+    "[Name] [Version]\n"
+    "Written by [Author].\n"
+    "\n"
+    "Copyright (C) [Copyright].\n"
+    "This program comes with ABSOLUTELY NO WARRANTY; not even for\n"
+    "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n"
+    "This is free software, and you are welcome to redistribute it\n"
+    "under certain conditions; refer to the license for details.\n";
+
 /********************* struct and unions *********************/
 /*!! data_union !!*/
 
@@ -500,7 +526,10 @@ int main(int argc, char const *argv[])
                 switch (argv[i][j])
                 {
                 case 'h': // Help message
-                    printf("Help message not implemented.");
+                    printf(ASS_help_message, argv[0]);
+                    exit(EXIT_SUCCESS);
+                case 'V':
+                    printf(ASS_version_message);
                     exit(EXIT_SUCCESS);
                 case 'o': // Output file
                     if (++i >= argc || (strlen(argv[i]) >= 2 && argv[i][0] == '-'))
