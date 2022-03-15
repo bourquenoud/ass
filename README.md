@@ -116,7 +116,7 @@ The state machines are implemented using **very** large switch case statements. 
 
 I'm planning on implementing an automatic documentation generator. Doc being quite important, this is something I'll implement in the near future if I find it easy to do.
 
-Being able to generate linkable files could be useful, but as this software targets mostly small processors.
+Being able to generate linkable files could be useful, but as this software targets mostly small processors this isn't a priority.
 
 I want to implement a way to generate an emulator from the opcode descriptions, but this will probably need a lot of work. This may or may not be implemented one day, but don't expect anything.
 
