@@ -133,7 +133,8 @@ void lexer_generate()
     new_token.pattern[strlen(new_token.pattern) - 1] = parameters.label_postfix;
     darray_add(&tokens, new_token);
 
-    // FIXME : only matches hex numbers
+    // TODO: add signed numbers support
+    // FIXME : only matches hex numbers, should match anything strtoull can parse
     token_id_lookup[eT_IMMEDIATE_INT] = id;
     new_token = (token_def_t){.name = "IMMEDIATE_INT", .id = id++, .pattern = "0x[0-9a-fA-F]+", .action = action_parse_int};
     darray_add(&tokens, new_token);
@@ -143,7 +144,7 @@ void lexer_generate()
     darray_add(&tokens, new_token);
 
     token_id_lookup[eT_CONSTANT_DIR] = id;
-    new_token = (token_def_t){.name = "CONSTANT_DIR", .id = id++, .pattern = "\\.constant", .action = NULL};
+    new_token = (token_def_t){.name = "CONSTANT_DIR", .id = id++, .pattern = parameters.constant_dir, .action = NULL};
     darray_add(&tokens, new_token);
 
     token_id_lookup[eT_IDENTIFIER] = id;

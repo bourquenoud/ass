@@ -160,8 +160,7 @@ void parser_generate()
     int x = 0;
     rule_def_t *new_rule;
 
-    //HACK: Hardcoded constant directive
-    new_rule = xmalloc(sizeof(rule_def_t) + 8 * sizeof(int));
+    new_rule = xmalloc(sizeof(rule_def_t) + 11 * sizeof(int));
     new_rule->id = opcode_count + x;
     new_rule->count = 8;
     new_rule->name = "constant";
@@ -173,7 +172,10 @@ void parser_generate()
     new_rule->tokens[4] = token_id_lookup[eT_IMMEDIATE_CHAR];
     new_rule->tokens[5] = token_id_lookup[eT_IMMEDIATE_INT];
     new_rule->tokens[6] = -(int)']'; //Close the set
-    new_rule->tokens[7] = token_id_lookup[eT_NEWLINE];
+    new_rule->tokens[7] = -(int)'['; //Open a set
+    new_rule->tokens[8] = token_id_lookup[eT_NEWLINE];
+    new_rule->tokens[9] = token_id_lookup[eT_COMMENT];
+    new_rule->tokens[10] = -(int)']'; //Close the set
     rules[opcode_count + x] = new_rule;
     x++;
 

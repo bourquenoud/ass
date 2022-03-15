@@ -17,6 +17,7 @@ enum
     ePARAM_ENDIANNESS,
     ePARAM_ARGS_SEPARATOR,
     ePARAM_LABEL_POSTFIX,
+    ePARAM_CONSTANT_DIRECTIVE,
     ePARAM_len
 };
 
@@ -41,6 +42,7 @@ typedef struct
     // Syntax parameters, all optional with default values
     char args_separator; // The character used to separate the arguments of a mnemonic
     char label_postfix; // The character at the end of a label declaration (':' by default)
+    char* constant_dir; // Directive for constant declaration
 } parameters_t;
 
 extern parameters_t parameters;
