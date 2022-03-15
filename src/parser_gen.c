@@ -73,6 +73,7 @@ void parser_generate()
                         darray_add(&rule_list_tint, token_id);
                         darray_add(&rule_list_tint, token_id_lookup[eT_IMMEDIATE_INT]);
                         darray_add(&rule_list_tint, token_id_lookup[eT_IMMEDIATE_CHAR]);
+                        darray_add(&rule_list_tint, token_id_lookup[eT_IDENTIFIER]);
                         // Close the set
                         token_id = -(int)']';
                         darray_add(&rule_list_tint, token_id);

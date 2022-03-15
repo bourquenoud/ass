@@ -138,7 +138,10 @@ char *generator_generate_opcode_action(opcode_t opcode)
                 {
                 case eBP_IMMEDIATE:
                     bprintf(buff, "    /**eBP_IMMEDIATE**/");
-                    bprintf(buff, "    data = ASS_parser_stack[%i].iVal;", bit_elem->index_mnemonic);
+                    bprintf(buff, "    if (ASS_parser_stack[%i].type == ASS_DT_STRING)", bit_elem->index_mnemonic);
+                    bprintf(buff, "        data = ASS_resolve_const(ASS_parser_stack[%i].sVal);", bit_elem->index_mnemonic);
+                    bprintf(buff, "    else");
+                    bprintf(buff, "        data = ASS_parser_stack[%i].iVal;", bit_elem->index_mnemonic);
                     bprintf(buff, "    opcode.data &= 0x%llXLLU;", mask);
                     bprintf(buff, "    opcode.data |= (0x%llXLLU & (data << %u));", ~mask, offset);
                     break;
