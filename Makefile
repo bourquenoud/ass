@@ -54,8 +54,8 @@ $(output_dir):
 ########################################################################
 #                      SKELETONS FILE GENERATIONS                      #
 ########################################################################
-$(src_dir)/$(gen_dir)/skeleton.h: $(sklt_dir)/skeleton.h.sk
-		xxd -i $(sklt_dir)/skeleton.h.sk $(src_dir)/$(gen_dir)/skeleton.h
+$(src_dir)/$(gen_dir)/skeleton.h: $(sklt_dir)/skeleton.c.sk
+		xxd -i $(sklt_dir)/skeleton.c.sk $(src_dir)/$(gen_dir)/skeleton.h
 		sed -i 's/unsigned char .*\[\]/unsigned char SKELETON\[\]/g' src/generated/skeleton.h
 		sed -i 's/unsigned int .*_len/unsigned int SKELETON_LEN/g' src/generated/skeleton.h
 
