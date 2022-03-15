@@ -129,17 +129,18 @@ char *generator_generate_opcode_action(opcode_t opcode)
 
             if (bit_elem->index_opcode == i)
             {
+                // Compute mask
+                uint64_t mask;
+                mask = mask = (0xFFFFFFFFFFFFFFFFLLU << (bit_elem->width + offset));
+                mask |= ~(0xFFFFFFFFFFFFFFFFLLU << offset);
 
                 switch (bit_elem->type)
                 {
-                    // TODO: resolve mask at generation time
                 case eBP_IMMEDIATE:
                     bprintf(buff, "    /**eBP_IMMEDIATE**/");
-                    bprintf(buff, "    mask = (0xFFFFFFFFFFFFFFFFLLU << %u);", bit_elem->width + offset);
-                    bprintf(buff, "    mask |= ~(0xFFFFFFFFFFFFFFFFLLU << %u);", offset);
                     bprintf(buff, "    data = ASS_parser_stack[%i].iVal;", bit_elem->index_mnemonic);
-                    bprintf(buff, "    opcode.data &= mask;");
-                    bprintf(buff, "    opcode.data |= (~mask & (data << %u));", offset);
+                    bprintf(buff, "    opcode.data &= 0x%llXLLU;", mask);
+                    bprintf(buff, "    opcode.data |= (0x%llXLLU & (data << %u));", ~mask, offset);
                     break;
                 case eBP_LABEL_ABS:
                     bprintf(buff, "    /**eBP_LABEL_ABS**/");
@@ -160,11 +161,9 @@ char *generator_generate_opcode_action(opcode_t opcode)
                     bprintf(buff, "    ASS_ref_stack_push(new_ref);");
                 case eBP_ENUM:
                     bprintf(buff, "    /**eBP_ENUM**/");
-                    bprintf(buff, "    mask = (0xFFFFFFFFFFFFFFFFLLU << %u);", bit_elem->width + offset);
-                    bprintf(buff, "    mask |= ~(0xFFFFFFFFFFFFFFFFLLU << %u);", offset);
                     bprintf(buff, "    data = ASS_parser_stack[%i].iVal;", bit_elem->index_mnemonic);
-                    bprintf(buff, "    opcode.data &= mask;");
-                    bprintf(buff, "    opcode.data |= (~mask & (data << %u));", offset);
+                    bprintf(buff, "    opcode.data &= 0x%llXLLU;", mask);
+                    bprintf(buff, "    opcode.data |= (0x%llXLLU & (data << %u));", ~mask, offset);
                     break;
                 case eBP_ID:
                     fprintf(stderr, "Unresolved ID\n");
@@ -173,16 +172,12 @@ char *generator_generate_opcode_action(opcode_t opcode)
                 case eBP_BIT_CONST:
                 case eBP_BIT_LIT:
                     bprintf(buff, "    /**eBP_BIT_LIT**/");
-                    bprintf(buff, "    mask = (0xFFFFFFFFFFFFFFFFLLU << %u);", bit_elem->width + offset);
-                    bprintf(buff, "    mask |= ~(0xFFFFFFFFFFFFFFFFLLU << %u);", offset);
-                    bprintf(buff, "    opcode.data &= mask;");
-                    bprintf(buff, "    opcode.data |= (~mask & (%#xLLU << %u));", ((bit_const_t *)(bit_elem->data))->val, offset);
+                    bprintf(buff, "    opcode.data &= 0x%llXLLU;", mask);
+                    bprintf(buff, "    opcode.data |= (0x%llXLLU & (0x%XLLU << %u));", ~mask, ((bit_const_t *)(bit_elem->data))->val, offset);
                     break;
                 case eBP_ELLIPSIS:
                     bprintf(buff, "    /**eBP_ELLIPSIS**/");
-                    bprintf(buff, "    mask = (0xFFFFFFFFFFFFFFFFLLU << %u);", bit_elem->width + offset);
-                    bprintf(buff, "    mask |= ~(0xFFFFFFFFFFFFFFFFLLU << %u);", offset);
-                    bprintf(buff, "    opcode.data &= mask;");
+                    bprintf(buff, "    opcode.data &= 0x%llXLLU;", mask);
                     break;
                 default:
                     fprintf(stderr, "Unknown bit_elem type\n");
