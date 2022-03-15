@@ -42,21 +42,7 @@ enum
 
 /*!! data_types !!*/
 
-char const *const ASS_help_message =
-    "Usage: %s [OPTION]... -o OUTPUT_FILE INPUT_FILE\n"
-    "A simple assembler.\n"
-    "\n"
-    "Options:\n"
-    "  -o <FILE>    set the output file\n"
-    "  -h           display this help and exit\n"
-    "  -V           output version information and exit\n"
-    "  -v           show info messages\n"
-    "\n"
-    "  -f <FORMAT>  set the format for the output file\n"
-    "               the available formats are\n"
-    "               hex    Intel HEX (default)\n"
-    "               coe    Xilinx COE\n"
-    "               vhdl   VHDL data array\n";
+/*!! help_message !!*/
 
 /*!! version_message !!*/
 

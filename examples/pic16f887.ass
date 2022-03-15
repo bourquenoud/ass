@@ -4,6 +4,7 @@
 %param author "Mathieu Bourquenoud"
 %param version "1.0.0"
 %param copyright "2022 Mathieu Bourquenoud"
+%param description "This is an example assembler that targets the PIC16f887."
 
 //Memory parameters
 %param opcode_width    14

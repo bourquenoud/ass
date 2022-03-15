@@ -210,6 +210,25 @@ char *generator_generate_opcode_action(opcode_t opcode)
 /*                   CALLBACKS                    */
 /**************************************************/
 
+void generator_help_message(int indent)
+{
+    iprintf( 0, "char const *const ASS_help_message =");
+    iprintf( 1 + indent, "\"Usage: %%s [OPTION]... -o OUTPUT_FILE INPUT_FILE\\n\"");
+    iprintf( 1 + indent, "\"%s\\n\"", parameters.description);
+    iprintf( 1 + indent, "\"\\n\"");
+    iprintf( 1 + indent, "\"Options:\\n\"");
+    iprintf( 1 + indent, "\"  -o <FILE>    set the output file\\n\"");
+    iprintf( 1 + indent, "\"  -h           display this help and exit\\n\"");
+    iprintf( 1 + indent, "\"  -V           output version information and exit\\n\"");
+    iprintf( 1 + indent, "\"  -v           show info messages\\n\"");
+    iprintf( 1 + indent, "\"\\n\"");
+    iprintf( 1 + indent, "\"  -f <FORMAT>  set the format for the output file\\n\"");
+    iprintf( 1 + indent, "\"               the available formats are\\n\"");
+    iprintf( 1 + indent, "\"     hex       Intel HEX (default)\\n\"");
+    iprintf( 1 + indent, "\"     coe       Xilinx COE\\n\"");
+    iprintf( 1 + indent, "\"     vhdl      VHDL data array\\n\";");
+}
+
 void generator_version_message(int indent)
 {
     iprintf(1 + indent, "char const *const ASS_version_message =");

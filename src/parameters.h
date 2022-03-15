@@ -22,6 +22,7 @@ enum
     ePARAM_NAME,
     ePARAM_VERSION,
     ePARAM_COPYRIGHT,
+    ePARAM_DESCRIPTION,
     ePARAM_len
 };
 
@@ -53,6 +54,7 @@ typedef struct
     char* version;
     char* name;
     char* copyright;
+    char* description;
 } parameters_t;
 
 extern parameters_t parameters;

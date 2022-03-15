@@ -36,6 +36,7 @@ const parameters_t start_parameters =
         .version = NULL,
         .name = NULL,
         .copyright = NULL,
+        .description = NULL,
 };
 
 /**
@@ -61,6 +62,7 @@ const parameters_t default_parameters =
         .version = "[NOT SET]",
         .name = "[NOT SET]",
         .copyright = "[NOT SET]",
+        .description = "Assembler generated using the Assembly Syntax Sythesiser."
 };
 
 static const char *const param_names[] =
@@ -79,6 +81,7 @@ static const char *const param_names[] =
         [ePARAM_NAME] = "name",
         [ePARAM_VERSION] = "version",
         [ePARAM_COPYRIGHT] = "copyright",
+        [ePARAM_DESCRIPTION] = "description",
 };
 
 int search_match(const char *const string_list[], int n_strings, const char *pattern);
@@ -146,6 +149,11 @@ void param_fill_unset()
     {
         fail_info("Copyright never set, falling back to default ('%s')", default_parameters.copyright);
         parameters.copyright = default_parameters.copyright;
+    }
+    if (parameters.description == NULL)
+    {
+        fail_info("Description never set, falling back to default ('%s')", default_parameters.description);
+        parameters.description = default_parameters.description;
     }
 }
 
@@ -415,6 +423,21 @@ int command_param(linked_list_t *args)
             fail_warning("Parameter '%s' set more than once.", param_name);
 
         parameters.copyright = str; // Passed by ref, may need to be copied for stability
+        return 0;                   // Success
+        break;
+
+    case ePARAM_DESCRIPTION:
+        if (len != 2)
+            fail_error("Parameter '%s' expects one string.", param_name);
+
+        arg_array[0] = list_get_at(args, 1);
+        if (!try_get_string(arg_array[0], &str))
+            fail_error("Parameter '%s' expects one string.", param_name);
+
+        if (parameters.constant_dir != NULL)
+            fail_warning("Parameter '%s' set more than once.", param_name);
+
+        parameters.description = str; // Passed by ref, may need to be copied for stability
         return 0;                   // Success
         break;
 

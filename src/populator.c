@@ -1,11 +1,12 @@
 #include "populator.h"
 
+#include "failure.h"
 #include "generated/skeleton.h"
 
 #define MAX_NAME_LENGHT 64
 
 // Automatically add "generator_" before the name
-#define register_function(name) hash_add(function_table, #name, generator_ ## name)
+#define register_function(name) hash_add(function_table, #name, generator_##name)
 
 typedef void (*callable_t)(int);
 hash_t *function_table;
@@ -16,6 +17,7 @@ void generate(FILE *fd)
 
     function_table = hash_init(64);
 
+    register_function(help_message);
     register_function(version_message);
     register_function(notice);
     register_function(parameters);
@@ -63,8 +65,8 @@ void generate(FILE *fd)
             {
                 if (i == SKELETON_LEN - 1 || c == '\n')
                 {
-                    fprintf(stderr, "Line %i, col %i : ", line, column);
-                    fprintf(stderr, "Syntax error in the skelton file, no name in replace pattern \n");
+                    fail_error("Line %i, col %i : Syntax error in the skelton file, no name in replace pattern", line, column);
+                    fail_error("Please report the issue to https://github.com/bourquenoud/ass");
                     abort();
                 }
                 c = SKELETON[++i];
@@ -76,8 +78,8 @@ void generate(FILE *fd)
                 name_buff[index++] = c;
                 if (i == SKELETON_LEN - 1 || index >= MAX_NAME_LENGHT - 1 || c == '\n')
                 {
-                    fprintf(stderr, "Line %i, col %i : ", line, column);
-                    fprintf(stderr, "Syntax error in the skelton file, replace pattern never closed or name too long\n");
+                    fail_error("Line %i, col %i : Syntax error in the skelton file, replace pattern never closed or name too long", line, column);
+                    fail_error("Please report the issue to https://github.com/bourquenoud/ass");
                     abort();
                 }
                 c = SKELETON[++i];
@@ -93,8 +95,8 @@ void generate(FILE *fd)
                 sl_buff[3] = c;
                 if (i == SKELETON_LEN - 1 || c == '\n')
                 {
-                    fprintf(stderr, "Line %i, col %i : ", line, column);
-                    fprintf(stderr, "Syntax error in the skelton file, replace pattern never closed\n");
+                    fail_error("Line %i, col %i : Syntax error in the skelton file, replace pattern never closed", line, column);
+                    fail_error("Please report the issue to https://github.com/bourquenoud/ass");
                     abort();
                 }
                 c = SKELETON[++i];
@@ -104,8 +106,8 @@ void generate(FILE *fd)
             callable_t function = hash_get(function_table, name_buff);
             if (function == NULL)
             {
-                fprintf(stderr, "Line %i, col %i : ", line, column);
-                fprintf(stderr, "Syntax error in the skelton file, '%s' not registered\n", name_buff);
+                fail_error("Line %i, col %i : Syntax error in the skelton file, '%s' not registered", line, column, name_buff);
+                fail_error("Please report the issue to https://github.com/bourquenoud/ass");
                 abort();
             }
             function(column / 4 - 1);
@@ -119,7 +121,7 @@ void generate(FILE *fd)
         }
     }
 
-    //Flush the buffer
+    // Flush the buffer
     putc(sl_buff[1], fd);
     putc(sl_buff[2], fd);
     putc(sl_buff[3], fd);
