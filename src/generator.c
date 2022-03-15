@@ -87,6 +87,7 @@ char *generator_generate_pattern_action(pattern_t *pattern)
 
     // TODO: free the dynamic array. Make "darray_destroy" first
     bprintf(buff, "    ASS_data_t data;");
+    bprintf(buff, "    data.type = ASS_DT_SIGNED;");
     bprintf(buff, "    data.iVal = 0x%X;", pattern->bit_const.val);
     bprintf(buff, "    return data;");
     xmalloc_set_handler(xmalloc_callback);

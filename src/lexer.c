@@ -6,21 +6,25 @@
 char *action_parse_uint =
     "    ASS_data_t data;\n"
     "    data.uVal = strtoull(ASS_text, NULL, 0);\n" // strtoull requires C11
+    "    data.type = ASS_DT_UNSIGNED;\n"
     "    return data;";
 
 char *action_parse_int =
     "    ASS_data_t data;\n"
     "    data.iVal = strtoll(ASS_text, NULL, 0);\n" // strtoll requires C11
+    "    data.type = ASS_DT_SIGNED;\n"
     "    return data;";
 
 char *action_parse_char =
     "    ASS_data_t data;\n"
     "    data.iVal = (uint64_t)ASS_text[1];\n"
+    "    data.type = ASS_DT_SIGNED;\n"
     "    return data;";
 
 char *action_parse_str =
     "    ASS_data_t data;\n"
     "    data.sVal = malloc(strlen(ASS_text) + 1);\n"
+    "    data.type = ASS_DT_STRING;\n"
     "    strcpy(data.sVal, ASS_text);\n"
     "    return data;";
 
