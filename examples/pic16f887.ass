@@ -10,6 +10,7 @@
 //Syntax parameters
 %param args_separator  ","
 %param label_postfix   ":"
+%param constant_directive "\.constant"
 
 //***********Byte oriented instructions***********
 //Data direction (work register -> file or file -> work register)

@@ -19,6 +19,7 @@ void generate(FILE *fd)
     register_function(notice);
     register_function(parameters);
     register_function(data_union);
+    register_function(data_types);
     register_function(lexer_actions);
     register_function(lexer_action_list);
     register_function(lexer_switch);

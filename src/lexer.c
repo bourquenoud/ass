@@ -6,21 +6,25 @@
 char *action_parse_uint =
     "    ASS_data_t data;\n"
     "    data.uVal = strtoull(ASS_text, NULL, 0);\n" // strtoull requires C11
+    "    data.type = ASS_DT_UNSIGNED;\n"
     "    return data;";
 
 char *action_parse_int =
     "    ASS_data_t data;\n"
     "    data.iVal = strtoll(ASS_text, NULL, 0);\n" // strtoll requires C11
+    "    data.type = ASS_DT_SIGNED;\n"
     "    return data;";
 
 char *action_parse_char =
     "    ASS_data_t data;\n"
     "    data.iVal = (uint64_t)ASS_text[1];\n"
+    "    data.type = ASS_DT_SIGNED;\n"
     "    return data;";
 
 char *action_parse_str =
     "    ASS_data_t data;\n"
     "    data.sVal = malloc(strlen(ASS_text) + 1);\n"
+    "    data.type = ASS_DT_STRING;\n"
     "    strcpy(data.sVal, ASS_text);\n"
     "    return data;";
 
@@ -36,7 +40,7 @@ int token_id_lookup[] =
         [eT_IMMEDIATE_INT] = -1,
         [eT_IMMEDIATE_CHAR] = -1,
         [eT_IDENTIFIER] = -1,
-        [eT_SECTION] = -1,
+        [eT_CONSTANT_DIR] = -1,
 };
 
 darray_t *tokens;
@@ -129,6 +133,8 @@ void lexer_generate()
     new_token.pattern[strlen(new_token.pattern) - 1] = parameters.label_postfix;
     darray_add(&tokens, new_token);
 
+    // TODO: add signed numbers support
+    // FIXME : only matches hex numbers, should match anything strtoull can parse
     token_id_lookup[eT_IMMEDIATE_INT] = id;
     new_token = (token_def_t){.name = "IMMEDIATE_INT", .id = id++, .pattern = "0x[0-9a-fA-F]+", .action = action_parse_int};
     darray_add(&tokens, new_token);
@@ -137,8 +143,8 @@ void lexer_generate()
     new_token = (token_def_t){.name = "IMMEDIATE_CHAR", .id = id++, .pattern = "'[ -~]'", .action = action_parse_char};
     darray_add(&tokens, new_token);
 
-    token_id_lookup[eT_SECTION] = id;
-    new_token = (token_def_t){.name = "SECTION", .id = id++, .pattern = "\\.[a-zA-Z_][a-zA-Z0-9_]*", .action = action_parse_str};
+    token_id_lookup[eT_CONSTANT_DIR] = id;
+    new_token = (token_def_t){.name = "CONSTANT_DIR", .id = id++, .pattern = parameters.constant_dir, .action = NULL};
     darray_add(&tokens, new_token);
 
     token_id_lookup[eT_IDENTIFIER] = id;

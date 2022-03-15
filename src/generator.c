@@ -87,6 +87,7 @@ char *generator_generate_pattern_action(pattern_t *pattern)
 
     // TODO: free the dynamic array. Make "darray_destroy" first
     bprintf(buff, "    ASS_data_t data;");
+    bprintf(buff, "    data.type = ASS_DT_SIGNED;");
     bprintf(buff, "    data.iVal = 0x%X;", pattern->bit_const.val);
     bprintf(buff, "    return data;");
     xmalloc_set_handler(xmalloc_callback);
@@ -128,17 +129,21 @@ char *generator_generate_opcode_action(opcode_t opcode)
 
             if (bit_elem->index_opcode == i)
             {
+                // Compute mask
+                uint64_t mask;
+                mask = mask = (0xFFFFFFFFFFFFFFFFLLU << (bit_elem->width + offset));
+                mask |= ~(0xFFFFFFFFFFFFFFFFLLU << offset);
 
                 switch (bit_elem->type)
                 {
-                    // TODO: resolve mask at generation time
                 case eBP_IMMEDIATE:
                     bprintf(buff, "    /**eBP_IMMEDIATE**/");
-                    bprintf(buff, "    mask = (0xFFFFFFFFFFFFFFFFLLU << %u);", bit_elem->width + offset);
-                    bprintf(buff, "    mask |= ~(0xFFFFFFFFFFFFFFFFLLU << %u);", offset);
-                    bprintf(buff, "    data = ASS_parser_stack[%i].iVal;", bit_elem->index_mnemonic);
-                    bprintf(buff, "    opcode.data &= mask;");
-                    bprintf(buff, "    opcode.data |= (~mask & (data << %u));", offset);
+                    bprintf(buff, "    if (ASS_parser_stack[%i].type == ASS_DT_STRING)", bit_elem->index_mnemonic);
+                    bprintf(buff, "        data = ASS_resolve_const(ASS_parser_stack[%i].sVal);", bit_elem->index_mnemonic);
+                    bprintf(buff, "    else");
+                    bprintf(buff, "        data = ASS_parser_stack[%i].iVal;", bit_elem->index_mnemonic);
+                    bprintf(buff, "    opcode.data &= 0x%llXLLU;", mask);
+                    bprintf(buff, "    opcode.data |= (0x%llXLLU & (data << %u));", ~mask, offset);
                     break;
                 case eBP_LABEL_ABS:
                     bprintf(buff, "    /**eBP_LABEL_ABS**/");
@@ -159,11 +164,9 @@ char *generator_generate_opcode_action(opcode_t opcode)
                     bprintf(buff, "    ASS_ref_stack_push(new_ref);");
                 case eBP_ENUM:
                     bprintf(buff, "    /**eBP_ENUM**/");
-                    bprintf(buff, "    mask = (0xFFFFFFFFFFFFFFFFLLU << %u);", bit_elem->width + offset);
-                    bprintf(buff, "    mask |= ~(0xFFFFFFFFFFFFFFFFLLU << %u);", offset);
                     bprintf(buff, "    data = ASS_parser_stack[%i].iVal;", bit_elem->index_mnemonic);
-                    bprintf(buff, "    opcode.data &= mask;");
-                    bprintf(buff, "    opcode.data |= (~mask & (data << %u));", offset);
+                    bprintf(buff, "    opcode.data &= 0x%llXLLU;", mask);
+                    bprintf(buff, "    opcode.data |= (0x%llXLLU & (data << %u));", ~mask, offset);
                     break;
                 case eBP_ID:
                     fprintf(stderr, "Unresolved ID\n");
@@ -172,16 +175,12 @@ char *generator_generate_opcode_action(opcode_t opcode)
                 case eBP_BIT_CONST:
                 case eBP_BIT_LIT:
                     bprintf(buff, "    /**eBP_BIT_LIT**/");
-                    bprintf(buff, "    mask = (0xFFFFFFFFFFFFFFFFLLU << %u);", bit_elem->width + offset);
-                    bprintf(buff, "    mask |= ~(0xFFFFFFFFFFFFFFFFLLU << %u);", offset);
-                    bprintf(buff, "    opcode.data &= mask;");
-                    bprintf(buff, "    opcode.data |= (~mask & (%#xLLU << %u));", ((bit_const_t *)(bit_elem->data))->val, offset);
+                    bprintf(buff, "    opcode.data &= 0x%llXLLU;", mask);
+                    bprintf(buff, "    opcode.data |= (0x%llXLLU & (0x%XLLU << %u));", ~mask, ((bit_const_t *)(bit_elem->data))->val, offset);
                     break;
                 case eBP_ELLIPSIS:
                     bprintf(buff, "    /**eBP_ELLIPSIS**/");
-                    bprintf(buff, "    mask = (0xFFFFFFFFFFFFFFFFLLU << %u);", bit_elem->width + offset);
-                    bprintf(buff, "    mask |= ~(0xFFFFFFFFFFFFFFFFLLU << %u);", offset);
-                    bprintf(buff, "    opcode.data &= mask;");
+                    bprintf(buff, "    opcode.data &= 0x%llXLLU;", mask);
                     break;
                 default:
                     fprintf(stderr, "Unknown bit_elem type\n");
@@ -231,13 +230,26 @@ void generator_parameters(int indent)
 
 void generator_data_union(int indent)
 {
-    iprintf(0, "typedef union");
+    iprintf(0, "typedef struct");
     iprintf(0 + indent, "{");
-    iprintf(1 + indent, "uint64_t uVal;");
-    iprintf(1 + indent, "int64_t iVal;");
-    iprintf(1 + indent, "char *sVal;");
+    iprintf(1 + indent, "ASS_DT_t type;");
+    iprintf(1 + indent, "union {");
+    iprintf(2 + indent, "uint64_t uVal;");
+    iprintf(2 + indent, "int64_t iVal;");
+    iprintf(2 + indent, "char *sVal;");
+    iprintf(1 + indent, "};");
     iprintf(0 + indent, "} ASS_data_t;");
 }
+
+void generator_data_types(int indent)
+{
+    iprintf(0, "typedef enum {");
+    iprintf(1 + indent, "ASS_DT_NULL,");
+    iprintf(1 + indent, "ASS_DT_UNSIGNED,");
+    iprintf(1 + indent, "ASS_DT_SIGNED,");
+    iprintf(1 + indent, "ASS_DT_STRING,");
+    iprintf(1 + indent, "} ASS_DT_t;");
+} 
 
 void generator_lexer_actions(int indent)
 {
@@ -275,7 +287,7 @@ void generator_lexer_actions(int indent)
                 iprintf(0 + indent, "// Empty action");
                 iprintf(0 + indent, "ASS_data_t ASS_TA_%s()", tokens_array[i].name);
                 iprintf(0 + indent, "{");
-                iprintf(1 + indent, "return (ASS_data_t)(uint64_t)0;");
+                iprintf(1 + indent, "return (ASS_data_t){ASS_DT_NULL, (uint64_t)0};");
                 iprintf(0 + indent, "}");
             }
         }
@@ -355,7 +367,7 @@ void generator_parser_actions(int indent)
                 iprintf(0 + indent, "// Empty action");
                 iprintf(0 + indent, "ASS_data_t ASS_RA_%s()", rules[i]->name);
                 iprintf(0 + indent, "{");
-                iprintf(1 + indent, "return (ASS_data_t)(uint64_t)0;");
+                iprintf(1 + indent, "return (ASS_data_t){ASS_DT_NULL, (uint64_t)0};");
                 iprintf(0 + indent, "}");
             }
         }

@@ -30,7 +30,9 @@ const parameters_t start_parameters =
         .address_stop = -1,
         .endianness = eUNDEF_ENDIAN,
         .args_separator = '\0',
-        .label_postfix = '\0'};
+        .label_postfix = '\0',
+        .constant_dir = NULL,
+};
 
 /**
  * @brief Default parameters. Values not set in the file are replace after parsing by those values.
@@ -49,7 +51,9 @@ const parameters_t default_parameters =
 
         // Default values
         .args_separator = ',',
-        .label_postfix = ':'};
+        .label_postfix = ':',
+        .constant_dir = "\\.constant",
+};
 
 static const char *const param_names[] =
     {
@@ -62,6 +66,7 @@ static const char *const param_names[] =
         [ePARAM_ENDIANNESS] = "endianness",
         [ePARAM_ARGS_SEPARATOR] = "args_separator",
         [ePARAM_LABEL_POSTFIX] = "label_postfix",
+        [ePARAM_CONSTANT_DIRECTIVE] = "constant_directive",
 };
 
 int search_match(const char *const string_list[], int n_strings, const char *pattern);
@@ -105,10 +110,16 @@ void param_fill_unset()
         fail_info("label_postfix never set, falling back to default ('%c')", default_parameters.label_postfix);
         parameters.label_postfix = default_parameters.label_postfix;
     }
+    if (parameters.constant_dir == NULL)
+    {
+        fail_info("constant_directive never set, falling back to default ('%s')", default_parameters.constant_dir);
+        parameters.constant_dir = default_parameters.constant_dir;
+    }
 }
 
 int command_param(linked_list_t *args)
 {
+
     if (!args)
         fail_error("No parameter name found.");
 
@@ -294,7 +305,29 @@ int command_param(linked_list_t *args)
         return 0; // Success
         break;
 
+    case ePARAM_CONSTANT_DIRECTIVE:
+        if (len != 2)
+            fail_error("Parameter '%s' expects one string.", param_name);
+
+        arg_array[0] = list_get_at(args, 1);
+        if (!try_get_string(arg_array[0], &str))
+            fail_error("Parameter '%s' expects one string.", param_name);
+
+        if (parameters.constant_dir != NULL)
+            fail_warning("Parameter '%s' set more than once.", param_name);
+
+        if (strlen(str) <= 0)
+        {
+            fail_error("Constant directive is too short.");
+            return 1; //Error
+        }
+
+        parameters.constant_dir = str; //Passed by ref, may need to be copied for stability
+        return 0; //Success
+        break;
+
     default:
+        fail_error("Unimplemented parameter, please report to https://github.com/bourquenoud/ass/issues");
         abort();
         break;
     }

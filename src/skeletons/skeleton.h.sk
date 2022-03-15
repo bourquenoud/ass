@@ -40,6 +40,8 @@ enum
 
 /*!! parameters !!*/
 
+/*!! data_types !!*/
+
 /********************* struct and unions *********************/
 /*!! data_union !!*/
 
@@ -83,6 +85,12 @@ typedef struct
     uint64_t start;
     uint64_t stop;
 } address_range_t;
+
+typedef struct
+{
+    uint64_t val;
+    char* name;
+} ASS_const_t;
 
 /********************* general globals *********************/
 char *ASS_text = NULL;
@@ -157,11 +165,14 @@ int ASS_ref_stack_ptr = 0;
 void ASS_ref_stack_push(ASS_ref_t);
 ASS_ref_t ASS_ref_stack_pop(void);
 
+// Constants
+ASS_const_t *ASS_const_stack;
+int ASS_const_stack_size = 0;
+int ASS_const_stack_ptr = 0;
+void ASS_const_stack_push(ASS_const_t);
+ASS_const_t ASS_const_stack_pop(void);
+
 /********************* lexer *********************/
-
-/*!! lexer_actions !!*/
-
-/*!! lexer_action_list !!*/
 
 int ASS_lexer_state = 0;
 bool ASS_lexer_valid = false;
@@ -171,10 +182,6 @@ int ASS_lexer_token;
 bool ASS_lexer_output_ready = false;
 
 /********************* parser *********************/
-
-/*!! parser_actions !!*/
-
-/*!! parser_action_list !!*/
 
 int ASS_parser_state = 0;
 bool ASS_parser_valid = false;
@@ -312,9 +319,52 @@ ASS_ref_t ASS_ref_stack_pop(void)
     return ASS_ref_stack[--ASS_ref_stack_ptr];
 }
 
+// const
+void ASS_const_stack_push(ASS_const_t val)
+{
+    // Resize the stack if necessary
+    if (ASS_const_stack_size == 0)
+    {
+        ASS_const_stack = malloc(sizeof(ASS_const_t) * ASS_DEFAULT_STACK_DEPTH);
+        ASS_const_stack_size = ASS_DEFAULT_STACK_DEPTH;
+    }
+    else if (ASS_const_stack_size <= ASS_const_stack_ptr)
+    {
+        ASS_const_stack = malloc(ASS_const_stack_size * 2);
+        ASS_const_stack_size *= 2;
+    }
+
+    ASS_const_stack[ASS_const_stack_ptr++] = val;
+}
+
+ASS_const_t ASS_const_stack_pop(void)
+{
+    return ASS_const_stack[--ASS_const_stack_ptr];
+}
+
+/***********************************************************************************************************/
+/*                                                   CONST                                                 */
+/***********************************************************************************************************/
+
+uint64_t ASS_resolve_const(char* name)
+{
+    for(int i = 0; i < ASS_const_stack_ptr; i++)
+    {
+        if(strcmp(ASS_const_stack[i].name, name) == 0)
+            return ASS_const_stack[i].val;
+    }
+
+    ASS_log_error("Undefined const '%s'", name);
+    return 0;
+}
+
 /***********************************************************************************************************/
 /*                                                   LEXER                                                 */
 /***********************************************************************************************************/
+
+/*!! lexer_actions !!*/
+
+/*!! lexer_action_list !!*/
 
 // Called when the lexer exit from a valid end state
 void ASS_lexer_exit_point()
@@ -374,6 +424,10 @@ void ASS_lexer()
 /***********************************************************************************************************/
 /*                                                   PARSER                                                */
 /***********************************************************************************************************/
+
+/*!! parser_actions !!*/
+
+/*!! parser_action_list !!*/
 
 // Called when the lexer exit from a valid end state
 void ASS_parser_exit_point()
