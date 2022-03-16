@@ -16,6 +16,8 @@ hash_t *format_array;
 
 darray_t *opcode_array;
 
+char *code = NULL;
+
 static void xmalloc_callback(int err);
 
 void command_init()
@@ -387,6 +389,23 @@ int command_pattern(data_t *enum_id, data_t *pattern_data, data_t *bit_const_dat
         list_append(enumeration->pattern_list, list_init(0, (void *)pattern, eDATA));
 }
 
+int command_code(data_t *in_code)
+{
+    // Copy the code if first command invocation
+    if (code == NULL)
+    {
+        xmalloc_set_handler(xmalloc_callback);
+        code = xmalloc(strlen(in_code->strVal) + 1);
+        strcpy(code, in_code->strVal);
+    }
+    // Otherwise append it
+    else
+    {
+        code = realloc(code, strlen(code) + strlen(in_code->strVal) + 1);
+        strcat(code, in_code->strVal);
+    }
+    return 0;
+}
 /********************************************************/
 
 void xmalloc_callback(int err)

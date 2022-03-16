@@ -23,6 +23,7 @@
 
     static data_t* get_string(char*);
     static data_t* get_id(char*);
+    static data_t* get_code(char* in);
     static data_t* get_const(char*);
     static data_t* get_bits(char*);
     static data_t* get_int(char*);
@@ -33,6 +34,7 @@
 /* Others */
 L_LINE                  [\r\n]
 L_WHITESPACE            [" "\t]
+L_C_BLOCK               "%{"([ -$&-~\t\r\n]|%[^}])*"%}"
 
 /* Comments */
 L_S_COMMENT             "//".*
@@ -48,6 +50,7 @@ L_PATTERN               "%pattern"
 L_FORMAT                "%format"
 L_ORDER                 "%order"
 L_OPCODE                "%opcode"
+L_CODE                  "%code"
 L_UNKNOWN_CMD           %[a-zA-Z0-9_]*
 
 /* Constant */
@@ -86,6 +89,7 @@ L_MODULO                "%"
 {L_FORMAT}                                      { return T_FORMAT; }
 {L_ORDER}                                       { return T_ORDER; }
 {L_OPCODE}                                      { return T_OPCODE; }
+{L_CODE}                                        { return T_CODE; }
 {L_UNKNOWN_CMD}                                 { return T_UNKNOWN_CMD; }
 
 {L_LEFTPAR}                                     { return T_LEFTPAR; }
@@ -110,6 +114,7 @@ L_MODULO                "%"
 
 {L_IDENTIFIER}                                  { yylval.dVal = get_id(yytext); return T_IDENTIFIER; }
 
+{L_C_BLOCK}                                     { yylval.dVal = get_code(yytext); return T_C_BLOCK; }
 {L_LINE}                                        { return T_LINE; }
 {L_WHITESPACE}                                  {/* Ignore white spaces */}
 
@@ -143,6 +148,22 @@ data_t* get_id(char* in) //Return a string
     xmalloc_set_handler(xmalloc_callback);
     str = xmalloc(len + 1); //FIXME: <---THIS IS A DATA LEAK, STR IS NEVER FREED
     strncpy(str, in, len + 1); //Keep everything
+    data = xmalloc(sizeof(data_t));
+    data->strVal = str;
+    return data;
+}
+
+data_t* get_code(char* in) //Return a string
+{
+    data_t* data;
+
+    char* str;
+    int len = strlen(in);
+
+    xmalloc_set_handler(xmalloc_callback);
+    str = xmalloc(len - 3); //FIXME: <---THIS IS A DATA LEAK, STR IS NEVER FREED
+    strncpy(str, in + 2, len - 3); //Remove the %{ and %}
+    str[len - 4] = '\0'; //Null terminate the string
     data = xmalloc(sizeof(data_t));
     data->strVal = str;
     return data;

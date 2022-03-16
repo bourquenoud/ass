@@ -59,6 +59,7 @@
 /* Others */
 %token T_LINE
 %token T_WHITESPACE
+%token<dVal> T_C_BLOCK
 
 /* Comments */
 %token T_S_COMMENT
@@ -74,6 +75,7 @@
 %token T_ORDER
 %token T_OPCODE
 %token T_FORMAT
+%token T_CODE
 %token T_UNKNOWN_CMD
 
 /* Constant */
@@ -90,7 +92,7 @@
 
 /* Punctuation */
 %token T_LEFTPAR             
-%token T_RIGHPAR             
+%token T_RIGHPAR   
 %token T_LEFTSQBRACK         
 %token T_RIGHSQBRACK         
 %token T_ELIPSIS             
@@ -199,6 +201,10 @@ command:              param
                     | order
                     | opcode
                     | format
+                    | code
+;
+
+code:                 T_CODE T_C_BLOCK endline    { fail_set_loc(@$); fail_show_loc(true); command_code($2); }
 ;
 
 page:                 %empty 

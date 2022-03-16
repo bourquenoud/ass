@@ -210,6 +210,12 @@ char *generator_generate_opcode_action(opcode_t opcode)
 /*                   CALLBACKS                    */
 /**************************************************/
 
+
+void generator_custom_code(int indent)
+{
+    iprintf(0, code);
+}
+
 void generator_help_message(int indent)
 {
     iprintf( 0, "char const *const ASS_help_message =");
@@ -281,7 +287,7 @@ void generator_data_types(int indent)
     iprintf(1 + indent, "ASS_DT_SIGNED,");
     iprintf(1 + indent, "ASS_DT_STRING,");
     iprintf(1 + indent, "} ASS_DT_t;");
-} 
+}
 
 void generator_lexer_actions(int indent)
 {
