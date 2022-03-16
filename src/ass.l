@@ -51,6 +51,7 @@ L_FORMAT                "%format"
 L_ORDER                 "%order"
 L_OPCODE                "%opcode"
 L_CODE                  "%code"
+L_OUTPUT                "%output"
 L_OVERRIDE              "%override"
 L_UNKNOWN_CMD           %[a-zA-Z0-9_]*
 
@@ -91,9 +92,9 @@ L_MODULO                "%"
 {L_ORDER}                                       { return T_ORDER; }
 {L_OPCODE}                                      { return T_OPCODE; }
 {L_CODE}                                        { return T_CODE; }
+{L_OUTPUT}                                      { return T_OUTPUT; }
 {L_OVERRIDE}                                    { return T_OVERRIDE; }
 {L_UNKNOWN_CMD}                                 { return T_UNKNOWN_CMD; }
-
 {L_LEFTPAR}                                     { return T_LEFTPAR; }
 {L_RIGHPAR}                                     { return T_RIGHPAR; }
 {L_LEFTSQBRACK}                                 { return T_LEFTSQBRACK; }

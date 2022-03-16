@@ -25,18 +25,14 @@
 #include <string.h>
 
 /***************** enums, defines and consts *****************/
-enum
-{
-    ASS_OUT_HEX,
-    ASS_OUT_COE,
-    ASS_OUT_VHDL,
-};
 
 enum
 {
     ASS_U_NONE = 0,
     ASS_U_DATA = 1,
 };
+
+/*!! outputs_enum !!*/
 
 /*!! parameters !!*/
 
@@ -212,6 +208,9 @@ void print_bits(FILE *fd, size_t const size, void const *const ptr);
 
 // Called before anything else in main
 /*!! startup !!*/
+
+/*!! custom_outputs_function !!*/
+
 /***********************************************************************************************************/
 /*                                                   STACKS                                                */
 /***********************************************************************************************************/
@@ -555,6 +554,7 @@ int main(int argc, char const *argv[])
                     {
                         output_format = ASS_OUT_VHDL;
                     }
+                    /*!! custom_outputs_selection !!*/
                     else
                     {
                         ASS_log_error("unkown format '%s'", argv[i]);
@@ -800,6 +800,7 @@ int main(int argc, char const *argv[])
         case ASS_OUT_VHDL:
             ASS_output_vhdl(fd);
             break;
+        /*!! custom_outputs_switch !!*/
         default:
             ASS_log_error("Output format file error.");
             break;

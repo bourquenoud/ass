@@ -210,6 +210,61 @@ char *generator_generate_opcode_action(opcode_t opcode)
 /*                   CALLBACKS                    */
 /**************************************************/
 
+void generator_custom_outputs_selection(int indent)
+{
+    iprintf(0, "");
+    custom_output_t *array = darray_get_ptr(&custom_output_array, 0);
+    for (int i = 0; i < custom_output_array->count; i++)
+    {
+        iprintf(0 + indent, "else if (strcmp(argv[i], \"%s\") == 0)", array[i].name);
+        iprintf(0 + indent, "{");
+        iprintf(0 + indent, "    output_format = ASS_OUT_%s;", array[i].name);
+        iprintf(0 + indent, "}");
+    }
+}
+
+void generator_custom_outputs_switch(int indent)
+{
+    iprintf(0, "");
+    custom_output_t *array = darray_get_ptr(&custom_output_array, 0);
+    for (int i = 0; i < custom_output_array->count; i++)
+    {
+        iprintf(1 + indent, "case ASS_OUT_%s:", array[i].name);
+        iprintf(1 + indent, "ASS_output_%s(fd);", array[i].name);
+        iprintf(1 + indent, "break;");
+    }
+}
+
+void generator_outputs_enum(int indent)
+{
+    iprintf(0, "enum");
+    iprintf(0 + indent, "{");
+    iprintf(1 + indent, "ASS_OUT_HEX,");
+    iprintf(1 + indent, "ASS_OUT_COE,");
+    iprintf(1 + indent, "ASS_OUT_VHDL,");
+
+    custom_output_t *array = darray_get_ptr(&custom_output_array, 0);
+    for (int i = 0; i < custom_output_array->count; i++)
+    {
+        iprintf(1 + indent, "ASS_OUT_%s,", array[i].name);
+    }
+
+    iprintf(0 + indent, "};");
+}
+
+void generator_custom_outputs_function(int indent)
+{
+    iprintf(0, "");
+
+    custom_output_t *array = darray_get_ptr(&custom_output_array, 0);
+    for (int i = 0; i < custom_output_array->count; i++)
+    {
+        iprintf(0 + indent, "void ASS_output_%s(FILE* fd)", array[i].name);
+        iprintf(0 + indent, "{");
+        iprintf(1 + indent, "%s", array[i].code);
+        iprintf(0 + indent, "}");
+    }
+}
 
 void generator_startup(int indent)
 {

@@ -16,6 +16,7 @@ hash_t *format_array;
 
 darray_t *opcode_array;
 
+darray_t *custom_output_array;
 
 char *override_code[1] = {NULL};
 char *code = NULL;
@@ -30,6 +31,7 @@ void command_init()
     str_const_array = hash_init(TABLE_SIZE);
     format_array = hash_init(TABLE_SIZE);
     opcode_array = darray_init(sizeof(opcode_t));
+    custom_output_array = darray_init(sizeof(custom_output_t));
 }
 
 void check_any(char *key)
@@ -406,6 +408,29 @@ int command_code(data_t *in_code)
         code = realloc(code, strlen(code) + strlen(in_code->strVal) + 1);
         strcat(code, in_code->strVal);
     }
+    return 0;
+}
+
+int command_output(data_t *name, data_t *description, data_t *in_code)
+{
+    custom_output_t new_custom_output = {
+        .name = name->strVal,
+        .description = description->strVal,
+        .code = in_code->strVal,
+    };
+
+    // Check if it already exists
+    custom_output_t* array = darray_get_ptr(&custom_output_array, 0);
+    for(int i = 0; i < custom_output_array->count; i++)
+    {
+        if(strcmp(array[i].name, new_custom_output.name) == 0)
+        {
+            fail_error("'%s' is already defined as a custom output type.");
+            return 1;
+        }
+    }
+
+    darray_add(&custom_output_array, new_custom_output);
     return 0;
 }
 

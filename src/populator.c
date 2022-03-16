@@ -17,6 +17,10 @@ void generate(FILE *fd)
 
     function_table = hash_init(64);
 
+    register_function(custom_outputs_selection);
+    register_function(custom_outputs_switch);
+    register_function(outputs_enum);
+    register_function(custom_outputs_function);
     register_function(startup);
     register_function(custom_code);
     register_function(help_message);

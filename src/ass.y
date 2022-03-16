@@ -76,6 +76,7 @@
 %token T_OPCODE
 %token T_FORMAT
 %token T_CODE
+%token T_OUTPUT
 %token T_OVERRIDE
 %token T_UNKNOWN_CMD
 
@@ -204,9 +205,13 @@ command:              param
                     | format
                     | code
                     | override
+                    | output
 ;
 
 code:                 T_CODE T_C_BLOCK endline    { fail_set_loc(@$); fail_show_loc(true); command_code($2); }
+;
+
+output:               T_OUTPUT T_IDENTIFIER T_STRING T_C_BLOCK endline  { fail_set_loc(@$); fail_show_loc(true); command_output($2,$3,$4); }
 ;
 
 override:             T_OVERRIDE T_IDENTIFIER T_C_BLOCK endline { fail_set_loc(@$); fail_show_loc(true); command_override($2,$3); }
