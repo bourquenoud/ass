@@ -35,6 +35,8 @@ extern hash_t *str_const_array;
 extern hash_t *enum_array;
 extern hash_t *format_array;
 extern darray_t *opcode_array;
+
+extern char* override_code[1];
 extern char* code;
 
 void command_init();
@@ -48,3 +50,4 @@ int command_order(data_t *id, linked_list_t *order_args);
 int command_opcode(data_t *id, data_t *pattern, data_t *opcode_id, bool is_constant);
 int command_pattern(data_t *enum_id, data_t *pattern, data_t *bit_const);
 int command_code(data_t* in_code);
+int command_override(data_t* target_name, data_t* in_code);

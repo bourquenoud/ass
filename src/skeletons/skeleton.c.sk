@@ -210,6 +210,8 @@ void print_bits(FILE *fd, size_t const size, void const *const ptr);
 
 /*!! custom_code !!*/
 
+// Called before anything else in main
+/*!! startup !!*/
 /***********************************************************************************************************/
 /*                                                   STACKS                                                */
 /***********************************************************************************************************/
@@ -486,6 +488,9 @@ int ASS_opcode_cmp(const void *a, const void *b)
 
 int main(int argc, char const *argv[])
 {
+    //Very first thing is calling the startup function, which is empty by default
+    ASS_startup();
+
     FILE *fd;
     char const *output_file = NULL;
     char const *input_file = NULL;

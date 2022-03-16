@@ -17,6 +17,7 @@ void generate(FILE *fd)
 
     function_table = hash_init(64);
 
+    register_function(startup);
     register_function(custom_code);
     register_function(help_message);
     register_function(version_message);

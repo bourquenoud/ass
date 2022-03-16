@@ -16,6 +16,8 @@ hash_t *format_array;
 
 darray_t *opcode_array;
 
+
+char *override_code[1] = {NULL};
 char *code = NULL;
 
 static void xmalloc_callback(int err);
@@ -406,6 +408,30 @@ int command_code(data_t *in_code)
     }
     return 0;
 }
+
+int command_override(data_t *target_name, data_t *in_code)
+{
+    if (strcmp(target_name->strVal, "startup") != 0)
+    {
+        fail_error("Unknown target '%s'", target_name->strVal);
+        return 1;
+    }
+
+    // Copy the code if first command invocation
+    if (override_code[0] == NULL)
+    {
+        xmalloc_set_handler(xmalloc_callback);
+        override_code[0] = xmalloc(strlen(in_code->strVal) + 1);
+        strcpy(override_code[0], in_code->strVal);
+    }
+    // Otherwise append it
+    else
+    {
+        override_code[0] = realloc(override_code[0], strlen(override_code[0]) + strlen(in_code->strVal) + 1);
+        strcat(override_code[0], in_code->strVal);
+    }
+}
+
 /********************************************************/
 
 void xmalloc_callback(int err)

@@ -64,6 +64,7 @@ char *generator_generate_opcode_action(opcode_t opcode);
 /**************************************************/
 /*                   CALLBACKS                    */
 /**************************************************/
+void generator_startup(int indent);
 void generator_custom_code(int indent);
 void generator_help_message(int indent);
 void generator_version_message(int indent);

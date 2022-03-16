@@ -211,6 +211,21 @@ char *generator_generate_opcode_action(opcode_t opcode)
 /**************************************************/
 
 
+void generator_startup(int indent)
+{
+    if (override_code[0] != NULL)
+    {
+        iprintf(0, "void ASS_startup()");
+        iprintf(0 + indent, "{");
+        iprintf(1 + indent, "%s", override_code[0]);
+        iprintf(0 + indent, "}");
+    }
+    else
+    {
+        iprintf(0, "void ASS_startup(){} // Empty");
+    }
+}
+
 void generator_custom_code(int indent)
 {
     iprintf(0, code);
