@@ -147,6 +147,7 @@ Example :
  - `LABEL_REL` Substituted for a relative jump from a label in 2's complement. 0 jump means stay where it is. Sign extended/trucated to width. Expects a label.
  - `IMMEDIATE` Substituted for an immediate value, extended/trucated to width. Expects a value which can be an hexadecimal by prefixing it with `0x`, a decimal value by default, an octal value by prefixing it with `0`(zero), a binary value by prefixing with `0b`, or a ASCII char by enclosing it in quotes `'`
 
+***BUG*** *: IMMEDIATE will only accept hexadecimal values.*
 
 # Parameters list
 
@@ -173,4 +174,4 @@ List of parameters :
 |    NO     | `name <assembler_name>`        | assembler_name (string)          | Set the assembler's name. Displayed in the version and help messages.|
 |    NO     | `version <assembler_version>`  | assembler_version (string)       | Set the assembler's version. Diplayed in the version message.|
 |    NO     | `description <description>`    | description (string)             | Set the assembler's description. Displayed in the help message.|
-|    NO     | `copyright <copyright>`        | copyright (string)               | Set the assembler's copyright string, (2022 - Mathieu Bourquenoud for example). Displayed in the version message.|
+|    NO     | `copyright <copyright>`        | copyright (string)               | Set the assembler's copyright string, ("2022 - Mathieu Bourquenoud" for example). Displayed in the version message.|
