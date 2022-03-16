@@ -158,7 +158,7 @@ Parameter for ASS are declared like this :
 
 List of parameters :
 
-| Mandatory | Name                           | Argument                         | Description                    |
+| Required  | Name                           | Argument                         | Description                    |
 | :-------: | ------------------------------ | -------------------------------- | ------------------------------ |
 |    YES    | `opcode_width <width>`         | width (integer)                  | The width of the opcodes in bits. This value is fixed, meaning you can not have variable length opcodes|
 |    YES    | `memory_width <width>`         | width (integer)                  | The width of the programm memory in bits. |
@@ -167,5 +167,10 @@ List of parameters :
 |    YES    | `address_start <address>`      | address (integer)                | The address were the programm memory starts. Inclusive. |
 |    YES    | `address_stop <address>`       | address (integer)                | The address were the programm memory stops. Inclusive. |
 |    YES    | `endianness <endianness>`      | endianness (string)              | The endianness of the opcodes. Either "big" or "little". Big endian means LSB first (bit order is reversed), little endian means MSB first. |
-|    NO    | `args_separator <separator>`    | separator (string)               | Define the separator used betweem arguments for mnemonics. By default they are separated by a comma. The separator used is the first character in the string sequence.
-|    NO    | `label_postfix <postfix>`       | postfix (string)               | Define the postfix for declaring labels. By default labels end with a colon `:`. The postfix used is the first character in the string.
+|    NO     | `args_separator <separator>`   | separator (string)               | Define the separator used betweem arguments for mnemonics. By default they are separated by a comma. The separator used is the first character in the string sequence.
+|    NO     | `label_postfix <postfix>`      | postfix (string)                 | Define the postfix for declaring labels. By default labels end with a colon `:`. The postfix used is the first character in the string.|
+|    NO     | `author <author_name>`         | author_name (string)             | Set assembler's author name. Displayed in the version message.|
+|    NO     | `name <assembler_name>`        | assembler_name (string)          | Set the assembler's name. Displayed in the version and help messages.|
+|    NO     | `version <assembler_version>`  | assembler_version (string)       | Set the assembler's version. Diplayed in the version message.|
+|    NO     | `description <description>`    | description (string)             | Set the assembler's description. Displayed in the help message.|
+|    NO     | `copyright <copyright>`        | copyright (string)               | Set the assembler's copyright string, (2022 - Mathieu Bourquenoud for example). Displayed in the version message.|
