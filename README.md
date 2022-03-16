@@ -55,7 +55,7 @@ ass -o myfirstassembler/simple_assembler.c ass/examples/pic16f887.ass
 
 We can then compile the generated file. It only requires the standard libraries.
 
-Here we use `gcc` but you can use any standard compliant C compiler.
+Here we use `gcc` but you can use any standard compliant C compiler (C11 standard or later).
 
 ```bash
 cd ~/myfirstassembler/
@@ -66,7 +66,7 @@ If everything went well, you now have a `simple_assembler` executable in your pr
 
 ## Using the assembler
 
-***INFO*** *: The generated assemblers can currently only output [Intel HEX](https://en.wikipedia.org/wiki/Intel_HEX) files. More format will be added in the near future. For now you can use a converter from HEX to the format you want.*
+***INFO*** *: The generated assemblers can currently only output Intel HEX, Xilinx COE and VHDL arrays. More format will be added in the near future. You can implement you own output format using the `%output` command*
 
 To compile an assembler file using our newly built assembler use :
 
@@ -75,6 +75,8 @@ cd ~/myfirstassembler
 cp ../ass/examples/pic16f887.asm pic16f887.asm
 ./simple_assembler -o output.hex pic16f887.asm
 ```
+
+You can select the output format with the `-f <FORMAT>` option. For a list of available format, use the `-h` option.
 
 # More
 
@@ -90,20 +92,18 @@ I have made a very simple extension for Visual Studio Code, available here : <ht
 
 ## Known bugs and missing features
 
- - ASS will consider escaped double quotes as invalid escape sequences, while still escaping them.
- - ASS only accept partial regex, the "|", any grouping and look-head aren't supported.
+ - ASS will consider escaped double quotes as invalid escape sequences, while still escaping them. This may lead to crash or invalid assembler.
+ - ASS only accept partial regex, the "|", negative sets, any grouping and look-head aren't supported.
  - ASS will accept multiple ID substitutions in a bit template, even though it is an undefined behaviour.
  - ASS will sometime crash when using multi-line comments.
  - ASS won't report if a pattern is fully shadowed by another.
  - ASS memory is never freed anywhere. As it is short-lived it isn't a huge problem, but this should be taken into account.
  - Most parameters are unused, and default to 16 bits width and 64bit address space.
- - If any state machine at any point has more than 1024 states during generation, the generation will silently fail. For comparison, the example "pic16f887.ass" reaches 199 states for the lexer.
- - Generated assemblers can only output Intel HEX files, and checksum is wrong.
- - Generated assemblers never check for address collisions.
+ - If any state machine at any point has more than 1024 states during generation, the generation will silently fail. For comparison, the example "pic16f887.ass" reaches 199 states for the lexer. The limit can be increase, but the memory usage increase quadratically.
+ - Generated assemblers output files in 16bits opcode format, associated parameters are ignored.
  - Generated assemblers will accept mutiple files as arguments, but will only parse the first one.
- - Generated assemblers don't really respect POSIX option parsing, and may even crash with valid arguments.
- - Generated assemblers will display a line number on errors/warnings/etc... even when the message isn't comming from a specific line.
- - Generated assemblers don't show helps messages
+ - Generated assemblers will log the wrong line/token depending on the message.
+ - Generated assemblers don't really respect POSIX option parsing, and may crash even with valid arguments.
  - Generated assemblers CLI isn't POSIX or GNU compliant, for example `--` won't stop option parsing.
 
 ## Future
