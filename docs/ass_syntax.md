@@ -140,6 +140,48 @@ Example :
 %opcode mul_immediate "muli" $0010          // Create the multiplication opcode, where ID will be replaced by 0000
 ```
 
+## Custom code
+
+You can insert custom C code in the generated C code, using the `%code` command. The code is inserted before any function definition but after all declarations. The code block is delimited by `%{` and `%}`. The code is copied *as is* and no error checking is performed. To avoid name conflicts, all globals are prefixed by `ASS_`. An API reference ~is available~ will soon be available. If `%code` is invoked multiple times, each blocks are joined together.
+
+Usage : `%code %{<custom code>%}`
+
+Example :
+```C
+%code %{
+    char const * const some_text = "This is a text"; // some_text is now available as a global constant
+%}
+```
+
+## Function override
+
+You can override some C functions to modify the behaviour of the assembler program. Overriding them will override their **content**, effectively replacing everything that inside the function's body. The `ASS_` prefix should not be specified in the function name.
+
+Usage : `%override <function_name> %{<custom code>%}`
+
+Example :
+```C
+%override startup %{
+    printf("Hello !\n"); // "Hello !" will be printed every time the program is run
+%}
+```
+
+## Custom output format
+
+It is possible to specifiy a custom output format using the `%output` command. The process is relatively complex and involves coding in C. A detailed tutorial is ~available~ on its way. It is recommended for the format name to be in lowercase and shorter than 12 character.
+
+Usage : `%output <format_name> %{<code>%}`
+
+Example :
+```C
+%output raw %{
+    for(int i = 0; i < ASS_binary_stack_ptr; i++)
+    {
+        printf("%X:%X\n", ASS_binary_stack[i].address, ASS_binary_stack[i].data);
+    }
+%}
+```
+
 # Substitutions list
 
  - `ID` Subsituted for the opcode ID, extended/trucated to width. Expects no arguments.
