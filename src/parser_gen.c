@@ -24,9 +24,9 @@ char *action_constant =
     "    ASS_const_t new_const;\n"
     "    new_const.val = ASS_parser_stack_pop().uVal;\n"
     "    char* str = ASS_parser_stack_pop().sVal;\n"
-    "    int len = strlen(str);\n"
+    "    int len = strlen(str) + 1;\n"
     "    new_const.name = malloc(len);\n"
-    "    strncpy(new_const.name, str, len);\n"
+    "    strcpy(new_const.name, str);\n"
     "    ASS_const_stack_push(new_const);\n"
     "    return (ASS_data_t){ASS_DT_NULL, (uint64_t)0};";
 
