@@ -587,7 +587,7 @@ int main(int argc, char const *argv[])
     ASS_line_ptr = 0;
     if (fgets(ASS_line, ASS_MAX_LINE_LENGTH, fd) == NULL)
     {
-        ASS_log_info("Empty file.");
+        ASS_log_info("Empty file. Exiting");
         exit(EXIT_SUCCESS);
     }
 
