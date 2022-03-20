@@ -496,19 +496,12 @@ int main(int argc, char const *argv[])
     else
         fd = fopen(ASS_input_file, "r");
 
-    // Load the first line
-    ASS_line_ptr = 0;
-    if (fgets(ASS_line, ASS_MAX_LINE_LENGTH, fd) == NULL)
-    {
-        ASS_log_info("Empty file. Exiting");
-        exit(EXIT_SUCCESS);
-    }
-
     // Parse the file
     ASS_show_loc = true;
     ASS_parse(fd);
     ASS_show_loc = false;
 
+    // Close the file
     fclose(fd);
 
     // Resolve label references
@@ -521,6 +514,7 @@ int main(int argc, char const *argv[])
         exit(EXIT_SUCCESS);
     }
 
+    // Sort the address and check for collisions
     ASS_address_sorting();
 
     if (ASS_output_file == NULL || strcmp(ASS_output_file, "-") == 0)
@@ -551,6 +545,7 @@ int main(int argc, char const *argv[])
 
     fclose(fd);
 
+    // Assembly result
     if (ASS_error_count == 0)
     {
         ASS_log_info("Success.");
@@ -851,6 +846,14 @@ void ASS_parse_arguments(int argc, char const **argv)
 
 void ASS_parse(FILE *fd)
 {
+    // Load the first line
+    ASS_line_ptr = 0;
+    if (fgets(ASS_line, ASS_MAX_LINE_LENGTH, fd) == NULL)
+    {
+        ASS_log_info("Empty file.");
+        return;
+    }
+
     // TODO : make it not need multiple newlines at the end
     int last_newline = 0;
     bool run = true;
