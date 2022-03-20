@@ -97,7 +97,9 @@ char *ASS_text = NULL;
 int ASS_current_address = 0;
 bool ASS_option_verbose = false;
 bool ASS_show_loc = false;
-
+char const *ASS_output_file = NULL;
+char const *ASS_input_file = NULL;
+int ASS_output_format = ASS_OUT_HEX;
 /********************* log system *********************/
 #define ASS_INFO_COLOUR 94
 #define ASS_WARN_COLOUR 93
@@ -199,6 +201,8 @@ void ASS_output_vhdl(FILE *fd);
 /******************** helpers ********************/
 
 void print_bits(FILE *fd, size_t const size, void const *const ptr);
+void ASS_parse_arguments(int argc, char const **argv);
+void ASS_parse();
 
 /***********************************************************************************************************/
 /*                                                CUSTOM CODE                                              */
@@ -491,97 +495,17 @@ int main(int argc, char const *argv[])
     ASS_startup();
 
     FILE *fd;
-    char const *output_file = NULL;
-    char const *input_file = NULL;
 
-    // Output in hex format by default
-    int output_format = ASS_OUT_HEX; // TODO: make configurable from ass file
-    bool format_set = false;
     ASS_show_loc = false; // Disable line display
 
+    bool format_set = false;
     // Parse the arguments
-    // NOTE: Handcrafted for portability.
-    // TODO: use the library optparse instead (https://github.com/skeeto/optparse, compatible license)
-    for (size_t i = 1; i < argc; i++)
-    {
-        int len = strlen(argv[i]);
-        if (len >= 2 && argv[i][0] == '-') // Is an option
-        {
-            // Parse all options
-            bool is_long_arg = false;
-            for (size_t j = 1; j < len && !is_long_arg; j++)
-            {
-                switch (argv[i][j])
-                {
-                case 'h': // Help message
-                    printf(ASS_help_message, argv[0]);
-                    exit(EXIT_SUCCESS);
-                case 'V':
-                    printf(ASS_version_message);
-                    exit(EXIT_SUCCESS);
-                case 'o': // Output file
-                    if (++i >= argc || (strlen(argv[i]) >= 2 && argv[i][0] == '-'))
-                    {
-                        ASS_log_error("option 'o' requires a parameter.");
-                        exit(EXIT_FAILURE);
-                    }
-                    output_file = argv[i];
-                    break;
-                case 'v': // Enable verbose mode
-                    ASS_option_verbose = true;
-                    break;
-                case 'f': // Format
-                    if (++i >= argc || (strlen(argv[i]) >= 2 && argv[i][0] == '-'))
-                    {
-                        ASS_log_error("option 'f' requires a parameter.");
-                        exit(EXIT_FAILURE);
-                    }
-                    if (format_set)
-                    {
-                        ASS_log_error("Multiple format option");
-                        exit(EXIT_FAILURE);
-                    }
+    ASS_parse_arguments(argc, argv);
 
-                    if (strcmp(argv[i], "coe") == 0)
-                    {
-                        output_format = ASS_OUT_COE;
-                    }
-                    else if (strcmp(argv[i], "hex") == 0)
-                    {
-                        output_format = ASS_OUT_HEX;
-                    }
-                    else if (strcmp(argv[i], "vhdl") == 0)
-                    {
-                        output_format = ASS_OUT_VHDL;
-                    }
-                    /*!! custom_outputs_selection !!*/
-                    else
-                    {
-                        ASS_log_error("unkown format '%s'", argv[i]);
-                        exit(EXIT_FAILURE);
-                    }
-
-                    format_set = true;
-                    break;
-                default:
-                    ASS_log_error("unkown option '%c'", argv[i][j]);
-                    exit(EXIT_FAILURE);
-                    break;
-                }
-            }
-        }
-        else // Is not an option, then it's an input file
-        {
-            // TODO: support multiple files
-            if (input_file == NULL)
-                input_file = argv[i];
-        }
-    }
-
-    if (input_file == NULL || strcmp(input_file, "-") == 0)
+    if (ASS_input_file == NULL || strcmp(ASS_input_file, "-") == 0)
         fd = stdin;
     else
-        fd = fopen(input_file, "r");
+        fd = fopen(ASS_input_file, "r");
 
     // load the first line
     ASS_line_ptr = 0;
@@ -592,100 +516,7 @@ int main(int argc, char const *argv[])
     }
 
     ASS_show_loc = true; // Enable line display
-    // TODO : make it not need multiple newlines at the end
-    int last_newline = 0;
-    bool run = true;
-    while (run)
-    {
-
-        if (last_newline)
-        {
-            if (last_newline == 1)
-            {
-                run = false;
-                ASS_lexer_token = ASS_EOF;
-            }
-            else
-            {
-                last_newline--;
-                ASS_lexer_token = '\n';
-            }
-        }
-        else
-        {
-            // Read the next character
-            ASS_lexer_token = ASS_line[ASS_line_ptr++];
-
-            // Load the next line
-            if (ASS_lexer_token == '\0')
-            {
-                ASS_line_ptr = 0;
-
-                // Stop when no more data is available
-                if (fgets(ASS_line, ASS_MAX_LINE_LENGTH, fd) == NULL)
-                {
-                    // HACK: Push a bunch of linefeed character before feeding the EOF and then closing
-                    ASS_lexer_token = '\n';
-                    last_newline = 3;
-                }
-                else
-                    continue;
-            }
-        }
-
-        // Mark the token as unprocessed
-        ASS_lexer_processed = false;
-
-        // Run the lexer machine until the token has been processed
-        while (!ASS_lexer_processed)
-        {
-            ASS_lexer_output_ready = false;
-            ASS_lexer();
-
-            // Run the parser if the lexer has matched a token
-            if (ASS_lexer_output_ready)
-            {
-                // Save the token's end position
-                ASS_loc.last_line = ASS_line_pos - 1;
-                ASS_loc.last_column = ASS_col_pos - 1;
-
-                // Process any non-whitespace token
-                if (ASS_lexer_output != ASS_T_WHITESPACE)
-                {
-                    ASS_parser_processed = false;
-                    ASS_parser_token = ASS_lexer_output;
-
-                    while (!ASS_parser_processed)
-                    {
-                        ASS_parser_output_ready = false;
-                        ASS_parser();
-
-                        if (ASS_parser_output_ready)
-                            ASS_parser_action();
-                    }
-                }
-
-                // Execute the token action only after the rule action has been executed
-                ASS_lexer_action();
-
-                // The end of the last token is the beginning of the next
-                ASS_loc.first_line = ASS_line_pos;
-                ASS_loc.first_column = ASS_col_pos;
-            }
-        }
-
-        // Keep track of the position
-        if (ASS_lexer_token == '\n')
-        {
-            ASS_col_pos = -1;
-            ASS_line_pos++;
-        }
-        else if (ASS_lexer_token == '\r') // Because windows, I guess...
-        {
-            ASS_col_pos = -1;
-        }
-        ASS_col_pos++;
-    }
+    ASS_parse(fd);
 
     fclose(fd);
     ASS_show_loc = false; // Disable line display
@@ -781,15 +612,15 @@ int main(int argc, char const *argv[])
     // TODO: could be removed by sorting the instructions before generating ranges
     qsort(address_range_array, address_ranges_count, sizeof(*address_range_array), ASS_address_range_cmp);
 
-    if (output_file == NULL || strcmp(output_file, "-") == 0)
+    if (ASS_output_file == NULL || strcmp(ASS_output_file, "-") == 0)
         fd = stdout;
     else
-        fd = fopen(output_file, "w");
+        fd = fopen(ASS_output_file, "w");
 
     // Generate outputs file
     if (ASS_error_count == 0)
     {
-        switch (output_format)
+        switch (ASS_output_format)
         {
         case ASS_OUT_HEX:
             ASS_output_hex(fd);
@@ -1023,5 +854,184 @@ void print_bits(FILE *fd, size_t const size, void const *const ptr)
             byte = (b[i] >> j) & 0b1;
             fprintf(fd, "%u", byte);
         }
+    }
+}
+
+void ASS_parse_arguments(int argc, char const **argv)
+{
+    // NOTE: Handcrafted for portability.
+    bool format_set = false;
+    for (size_t i = 1; i < argc; i++)
+    {
+        int len = strlen(argv[i]);
+        if (len >= 2 && argv[i][0] == '-') // Is an option
+        {
+            // Parse all options
+            bool is_long_arg = false;
+            for (size_t j = 1; j < len && !is_long_arg; j++)
+            {
+                switch (argv[i][j])
+                {
+                case 'h': // Help message
+                    printf(ASS_help_message, argv[0]);
+                    exit(EXIT_SUCCESS);
+                case 'V':
+                    printf(ASS_version_message);
+                    exit(EXIT_SUCCESS);
+                case 'o': // Output file
+                    if (++i >= argc || (strlen(argv[i]) >= 2 && argv[i][0] == '-'))
+                    {
+                        ASS_log_error("option 'o' requires a parameter.");
+                        exit(EXIT_FAILURE);
+                    }
+                    ASS_output_file = argv[i];
+                    break;
+                case 'v': // Enable verbose mode
+                    ASS_option_verbose = true;
+                    break;
+                case 'f': // Format
+                    if (++i >= argc || (strlen(argv[i]) >= 2 && argv[i][0] == '-'))
+                    {
+                        ASS_log_error("option 'f' requires a parameter.");
+                        exit(EXIT_FAILURE);
+                    }
+                    if (format_set)
+                    {
+                        ASS_log_error("Multiple format option");
+                        exit(EXIT_FAILURE);
+                    }
+
+                    if (strcmp(argv[i], "coe") == 0)
+                    {
+                        ASS_output_format = ASS_OUT_COE;
+                    }
+                    else if (strcmp(argv[i], "hex") == 0)
+                    {
+                        ASS_output_format = ASS_OUT_HEX;
+                    }
+                    else if (strcmp(argv[i], "vhdl") == 0)
+                    {
+                        ASS_output_format = ASS_OUT_VHDL;
+                    }
+                    /*!! custom_outputs_selection !!*/
+                    else
+                    {
+                        ASS_log_error("unkown format '%s'", argv[i]);
+                        exit(EXIT_FAILURE);
+                    }
+
+                    format_set = true;
+                    break;
+                default:
+                    ASS_log_error("unkown option '%c'", argv[i][j]);
+                    exit(EXIT_FAILURE);
+                    break;
+                }
+            }
+        }
+        else // Is not an option, then it's an input file
+        {
+            // TODO: support multiple files
+            if (ASS_input_file == NULL)
+                ASS_input_file = argv[i];
+        }
+    }
+}
+
+void ASS_parse(FILE* fd)
+{
+    // TODO : make it not need multiple newlines at the end
+    int last_newline = 0;
+    bool run = true;
+    while (run)
+    {
+
+        if (last_newline)
+        {
+            if (last_newline == 1)
+            {
+                run = false;
+                ASS_lexer_token = ASS_EOF;
+            }
+            else
+            {
+                last_newline--;
+                ASS_lexer_token = '\n';
+            }
+        }
+        else
+        {
+            // Read the next character
+            ASS_lexer_token = ASS_line[ASS_line_ptr++];
+
+            // Load the next line
+            if (ASS_lexer_token == '\0')
+            {
+                ASS_line_ptr = 0;
+
+                // Stop when no more data is available
+                if (fgets(ASS_line, ASS_MAX_LINE_LENGTH, fd) == NULL)
+                {
+                    // HACK: Push a bunch of linefeed character before feeding the EOF and then closing
+                    ASS_lexer_token = '\n';
+                    last_newline = 3;
+                }
+                else
+                    continue;
+            }
+        }
+
+        // Mark the token as unprocessed
+        ASS_lexer_processed = false;
+
+        // Run the lexer machine until the token has been processed
+        while (!ASS_lexer_processed)
+        {
+            ASS_lexer_output_ready = false;
+            ASS_lexer();
+
+            // Run the parser if the lexer has matched a token
+            if (ASS_lexer_output_ready)
+            {
+                // Save the token's end position
+                ASS_loc.last_line = ASS_line_pos - 1;
+                ASS_loc.last_column = ASS_col_pos - 1;
+
+                // Process any non-whitespace token
+                if (ASS_lexer_output != ASS_T_WHITESPACE)
+                {
+                    ASS_parser_processed = false;
+                    ASS_parser_token = ASS_lexer_output;
+
+                    while (!ASS_parser_processed)
+                    {
+                        ASS_parser_output_ready = false;
+                        ASS_parser();
+
+                        if (ASS_parser_output_ready)
+                            ASS_parser_action();
+                    }
+                }
+
+                // Execute the token action only after the rule action has been executed
+                ASS_lexer_action();
+
+                // The end of the last token is the beginning of the next
+                ASS_loc.first_line = ASS_line_pos;
+                ASS_loc.first_column = ASS_col_pos;
+            }
+        }
+
+        // Keep track of the position
+        if (ASS_lexer_token == '\n')
+        {
+            ASS_col_pos = -1;
+            ASS_line_pos++;
+        }
+        else if (ASS_lexer_token == '\r') // Because windows, I guess...
+        {
+            ASS_col_pos = -1;
+        }
+        ASS_col_pos++;
     }
 }
