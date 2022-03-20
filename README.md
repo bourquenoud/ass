@@ -93,7 +93,6 @@ I have made a very simple extension for Visual Studio Code, available here : <ht
 ## Known bugs and missing features
 
  - ASS only accept partial regex, the "|", negative sets, any grouping and look-head aren't supported.
- - ASS will sometime crash when using multi-line comments.
  - ASS won't report if a pattern is fully shadowed by another.
  - ASS memory is never freed anywhere. As it is short-lived it isn't a huge problem, but this should be taken into account.
  - Most parameters are unused, and default to 16 bits width and 64bit address space.

@@ -123,20 +123,20 @@
 %type pattern
 %type order
 %type opcode
-%type expr
 %type format
 %type command
 
 %%
 
-endline:              T_M_COMMENT
-                    | T_S_COMMENT T_LINE
-                    | T_S_COMMENT YYEOF
-                    | T_DM_COMMENT
-                    | T_DS_COMMENT T_LINE
-                    | T_DS_COMMENT YYEOF
-                    | T_LINE
-                    | YYEOF
+endline:              T_M_COMMENT                               
+                    | T_S_COMMENT T_LINE                        
+                    | T_S_COMMENT YYEOF                         
+                    | T_DM_COMMENT                              
+                    | T_DS_COMMENT T_LINE                       
+                    | T_DS_COMMENT YYEOF                        
+                    | T_LINE                                    
+                    | YYEOF                                     
+;
 
 param_args:           T_IDENTIFIER                              { $$ = list_init(YYSYMBOL_T_IDENTIFIER, $1, eDATA); }
                     | param_args T_IDENTIFIER                   { $$ = $1; list_append($1, list_init(YYSYMBOL_T_IDENTIFIER, $2, eDATA)); }
@@ -171,9 +171,6 @@ order:                T_ORDER T_IDENTIFIER order_args endline           { fail_s
 opcode:               T_OPCODE T_IDENTIFIER T_STRING T_BIT_LIT endline          { fail_set_loc(@$); fail_show_loc(true); command_opcode($2, $3, $4, false); }
                     | T_OPCODE T_IDENTIFIER T_STRING T_BIT_CONSTANT endline     { fail_set_loc(@$); fail_show_loc(true); command_opcode($2, $3, $4, true); }
                     | T_OPCODE T_IDENTIFIER T_STRING endline                    { fail_set_loc(@$); fail_show_loc(true); command_opcode($2, $3, NULL, false); }
-;
-
-expr:                 T_LEFTPAR T_RIGHPAR
 ;
 
 subst:                T_SUBST T_LEFTPAR T_INTEGER T_RIGHPAR             { fail_set_loc(@$); fail_show_loc(true); $$ = subst($1, $3); }
