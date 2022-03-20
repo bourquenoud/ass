@@ -135,7 +135,7 @@ data_t* get_string(char* in) //Return a string
     xmalloc_set_handler(xmalloc_callback);
     str = xmalloc(len - 1); //FIXME: <---THIS IS A DATA LEAK, STR IS NEVER FREED
     
-    //Copy the string and escape double quotes and backslash
+    //Copy the string and escape double quotes
     int src_index = 1;
     int dst_index = 0;
     while(in[src_index] != '\x00')
