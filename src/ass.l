@@ -137,7 +137,7 @@ data_t* get_string(char* in) //Return a string
 
     xmalloc_set_handler(xmalloc_callback);
     str = xmalloc(len - 1); //FIXME: <---THIS IS A DATA LEAK, STR IS NEVER FREED
-    
+
     //Copy the string and escape double quotes
     int src_index = 1;
     int dst_index = 0;
@@ -241,7 +241,7 @@ data_t* get_bits(char* in) //Return an unsigned int64
     }
     else if('o' == lastChar)
     {
-        data->bVal.val = strtoull(in + 1, NULL, 8); 
+        data->bVal.val = strtoull(in + 1, NULL, 8);
         data->bVal.width = (len - 2)*3; //Example $054o, length of 5 and 9 bits
     }
     else if('h' == lastChar)
@@ -249,7 +249,7 @@ data_t* get_bits(char* in) //Return an unsigned int64
         data->bVal.val = strtoull(in + 1, NULL, 16);
         data->bVal.width = (len - 2)*4; //Example $054Fh, length of 6 and 16 bits
     }
-    
+
     return data;
 }
 

@@ -93,17 +93,17 @@
 %token<dVal> T_SUBST
 
 /* Punctuation */
-%token T_LEFTPAR             
-%token T_RIGHPAR   
-%token T_LEFTSQBRACK         
-%token T_RIGHSQBRACK         
-%token T_ELIPSIS             
-%token T_COMMA  
-%token T_PLUS    
-%token T_MINUS   
+%token T_LEFTPAR
+%token T_RIGHPAR
+%token T_LEFTSQBRACK
+%token T_RIGHSQBRACK
+%token T_ELIPSIS
+%token T_COMMA
+%token T_PLUS
+%token T_MINUS
 %token T_MULTIPLY
-%token T_DIVIDE  
-%token T_MODULO  
+%token T_DIVIDE
+%token T_MODULO
 
 %start page
 
@@ -128,14 +128,14 @@
 
 %%
 
-endline:              T_M_COMMENT                               
-                    | T_S_COMMENT T_LINE                        
-                    | T_S_COMMENT YYEOF                         
-                    | T_DM_COMMENT                              
-                    | T_DS_COMMENT T_LINE                       
-                    | T_DS_COMMENT YYEOF                        
-                    | T_LINE                                    
-                    | YYEOF                                     
+endline:              T_M_COMMENT
+                    | T_S_COMMENT T_LINE
+                    | T_S_COMMENT YYEOF
+                    | T_DM_COMMENT
+                    | T_DS_COMMENT T_LINE
+                    | T_DS_COMMENT YYEOF
+                    | T_LINE
+                    | YYEOF
 ;
 
 param_args:           T_IDENTIFIER                              { $$ = list_init(YYSYMBOL_T_IDENTIFIER, $1, eDATA); }
@@ -215,9 +215,9 @@ override:             T_OVERRIDE T_IDENTIFIER T_C_BLOCK endline { fail_set_loc(@
 ;
 
 
-page:                 %empty 
-                    | page command 
-                    | page endline 
+page:                 %empty
+                    | page command
+                    | page endline
                     | page error endline
 ;
 
@@ -250,12 +250,12 @@ int yywrap()
 }
 
 int parse_file(int _totalFiles, char** _files)
-{   
+{
     totalFiles = _totalFiles;
     files = _files;
-    
+
     currentFileIndex = 0;                       //Start at the first file
-    
+
     /*Detect if we should read from stdin/write to stdout*/
     readFromStdin = totalFiles <= 0 || !isatty(fileno(stdin));
     writeToStdout = !isatty(fileno(stdout));
@@ -271,7 +271,7 @@ int parse_file(int _totalFiles, char** _files)
         printf("ERROR : no input file.\n");
         exit(EXIT_FAILURE);
     }
-    
+
     //Parse all files
 	do
     {
@@ -295,7 +295,7 @@ const char *getTypeName(int type)
 static int yyreport_syntax_error (const yypcontext_t *ctx)
 {
     int res = 0;
-    char error_message[1024] = "syntax error, "; 
+    char error_message[1024] = "syntax error, ";
     fail_set_loc(*yypcontext_location (ctx));
 
     // Report the tokens expected at this point.
