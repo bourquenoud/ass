@@ -163,7 +163,6 @@ data_t* get_string(char* in) //Return a string
         src_index++;
     }
     str[dst_index-1] = '\x00'; //REmove the last double quotes
-    printf("Parsed string : '%s'\n", str);
 
     data = xmalloc(sizeof(data_t));
     data->strVal = str;
