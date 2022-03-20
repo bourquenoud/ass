@@ -203,6 +203,7 @@ void ASS_output_vhdl(FILE *fd);
 void print_bits(FILE *fd, size_t const size, void const *const ptr);
 void ASS_parse_arguments(int argc, char const **argv);
 void ASS_parse();
+void ASS_resolve_ref();
 
 /***********************************************************************************************************/
 /*                                                CUSTOM CODE                                              */
@@ -491,23 +492,22 @@ int ASS_opcode_cmp(const void *a, const void *b)
 
 int main(int argc, char const *argv[])
 {
-    //Very first thing is calling the startup function, which is empty by default
+    FILE *fd;
+    ASS_show_loc = false;
+
+    // Very first thing is calling the startup function, which is empty by default
     ASS_startup();
 
-    FILE *fd;
-
-    ASS_show_loc = false; // Disable line display
-
-    bool format_set = false;
     // Parse the arguments
     ASS_parse_arguments(argc, argv);
 
+    // Open the file
     if (ASS_input_file == NULL || strcmp(ASS_input_file, "-") == 0)
         fd = stdin;
     else
         fd = fopen(ASS_input_file, "r");
 
-    // load the first line
+    // Load the first line
     ASS_line_ptr = 0;
     if (fgets(ASS_line, ASS_MAX_LINE_LENGTH, fd) == NULL)
     {
@@ -515,50 +515,15 @@ int main(int argc, char const *argv[])
         exit(EXIT_SUCCESS);
     }
 
-    ASS_show_loc = true; // Enable line display
+    // Parse the file
+    ASS_show_loc = true;
     ASS_parse(fd);
+    ASS_show_loc = false;
 
     fclose(fd);
-    ASS_show_loc = false; // Disable line display
 
-    // Resolve references
-    for (size_t i = 0; i < ASS_ref_stack_ptr; i++)
-    {
-        ASS_ref_t *ref = ASS_ref_stack + i;
-
-        // Search in the symbol table
-        uint64_t address = 0;
-        bool found = false;
-        for (size_t j = 0; j < ASS_symbol_stack_ptr; j++)
-        {
-            if (strcmp(ref->symbol_name, ASS_symbol_stack[j].name) == 0)
-            {
-                address = ASS_symbol_stack[j].value;
-                found = true;
-                break;
-            }
-        }
-
-        // Update the opcode value
-        if (!found)
-        {
-            ASS_log_error("Symbol '%s' not found", ref->symbol_name);
-        }
-        else
-        {
-            uint64_t mask;
-            ASS_opcode_t *opcode = ASS_binary_stack + ref->index;
-            mask = (0xFFFFFFFFFFFFFFFFLLU << (ref->bit_width + ref->bit_offset));
-            mask |= ~(0xFFFFFFFFFFFFFFFFLLU << (ref->bit_offset));
-            opcode->data &= mask;
-
-            // Compute the relative position if necessarry
-            if (ref->absolute)
-                opcode->data |= (~mask & (address << (ref->bit_offset)));
-            else
-                opcode->data |= (~mask & (((int64_t)address - (int64_t)opcode->address) << (ref->bit_offset)));
-        }
-    }
+    // Resolve label references
+    ASS_resolve_ref();
 
     // Exit if no data
     if (ASS_binary_stack_ptr == 0)
@@ -938,7 +903,7 @@ void ASS_parse_arguments(int argc, char const **argv)
     }
 }
 
-void ASS_parse(FILE* fd)
+void ASS_parse(FILE *fd)
 {
     // TODO : make it not need multiple newlines at the end
     int last_newline = 0;
@@ -1033,5 +998,46 @@ void ASS_parse(FILE* fd)
             ASS_col_pos = -1;
         }
         ASS_col_pos++;
+    }
+}
+
+void ASS_resolve_ref()
+{
+    for (size_t i = 0; i < ASS_ref_stack_ptr; i++)
+    {
+        ASS_ref_t *ref = ASS_ref_stack + i;
+
+        // Search in the symbol table
+        uint64_t address = 0;
+        bool found = false;
+        for (size_t j = 0; j < ASS_symbol_stack_ptr; j++)
+        {
+            if (strcmp(ref->symbol_name, ASS_symbol_stack[j].name) == 0)
+            {
+                address = ASS_symbol_stack[j].value;
+                found = true;
+                break;
+            }
+        }
+
+        // Update the opcode value
+        if (!found)
+        {
+            ASS_log_error("Symbol '%s' not found", ref->symbol_name);
+        }
+        else
+        {
+            uint64_t mask;
+            ASS_opcode_t *opcode = ASS_binary_stack + ref->index;
+            mask = (0xFFFFFFFFFFFFFFFFLLU << (ref->bit_width + ref->bit_offset));
+            mask |= ~(0xFFFFFFFFFFFFFFFFLLU << (ref->bit_offset));
+            opcode->data &= mask;
+
+            // Compute the relative position if necessarry
+            if (ref->absolute)
+                opcode->data |= (~mask & (address << (ref->bit_offset)));
+            else
+                opcode->data |= (~mask & (((int64_t)address - (int64_t)opcode->address) << (ref->bit_offset)));
+        }
     }
 }
