@@ -92,7 +92,6 @@ I have made a very simple extension for Visual Studio Code, available here : <ht
 
 ## Known bugs and missing features
 
- - ASS will consider escaped double quotes as invalid escape sequences, while still escaping them. This may lead to crash or invalid assembler.
  - ASS only accept partial regex, the "|", negative sets, any grouping and look-head aren't supported.
  - ASS will sometime crash when using multi-line comments.
  - ASS won't report if a pattern is fully shadowed by another.

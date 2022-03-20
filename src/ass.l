@@ -59,7 +59,7 @@ L_UNKNOWN_CMD           %[a-zA-Z0-9_]*
 L_INTEGER               -?[0-9]+
 L_BIT_CONSTANT          "$"[a-z][a-z0-9_]*
 L_BIT_LIT               "$"[0-9a-fA-F]*(h|o|b)?
-L_STRING                \".*?\"
+L_STRING                \"([^\"]|\\\")*?\"
 
 /* Identifier */
 L_IDENTIFIER            [a-z][a-z0-9_]*
@@ -134,8 +134,37 @@ data_t* get_string(char* in) //Return a string
 
     xmalloc_set_handler(xmalloc_callback);
     str = xmalloc(len - 1); //FIXME: <---THIS IS A DATA LEAK, STR IS NEVER FREED
-    strncpy(str, in + 1, len - 1); //Remove the leading and trailing "
-    str[len - 2] = '\0'; //Null terminate the string
+    
+    //Copy the string and escape double quotes and backslash
+    int src_index = 1;
+    int dst_index = 0;
+    while(in[src_index] != '\x00')
+    {
+        if(in[src_index] != '\\')
+        {
+            str[dst_index] = in[src_index];
+            dst_index++;
+        }
+        else if(in[src_index + 1] == '"')
+        {
+            str[dst_index] = '"';
+            src_index++;
+            dst_index++;
+        }
+        else
+        {
+            // Don't escape
+            str[dst_index] = in[src_index];
+            src_index++;
+            dst_index++;
+            str[dst_index] = in[src_index];
+            dst_index++;
+        }
+        src_index++;
+    }
+    str[dst_index-1] = '\x00'; //REmove the last double quotes
+    printf("Parsed string : '%s'\n", str);
+
     data = xmalloc(sizeof(data_t));
     data->strVal = str;
     return data;
