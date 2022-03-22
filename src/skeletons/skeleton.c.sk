@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
+#include <errno.h>
 
 /***************** enums, defines and consts *****************/
 
@@ -498,6 +499,12 @@ int main(int argc, char const *argv[])
             fd = stdin;
         else
             fd = fopen(ASS_input_files[i], "r");
+
+        if(fd == NULL)
+        {
+            ASS_log_error("Unable to read '%s', %s", ASS_input_files[i], strerror(errno));
+            exit(EXIT_FAILURE);
+        }
 
         // Parse the file
         ASS_show_loc = true;
