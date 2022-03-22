@@ -100,8 +100,6 @@ I have made a very simple extension for Visual Studio Code, available here : <ht
  - Generated assemblers output files in 16bits opcode format, associated parameters are ignored.
  - Generated assemblers will accept mutiple files as arguments, but will only parse the first one.
  - Generated assemblers will log the wrong line/token depending on the message.
- - Generated assemblers don't really respect POSIX option parsing, and may crash even with valid arguments.
- - Generated assemblers CLI isn't POSIX or GNU compliant, for example `--` won't stop option parsing.
 
 ## Future
 

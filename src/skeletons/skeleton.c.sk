@@ -767,66 +767,109 @@ void ASS_parse_arguments(int argc, char const **argv)
 {
     // NOTE: Handcrafted for portability.
     bool format_set = false;
-    for (size_t i = 1; i < argc; i++)
+    bool stop_parsing = false;
+    size_t i;
+    for (i = 1; i < argc && !stop_parsing; i++)
     {
         int len = strlen(argv[i]);
         if (len >= 2 && argv[i][0] == '-') // Is an option
         {
             // Parse all options
-            bool is_long_arg = false;
-            for (size_t j = 1; j < len && !is_long_arg; j++)
+            char const *argument;
+            for (size_t j = 1; j < len && !stop_parsing; j++)
             {
                 switch (argv[i][j])
                 {
+                // Options requiring no arguments
                 case 'h': // Help message
                     printf(ASS_help_message, argv[0]);
                     exit(EXIT_SUCCESS);
                 case 'V':
                     printf(ASS_version_message);
                     exit(EXIT_SUCCESS);
-                case 'o': // Output file
-                    if (++i >= argc || (strlen(argv[i]) >= 2 && argv[i][0] == '-'))
+                case 'v': // Enable verbose mode
+                    ASS_option_verbose = true;
+                    break;
+                case '-': // Stop parsing
+                    if (j != 1)
+                    {
+                        ASS_log_error("unkown option '%c'", argv[i][j]);
+                        exit(EXIT_FAILURE);
+                    }
+                    stop_parsing = true;
+                    break;
+
+                // Options requiring an argument
+                case 'o':        // Output file
+                    if (len > 2) // Check if the argument is not separated from the option
+                    {
+                        if (j != 1)
+                        {
+                            ASS_log_error("options that require an argument can not be grouped.");
+                            exit(EXIT_FAILURE);
+                        }
+                        argument = argv[i] + 2;
+                    }
+                    else if (i + 1 < argc && (strlen(argv[i + 1]) < 2 || argv[i + 1][0] != '-')) // Check if next parameter is the argument
+                    {
+                        argument = argv[++i];
+                    }
+                    else
                     {
                         ASS_log_error("option 'o' requires a parameter.");
                         exit(EXIT_FAILURE);
                     }
-                    ASS_output_file = argv[i];
+
+                    ASS_output_file = argument;
+                    j = len; // Stop the parsing of this option
                     break;
-                case 'v': // Enable verbose mode
-                    ASS_option_verbose = true;
-                    break;
-                case 'f': // Format
-                    if (++i >= argc || (strlen(argv[i]) >= 2 && argv[i][0] == '-'))
+                case 'f':        // Format
+                    if (len > 2) // Check if the argument is not separated from the option
                     {
-                        ASS_log_error("option 'f' requires a parameter.");
+                        if (j != 1)
+                        {
+                            ASS_log_error("options that require an argument can not be grouped.");
+                            exit(EXIT_FAILURE);
+                        }
+                        argument = argv[i] + 2;
+                    }
+                    else if (i + 1 < argc && (strlen(argv[i + 1]) < 2 || argv[i + 1][0] != '-')) // Check if next parameter is the argument
+                    {
+                        argument = argv[++i];
+                    }
+                    else
+                    {
+                        ASS_log_error("option 'o' requires a parameter.");
                         exit(EXIT_FAILURE);
                     }
+
                     if (format_set)
                     {
                         ASS_log_error("Multiple format option");
                         exit(EXIT_FAILURE);
                     }
 
-                    if (strcmp(argv[i], "coe") == 0)
+                    if (strcmp(argument, "coe") == 0)
                     {
                         ASS_output_format = ASS_OUT_COE;
                     }
-                    else if (strcmp(argv[i], "hex") == 0)
+                    else if (strcmp(argument, "hex") == 0)
                     {
                         ASS_output_format = ASS_OUT_HEX;
                     }
-                    else if (strcmp(argv[i], "vhdl") == 0)
+                    else if (strcmp(argument, "vhdl") == 0)
                     {
                         ASS_output_format = ASS_OUT_VHDL;
                     }
                     /*!! custom_outputs_selection !!*/
                     else
                     {
-                        ASS_log_error("unkown format '%s'", argv[i]);
+                        ASS_log_error("unkown format '%s'", argument);
                         exit(EXIT_FAILURE);
                     }
 
                     format_set = true;
+                    j = len; // Stop the parsing of this option
                     break;
                 default:
                     ASS_log_error("unkown option '%c'", argv[i][j]);
@@ -837,10 +880,16 @@ void ASS_parse_arguments(int argc, char const **argv)
         }
         else // Is not an option, then it's an input file
         {
-            // TODO: support multiple files
-            if (ASS_input_file == NULL)
-                ASS_input_file = argv[i];
+            break;
         }
+    }
+
+    // Parse all remaining parameters
+    for (; i < argc; i++)
+    {
+        // TODO: support multiple files
+        if (ASS_input_file == NULL)
+            ASS_input_file = argv[i];
     }
 }
 
