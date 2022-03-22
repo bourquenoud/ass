@@ -98,7 +98,8 @@ int ASS_current_address = 0;
 bool ASS_option_verbose = false;
 bool ASS_show_loc = false;
 char const *ASS_output_file = NULL;
-char const *ASS_input_file = NULL;
+char const **ASS_input_files = NULL;
+size_t ASS_input_files_count = 0;
 int ASS_output_format = ASS_OUT_HEX;
 /********************* log system *********************/
 #define ASS_INFO_COLOUR 94
@@ -490,19 +491,22 @@ int main(int argc, char const *argv[])
     // Parse the arguments
     ASS_parse_arguments(argc, argv);
 
-    // Open the file
-    if (ASS_input_file == NULL || strcmp(ASS_input_file, "-") == 0)
-        fd = stdin;
-    else
-        fd = fopen(ASS_input_file, "r");
+    for (size_t i = 0; i < ASS_input_files_count; i++)
+    {
+        // Open the file
+        if (strcmp(ASS_input_files[i], "-") == 0)
+            fd = stdin;
+        else
+            fd = fopen(ASS_input_files[i], "r");
 
-    // Parse the file
-    ASS_show_loc = true;
-    ASS_parse(fd);
-    ASS_show_loc = false;
+        // Parse the file
+        ASS_show_loc = true;
+        ASS_parse(fd);
+        ASS_show_loc = false;
 
-    // Close the file
-    fclose(fd);
+        // Close the file
+        fclose(fd);
+    }
 
     // Resolve label references
     ASS_resolve_ref();
@@ -763,7 +767,7 @@ void print_bits(FILE *fd, size_t const size, void const *const ptr)
     }
 }
 
-// TODO: improve this, it really bad
+// TODO: improve this, its really bad
 char const *ASS_parse_argument(size_t len, size_t *i, size_t index, int argc, char const **argv)
 {
     char const *argument;
@@ -830,7 +834,7 @@ void ASS_parse_arguments(int argc, char const **argv)
                     ASS_output_file = argument;
                     j = len; // Stop the parsing of this option
                     break;
-                case 'f':        // Format
+                case 'f': // Format
                     argument = ASS_parse_argument(len, &i, j, argc, argv);
 
                     if (format_set)
@@ -875,12 +879,17 @@ void ASS_parse_arguments(int argc, char const **argv)
     }
 
     // Parse all remaining parameters
+    ASS_input_files = malloc(sizeof(char *));
     for (; i < argc; i++)
     {
-        // TODO: support multiple files
-        if (ASS_input_file == NULL)
-            ASS_input_file = argv[i];
+        ASS_input_files[ASS_input_files_count] = argv[i];
+        ASS_input_files = realloc(ASS_input_files, sizeof(char *) * ++ASS_input_files_count);
     }
+
+    // If no file provided, read for stdin
+    if (ASS_input_files_count == 0)
+        ASS_input_files[0] = "-";
+    
 }
 
 void ASS_parse(FILE *fd)
