@@ -92,19 +92,14 @@ I have made a very simple extension for Visual Studio Code, available here : <ht
 
 ## Known bugs and missing features
 
- - ASS will consider escaped double quotes as invalid escape sequences, while still escaping them. This may lead to crash or invalid assembler.
  - ASS only accept partial regex, the "|", negative sets, any grouping and look-head aren't supported.
- - ASS will accept multiple ID substitutions in a bit template, even though it is an undefined behaviour.
- - ASS will sometime crash when using multi-line comments.
  - ASS won't report if a pattern is fully shadowed by another.
  - ASS memory is never freed anywhere. As it is short-lived it isn't a huge problem, but this should be taken into account.
  - Most parameters are unused, and default to 16 bits width and 64bit address space.
  - If any state machine at any point has more than 1024 states during generation, the generation will silently fail. For comparison, the example "pic16f887.ass" reaches 199 states for the lexer. The limit can be increase, but the memory usage increase quadratically.
  - Generated assemblers output files in 16bits opcode format, associated parameters are ignored.
- - Generated assemblers will accept mutiple files as arguments, but will only parse the first one.
  - Generated assemblers will log the wrong line/token depending on the message.
- - Generated assemblers don't really respect POSIX option parsing, and may crash even with valid arguments.
- - Generated assemblers CLI isn't POSIX or GNU compliant, for example `--` won't stop option parsing.
+ - Generated assemblers can read multiple files, but won't automatically place code sections. It will place the first encountered instruction at the beginning of the address space, so file order is important.
 
 ## Future
 

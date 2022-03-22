@@ -104,6 +104,7 @@ int command_format(data_t *id, linked_list_t *list)
     }
 
     // Number the elements in order, compute the width and extract the ellipsis
+    bool has_id = false;
     int width = 0;
     linked_list_t *current = list;
     int index_opcode = 0;
@@ -121,6 +122,7 @@ int command_format(data_t *id, linked_list_t *list)
         ((bit_elem_t *)(current->user_data))->index_opcode = index_opcode;
         index_opcode++;
 
+        // Check for multiple ellipsis
         if (((bit_elem_t *)(current->user_data))->type == eBP_ELLIPSIS)
         {
             if (ellipsis != NULL)
@@ -129,6 +131,16 @@ int command_format(data_t *id, linked_list_t *list)
                 return 1;
             }
             ellipsis = ((bit_elem_t *)(current->user_data));
+        }
+        // Check for multiple ID
+        else if (((bit_elem_t *)(current->user_data))->type == eBP_ID)
+        {
+            if (has_id)
+            {
+                fail_error("Multiple ID substitutions in a bit format.");
+                return 1;
+            }
+            has_id = true;
         }
 
         current = current->next;

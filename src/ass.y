@@ -93,17 +93,17 @@
 %token<dVal> T_SUBST
 
 /* Punctuation */
-%token T_LEFTPAR             
-%token T_RIGHPAR   
-%token T_LEFTSQBRACK         
-%token T_RIGHSQBRACK         
-%token T_ELIPSIS             
-%token T_COMMA  
-%token T_PLUS    
-%token T_MINUS   
+%token T_LEFTPAR
+%token T_RIGHPAR
+%token T_LEFTSQBRACK
+%token T_RIGHSQBRACK
+%token T_ELIPSIS
+%token T_COMMA
+%token T_PLUS
+%token T_MINUS
 %token T_MULTIPLY
-%token T_DIVIDE  
-%token T_MODULO  
+%token T_DIVIDE
+%token T_MODULO
 
 %start page
 
@@ -123,7 +123,6 @@
 %type pattern
 %type order
 %type opcode
-%type expr
 %type format
 %type command
 
@@ -137,6 +136,7 @@ endline:              T_M_COMMENT
                     | T_DS_COMMENT YYEOF
                     | T_LINE
                     | YYEOF
+;
 
 param_args:           T_IDENTIFIER                              { $$ = list_init(YYSYMBOL_T_IDENTIFIER, $1, eDATA); }
                     | param_args T_IDENTIFIER                   { $$ = $1; list_append($1, list_init(YYSYMBOL_T_IDENTIFIER, $2, eDATA)); }
@@ -171,9 +171,6 @@ order:                T_ORDER T_IDENTIFIER order_args endline           { fail_s
 opcode:               T_OPCODE T_IDENTIFIER T_STRING T_BIT_LIT endline          { fail_set_loc(@$); fail_show_loc(true); command_opcode($2, $3, $4, false); }
                     | T_OPCODE T_IDENTIFIER T_STRING T_BIT_CONSTANT endline     { fail_set_loc(@$); fail_show_loc(true); command_opcode($2, $3, $4, true); }
                     | T_OPCODE T_IDENTIFIER T_STRING endline                    { fail_set_loc(@$); fail_show_loc(true); command_opcode($2, $3, NULL, false); }
-;
-
-expr:                 T_LEFTPAR T_RIGHPAR
 ;
 
 subst:                T_SUBST T_LEFTPAR T_INTEGER T_RIGHPAR             { fail_set_loc(@$); fail_show_loc(true); $$ = subst($1, $3); }
@@ -218,9 +215,9 @@ override:             T_OVERRIDE T_IDENTIFIER T_C_BLOCK endline { fail_set_loc(@
 ;
 
 
-page:                 %empty 
-                    | page command 
-                    | page endline 
+page:                 %empty
+                    | page command
+                    | page endline
                     | page error endline
 ;
 
@@ -253,12 +250,12 @@ int yywrap()
 }
 
 int parse_file(int _totalFiles, char** _files)
-{   
+{
     totalFiles = _totalFiles;
     files = _files;
-    
+
     currentFileIndex = 0;                       //Start at the first file
-    
+
     /*Detect if we should read from stdin/write to stdout*/
     readFromStdin = totalFiles <= 0 || !isatty(fileno(stdin));
     writeToStdout = !isatty(fileno(stdout));
@@ -274,7 +271,7 @@ int parse_file(int _totalFiles, char** _files)
         printf("ERROR : no input file.\n");
         exit(EXIT_FAILURE);
     }
-    
+
     //Parse all files
 	do
     {
@@ -298,7 +295,7 @@ const char *getTypeName(int type)
 static int yyreport_syntax_error (const yypcontext_t *ctx)
 {
     int res = 0;
-    char error_message[1024] = "syntax error, "; 
+    char error_message[1024] = "syntax error, ";
     fail_set_loc(*yypcontext_location (ctx));
 
     // Report the tokens expected at this point.

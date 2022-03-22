@@ -38,7 +38,7 @@ L_C_BLOCK               "%{"([ -$&-~\t\r\n]|%[^}])*"%}"
 
 /* Comments */
 L_S_COMMENT             "//".*
-L_M_COMMENT             "/*"([^*]*|(\*+[^/]))*"*/"
+L_M_COMMENT             "/*"[^*]([^*]*|(\*+[^/]))*"*/"
 L_DS_COMMENT             "///".*
 L_DM_COMMENT             "/**"([^*]*|(\*+[^/]))*"*/"
 
@@ -59,7 +59,7 @@ L_UNKNOWN_CMD           %[a-zA-Z0-9_]*
 L_INTEGER               -?[0-9]+
 L_BIT_CONSTANT          "$"[a-z][a-z0-9_]*
 L_BIT_LIT               "$"[0-9a-fA-F]*(h|o|b)?
-L_STRING                \".*?\"
+L_STRING                \"([^\"]|\\\")*?\"
 
 /* Identifier */
 L_IDENTIFIER            [a-z][a-z0-9_]*
@@ -84,17 +84,6 @@ L_MODULO                "%"
 
 {L_SUBST}                                       { yylval.dVal = get_id(yytext); return T_SUBST; }
 
-{L_PARAM}                                       { return T_PARAM; }
-{L_CONSTANT}                                    { return T_CONSTANT; }
-{L_ENUM}                                        { return T_ENUM; }
-{L_PATTERN}                                     { return T_PATTERN; }
-{L_FORMAT}                                      { return T_FORMAT; }
-{L_ORDER}                                       { return T_ORDER; }
-{L_OPCODE}                                      { return T_OPCODE; }
-{L_CODE}                                        { return T_CODE; }
-{L_OUTPUT}                                      { return T_OUTPUT; }
-{L_OVERRIDE}                                    { return T_OVERRIDE; }
-{L_UNKNOWN_CMD}                                 { return T_UNKNOWN_CMD; }
 {L_LEFTPAR}                                     { return T_LEFTPAR; }
 {L_RIGHPAR}                                     { return T_RIGHPAR; }
 {L_LEFTSQBRACK}                                 { return T_LEFTSQBRACK; }
@@ -107,13 +96,27 @@ L_MODULO                "%"
 {L_DIVIDE}                                      { return T_DIVIDE; }
 {L_MODULO}                                      { return T_MODULO; }
 
+{L_PARAM}                                       { return T_PARAM; }
+{L_CONSTANT}                                    { return T_CONSTANT; }
+{L_ENUM}                                        { return T_ENUM; }
+{L_PATTERN}                                     { return T_PATTERN; }
+{L_FORMAT}                                      { return T_FORMAT; }
+{L_ORDER}                                       { return T_ORDER; }
+{L_OPCODE}                                      { return T_OPCODE; }
+{L_CODE}                                        { return T_CODE; }
+{L_OUTPUT}                                      { return T_OUTPUT; }
+{L_OVERRIDE}                                    { return T_OVERRIDE; }
+{L_UNKNOWN_CMD}                                 { return T_UNKNOWN_CMD; }
+
 {L_INTEGER}                                     { yylval.dVal = get_int(yytext); return T_INTEGER; }
 {L_BIT_LIT}                                     { yylval.dVal = get_bits(yytext); return T_BIT_LIT; }
 {L_BIT_CONSTANT}                                { yylval.dVal = get_const(yytext); return T_BIT_CONSTANT; }
 {L_STRING}                                      { yylval.dVal = get_string(yytext); return T_STRING; }
 
-{L_DS_COMMENT}|{L_DM_COMMENT}                   { return T_DS_COMMENT;}
-{L_S_COMMENT}|{L_M_COMMENT}                     { return T_S_COMMENT;}
+{L_DS_COMMENT}                                  { return T_DS_COMMENT;}
+{L_DM_COMMENT}                                  { return T_DM_COMMENT;}
+{L_S_COMMENT}                                   { return T_S_COMMENT;}
+{L_M_COMMENT}                                   { return T_M_COMMENT;}
 
 {L_IDENTIFIER}                                  { yylval.dVal = get_id(yytext); return T_IDENTIFIER; }
 
@@ -134,8 +137,36 @@ data_t* get_string(char* in) //Return a string
 
     xmalloc_set_handler(xmalloc_callback);
     str = xmalloc(len - 1); //FIXME: <---THIS IS A DATA LEAK, STR IS NEVER FREED
-    strncpy(str, in + 1, len - 1); //Remove the leading and trailing "
-    str[len - 2] = '\0'; //Null terminate the string
+
+    //Copy the string and escape double quotes
+    int src_index = 1;
+    int dst_index = 0;
+    while(in[src_index] != '\x00')
+    {
+        if(in[src_index] != '\\')
+        {
+            str[dst_index] = in[src_index];
+            dst_index++;
+        }
+        else if(in[src_index + 1] == '"')
+        {
+            str[dst_index] = '"';
+            src_index++;
+            dst_index++;
+        }
+        else
+        {
+            // Don't escape
+            str[dst_index] = in[src_index];
+            src_index++;
+            dst_index++;
+            str[dst_index] = in[src_index];
+            dst_index++;
+        }
+        src_index++;
+    }
+    str[dst_index-1] = '\x00'; //REmove the last double quotes
+
     data = xmalloc(sizeof(data_t));
     data->strVal = str;
     return data;
@@ -210,7 +241,7 @@ data_t* get_bits(char* in) //Return an unsigned int64
     }
     else if('o' == lastChar)
     {
-        data->bVal.val = strtoull(in + 1, NULL, 8); 
+        data->bVal.val = strtoull(in + 1, NULL, 8);
         data->bVal.width = (len - 2)*3; //Example $054o, length of 5 and 9 bits
     }
     else if('h' == lastChar)
@@ -218,7 +249,7 @@ data_t* get_bits(char* in) //Return an unsigned int64
         data->bVal.val = strtoull(in + 1, NULL, 16);
         data->bVal.width = (len - 2)*4; //Example $054Fh, length of 6 and 16 bits
     }
-    
+
     return data;
 }
 
