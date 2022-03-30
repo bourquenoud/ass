@@ -24,6 +24,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <errno.h>
+#include <ctype.h>
 
 /***************** enums, defines and consts *****************/
 
@@ -101,7 +102,7 @@ bool ASS_show_loc = false;
 char const *ASS_output_file = NULL;
 char const **ASS_input_files = NULL;
 size_t ASS_input_files_count = 0;
-int ASS_output_format = ASS_OUT_HEX;
+int ASS_output_format = ASS_OUT_UNKNOWN;
 /********************* log system *********************/
 #define ASS_INFO_COLOUR 94
 #define ASS_WARN_COLOUR 93
@@ -206,7 +207,10 @@ void print_bits(FILE *fd, size_t const size, void const *const ptr);
 void ASS_parse_arguments(int argc, char const **argv);
 void ASS_parse();
 void ASS_resolve_ref();
-void ASS_address_sorting();
+void ASS_sort_opcodes();
+FILE *ASS_open_file(const char *filename, const char *mode);
+int ASS_get_extension(char const *filename);
+char const* ASS_output_format_to_string(int format);
 
 /***********************************************************************************************************/
 /*                                                CUSTOM CODE                                              */
@@ -498,13 +502,7 @@ int main(int argc, char const *argv[])
         if (strcmp(ASS_input_files[i], "-") == 0)
             fd = stdin;
         else
-            fd = fopen(ASS_input_files[i], "r");
-
-        if(fd == NULL)
-        {
-            ASS_log_error("Unable to read '%s', %s", ASS_input_files[i], strerror(errno));
-            exit(EXIT_FAILURE);
-        }
+            fd = ASS_open_file(ASS_input_files[i], "r");
 
         // Parse the file
         ASS_show_loc = true;
@@ -526,12 +524,12 @@ int main(int argc, char const *argv[])
     }
 
     // Sort the address and check for collisions
-    ASS_address_sorting();
+    ASS_sort_opcodes();
 
     if (ASS_output_file == NULL || strcmp(ASS_output_file, "-") == 0)
         fd = stdout;
     else
-        fd = fopen(ASS_output_file, "w");
+        fd = ASS_open_file(ASS_output_file, "w");
 
     // Generate outputs file
     if (ASS_error_count == 0)
@@ -896,7 +894,17 @@ void ASS_parse_arguments(int argc, char const **argv)
     // If no file provided, read for stdin
     if (ASS_input_files_count == 0)
         ASS_input_files[0] = "-";
-    
+
+    // If no output file provided, use stdout
+    if (ASS_output_file == NULL)
+        ASS_output_file = "-";
+
+    // If format is unknown, try to extract it from the input file
+    if (ASS_output_format == ASS_OUT_UNKNOWN)
+    {
+        ASS_output_format = ASS_get_extension(ASS_output_file);
+        ASS_log_info("No format specified, using '%s'", ASS_output_format_to_string(ASS_output_format));
+    }    
 }
 
 void ASS_parse(FILE *fd)
@@ -1058,49 +1066,74 @@ int ASS_opcode_cmp(const void *a, const void *b)
     return (*(ASS_opcode_t *)a).address - (*(ASS_opcode_t *)b).address;
 }
 
-void ASS_address_sorting()
+// Sort the opcodes by address. Throw an error if there are overlapping addresses
+void ASS_sort_opcodes()
 {
-    size_t address_ranges_count = 1;
-    uint64_t last_address;
+    // Sort the opcodes by address
+    qsort(ASS_binary_stack, ASS_binary_stack_ptr, sizeof(ASS_opcode_t), ASS_opcode_cmp);
 
-    address_range_t *address_range_array = malloc(sizeof(address_range_t));
-    last_address = ASS_binary_stack[0].address;
-    address_range_array[0].start = last_address;
-
-    for (size_t i = 1; i < ASS_binary_stack_ptr; i++)
+    // Check for overlapping addresses
+    for (size_t i = 0; i < ASS_binary_stack_ptr - 1; i++)
     {
-        // If we get an address jump then we count it as a different address range
-        if (last_address + 1 != ASS_binary_stack[i].address)
+        if (ASS_binary_stack[i].address == ASS_binary_stack[i + 1].address)
         {
-            address_range_array[address_ranges_count - 1].stop = last_address;
-            address_range_array = realloc(address_range_array, sizeof(address_range_t) * (address_ranges_count + 1)); // TODO: realloc less frequently
-            address_range_array[address_ranges_count].start = ASS_binary_stack[i].address;
-            address_ranges_count++;
-        }
-        last_address = ASS_binary_stack[i].address;
-    }
-    address_range_array[address_ranges_count - 1].stop = last_address;
-
-    // Check for address collisions
-    for (size_t i = 0; i < address_ranges_count - 1; i++)
-    {
-        for (size_t j = i + 1; j < address_ranges_count; j++)
-        {
-            // If range overlap
-            if ((address_range_array[i].start <= address_range_array[j].stop) && (address_range_array[i].stop >= address_range_array[j].start))
-            {
-                ASS_log_error("Colliding address ranges. Address from 0x%X to 0x%X are overlapping. Exiting",
-                              (address_range_array[i].start > address_range_array[j].start) ? address_range_array[i].start : address_range_array[j].start,
-                              (address_range_array[i].stop < address_range_array[j].stop) ? address_range_array[i].stop : address_range_array[j].stop);
-                exit(EXIT_FAILURE);
-            }
+            ASS_log_error("Overlapping addresses: 0x%X and 0x%X", ASS_binary_stack[i].address, ASS_binary_stack[i + 1].address);
         }
     }
+}
 
-    // Sort the instructions by address
-    qsort(ASS_binary_stack, ASS_binary_stack_ptr, sizeof(*ASS_binary_stack), ASS_opcode_cmp);
+// Open a file and check for errors, return its file descriptor if no error occured, otherwise show an error and exit.
+// Uses fopen
+FILE *ASS_open_file(const char *filename, const char *mode)
+{
+    FILE *fd = fopen(filename, mode);
+    if (fd == NULL)
+    {
+        ASS_log_error("Could not open file '%s'", filename);
+        exit(EXIT_FAILURE);
+    }
+    return fd;
+}
 
-    // Sort address ranges
-    // TODO: could be removed by sorting the instructions before generating ranges
-    qsort(address_range_array, address_ranges_count, sizeof(*address_range_array), ASS_address_range_cmp);
+// Extract the file extension from a filename, then map it to the corresponding file type. Extension is case insensitive.
+// Valid file extensions are:
+// - .hex
+// - .vhd
+// - .vhdl
+// - .coe
+int ASS_get_extension(char const *filename)
+{
+    char *extension = strrchr(filename, '.');
+    if (extension == NULL)
+        return ASS_OUT_UNKNOWN;
+
+    // Convert the extension to lowercase
+    for (size_t i = 0; i < strlen(extension); i++)
+        extension[i] = tolower(extension[i]);
+
+    // Map the extension to a file type
+    if (strcmp(extension, ".hex") == 0)
+        return ASS_OUT_HEX;
+    else if (strcmp(extension, ".vhd") == 0 || strcmp(extension, ".vhdl") == 0)
+        return ASS_OUT_VHDL;
+    else if (strcmp(extension, ".coe") == 0)
+        return ASS_OUT_COE;
+    else
+        return ASS_OUT_UNKNOWN;
+}
+
+//Convert the output format to a string
+char const *ASS_output_format_to_string(int format)
+{
+    switch (format)
+    {
+    case ASS_OUT_HEX:
+        return "HEX";
+    case ASS_OUT_VHDL:
+        return "VHDL";
+    case ASS_OUT_COE:
+        return "COE";
+    default:
+        return "UNKNOWN";
+    }
 }

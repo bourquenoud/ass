@@ -239,6 +239,7 @@ void generator_outputs_enum(int indent)
 {
     iprintf(0, "enum");
     iprintf(0 + indent, "{");
+    iprintf(1 + indent, "ASS_OUT_UNKNOWN,");
     iprintf(1 + indent, "ASS_OUT_HEX,");
     iprintf(1 + indent, "ASS_OUT_COE,");
     iprintf(1 + indent, "ASS_OUT_VHDL,");
