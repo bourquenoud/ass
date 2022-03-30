@@ -13,7 +13,7 @@ char *action_label =
     "    strncpy(new_symbol.name, str, len);\n"
     "    new_symbol.name[len - 1] = '\\0';\n"
     "    new_symbol.value = ASS_current_address;\n"
-    "    ASS_symbol_stack_push(new_symbol);\n"
+    "    ASS_insert_symbol(new_symbol);\n"
     "    return (ASS_data_t){ASS_DT_NULL, (uint64_t)0};";
 
 char *action_address =

@@ -28,6 +28,8 @@
 
 /***************** enums, defines and consts *****************/
 
+#define ASS_SYMBOL_HASH_SIZE 1024
+
 enum
 {
     ASS_U_NONE = 0,
@@ -103,6 +105,9 @@ char const *ASS_output_file = NULL;
 char const **ASS_input_files = NULL;
 size_t ASS_input_files_count = 0;
 int ASS_output_format = ASS_OUT_UNKNOWN;
+
+ASS_symbol_t ASS_symbol_hash[ASS_SYMBOL_HASH_SIZE];
+
 /********************* log system *********************/
 #define ASS_INFO_COLOUR 94
 #define ASS_WARN_COLOUR 93
@@ -147,13 +152,6 @@ int ASS_parser_stack_size = 0;
 int ASS_parser_stack_ptr = 0;
 void ASS_parser_stack_push(ASS_data_t);
 ASS_data_t ASS_parser_stack_pop(void);
-
-// Symbol
-ASS_symbol_t *ASS_symbol_stack;
-int ASS_symbol_stack_size = 0;
-int ASS_symbol_stack_ptr = 0;
-void ASS_symbol_stack_push(ASS_symbol_t);
-ASS_symbol_t ASS_symbol_stack_pop(void);
 
 // Binary
 // TODO: rename to ASS_instruction_stack
@@ -210,7 +208,9 @@ void ASS_resolve_ref();
 void ASS_sort_opcodes();
 FILE *ASS_open_file(const char *filename, const char *mode);
 int ASS_get_extension(char const *filename);
-char const* ASS_output_format_to_string(int format);
+char const *ASS_output_format_to_string(int format);
+void ASS_insert_symbol(ASS_symbol_t symbol);
+ASS_symbol_t *ASS_get_symbol(char const *name);
 
 /***********************************************************************************************************/
 /*                                                CUSTOM CODE                                              */
@@ -271,29 +271,6 @@ void ASS_parser_stack_push(ASS_data_t val)
 ASS_data_t ASS_parser_stack_pop(void)
 {
     return ASS_parser_stack[--ASS_parser_stack_ptr];
-}
-
-// Symbol
-void ASS_symbol_stack_push(ASS_symbol_t val)
-{
-    // Resize the stack if necessary
-    if (ASS_symbol_stack_size == 0)
-    {
-        ASS_symbol_stack = malloc(sizeof(ASS_symbol_t) * ASS_DEFAULT_STACK_DEPTH);
-        ASS_symbol_stack_size = ASS_DEFAULT_STACK_DEPTH;
-    }
-    else if (ASS_symbol_stack_size <= ASS_symbol_stack_ptr)
-    {
-        ASS_symbol_stack = malloc(ASS_symbol_stack_size * 2);
-        ASS_symbol_stack_size *= 2;
-    }
-
-    ASS_symbol_stack[ASS_symbol_stack_ptr++] = val;
-}
-
-ASS_symbol_t ASS_symbol_stack_pop(void)
-{
-    return ASS_symbol_stack[--ASS_symbol_stack_ptr];
 }
 
 // binary
@@ -489,6 +466,7 @@ int main(int argc, char const *argv[])
 {
     FILE *fd;
     ASS_show_loc = false;
+    bool read_macro = false;
 
     // Very first thing is calling the startup function, which is empty by default
     ASS_startup();
@@ -904,11 +882,16 @@ void ASS_parse_arguments(int argc, char const **argv)
     {
         ASS_output_format = ASS_get_extension(ASS_output_file);
         ASS_log_info("No format specified, using '%s'", ASS_output_format_to_string(ASS_output_format));
-    }    
+    }
 }
 
 void ASS_parse(FILE *fd)
 {
+    // Set to true if expending a macro
+    bool expanding_macro = false;
+    char *macro_content = NULL;
+    int ASS_macro_ptr = 0;
+
     // Load the first line
     ASS_line_ptr = 0;
     if (fgets(ASS_line, ASS_MAX_LINE_LENGTH, fd) == NULL)
@@ -946,7 +929,7 @@ void ASS_parse(FILE *fd)
             {
                 ASS_line_ptr = 0;
 
-                // Stop when no more data is available
+                // Try to load the next line, stop when no more data is available
                 if (fgets(ASS_line, ASS_MAX_LINE_LENGTH, fd) == NULL)
                 {
                     // HACK: Push a bunch of linefeed character before feeding the EOF and then closing
@@ -1019,38 +1002,20 @@ void ASS_resolve_ref()
     {
         ASS_ref_t *ref = ASS_ref_stack + i;
 
-        // Search in the symbol table
-        uint64_t address = 0;
-        bool found = false;
-        for (size_t j = 0; j < ASS_symbol_stack_ptr; j++)
-        {
-            if (strcmp(ref->symbol_name, ASS_symbol_stack[j].name) == 0)
-            {
-                address = ASS_symbol_stack[j].value;
-                found = true;
-                break;
-            }
-        }
+        // Get the symbol
+        uint64_t address = ASS_get_symbol(ref->symbol_name)->value;
+        
+        uint64_t mask;
+        ASS_opcode_t *opcode = ASS_binary_stack + ref->index;
+        mask = (0xFFFFFFFFFFFFFFFFLLU << (ref->bit_width + ref->bit_offset));
+        mask |= ~(0xFFFFFFFFFFFFFFFFLLU << (ref->bit_offset));
+        opcode->data &= mask;
 
-        // Update the opcode value
-        if (!found)
-        {
-            ASS_log_error("Symbol '%s' not found", ref->symbol_name);
-        }
+        // Compute the relative position if necessarry
+        if (ref->absolute)
+            opcode->data |= (~mask & (address << (ref->bit_offset)));
         else
-        {
-            uint64_t mask;
-            ASS_opcode_t *opcode = ASS_binary_stack + ref->index;
-            mask = (0xFFFFFFFFFFFFFFFFLLU << (ref->bit_width + ref->bit_offset));
-            mask |= ~(0xFFFFFFFFFFFFFFFFLLU << (ref->bit_offset));
-            opcode->data &= mask;
-
-            // Compute the relative position if necessarry
-            if (ref->absolute)
-                opcode->data |= (~mask & (address << (ref->bit_offset)));
-            else
-                opcode->data |= (~mask & (((int64_t)address - (int64_t)opcode->address) << (ref->bit_offset)));
-        }
+            opcode->data |= (~mask & (((int64_t)address - (int64_t)opcode->address) << (ref->bit_offset)));
     }
 }
 
@@ -1122,7 +1087,7 @@ int ASS_get_extension(char const *filename)
         return ASS_OUT_UNKNOWN;
 }
 
-//Convert the output format to a string
+// Convert the output format to a string
 char const *ASS_output_format_to_string(int format)
 {
     switch (format)
@@ -1136,4 +1101,66 @@ char const *ASS_output_format_to_string(int format)
     default:
         return "UNKNOWN";
     }
+}
+
+// Hash a string using the djb2 algorithm
+uint32_t ASS_hash_string(char const *str)
+{
+    uint32_t hash = 5381;
+    int c;
+
+    while ((c = *str++))
+        hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
+
+    return hash;
+}
+
+// Get the value of a symbol from the hash table. Throw an error if the symbol is not found and return null.
+ASS_symbol_t *ASS_get_symbol(char const *name)
+{
+    uint32_t hash = ASS_hash_string(name);
+    uint32_t index = hash % ASS_SYMBOL_HASH_SIZE;
+
+    // Search for the symbol
+    while (ASS_symbol_hash[index].name != NULL)
+    {
+        if (strcmp(name, ASS_symbol_hash[index].name) == 0)
+            return &(ASS_symbol_hash[index]);
+
+        index = (++index) % ASS_SYMBOL_HASH_SIZE;
+    }
+
+    // Symbol not found
+    ASS_log_error("Symbol '%s' not found", name);
+    return NULL;
+}
+
+// Insert a symbol into the hash table. Throw an error if the symbol already exists.
+// Use the linear probing, and throw an error if the hash table is full.
+void ASS_insert_symbol(ASS_symbol_t symbol)
+{
+    uint32_t hash = ASS_hash_string(symbol.name);
+    uint32_t index = hash % ASS_SYMBOL_HASH_SIZE;
+
+    // Search for the symbol
+    while (ASS_symbol_hash[index].name != NULL)
+    {
+        if (strcmp(symbol.name, ASS_symbol_hash[index].name) == 0)
+        {
+            ASS_log_error("Symbol '%s' already exists", symbol.name);
+            return;
+        }
+
+        index = (++index) % ASS_SYMBOL_HASH_SIZE;
+
+        // Hash table is full
+        if (index == hash % ASS_SYMBOL_HASH_SIZE)
+        {
+            ASS_log_error("Symbol hash table is full");
+            return;
+        }
+    }
+
+    // Insert the symbol
+    ASS_symbol_hash[index] = symbol;
 }
