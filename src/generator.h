@@ -64,6 +64,7 @@ char *generator_generate_opcode_action(opcode_t opcode);
 /**************************************************/
 /*                   CALLBACKS                    */
 /**************************************************/
+void generator_default_macros(int indent);
 void generator_custom_outputs_selection(int indent);
 void generator_custom_outputs_switch(int indent);
 void generator_outputs_enum(int indent);

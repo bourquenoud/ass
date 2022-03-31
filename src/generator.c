@@ -210,6 +210,23 @@ char *generator_generate_opcode_action(opcode_t opcode)
 /*                   CALLBACKS                    */
 /**************************************************/
 
+void generator_default_macros(int indent)
+{
+    int count = hash_count(macro_array);
+    bucket_t **macro = hash_serialise(macro_array);
+
+    iprintf(0, "// Default macros");
+
+    for (int i = 0; i < count; i++)
+    {
+        // Get the macro from the bucket
+        macro_t *macro_elem = (macro_t *)(macro[i]->user_data);
+
+        iprintf(0 + indent, "ASS_insert_macro((ASS_macro_t){.name = \"%s\", .content = \"%s\"});", macro_elem->name, macro_elem->content);
+    }
+
+}
+
 void generator_custom_outputs_selection(int indent)
 {
     iprintf(0, "");
@@ -298,6 +315,7 @@ void generator_help_message(int indent)
     iprintf(1 + indent, "\"  -h           display this help and exit\\n\"");
     iprintf(1 + indent, "\"  -V           output version information and exit\\n\"");
     iprintf(1 + indent, "\"  -v           verbose\\n\"");
+    iprintf(1 + indent, "\"  -c           disable coloured messages\\n\"");
     iprintf(1 + indent, "\"  -f <FORMAT>  set the format for the output file\\n\"");
     iprintf(1 + indent, "\"\\n\"");
     iprintf(1 + indent, "\"FORMAT is the format of the output file. The available formats are:\\n\"");
