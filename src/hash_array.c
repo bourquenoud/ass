@@ -106,6 +106,21 @@ size_t bucket_push_to_array(bucket_t* self, bucket_t** serialised_data)
     return count;
 }
 
+// Deallocate all buckets
+void bucket_free(bucket_t* self)
+{
+    bucket_t* current = self;
+    bucket_t* next;
+
+    //Goes throught all elements and push them on the array utill the end of the array
+    while(current)
+    {
+        next = current->next;
+        free(current);
+        current = next;
+    }
+}
+
 /********************************************************/
 
 hash_t* hash_init(int size)
@@ -136,7 +151,7 @@ void hash_add(hash_t* self, char* key, void* data)
         bucket_add(self->buckets[hash_val], new_bucket);
 }
 
-//TODO: implement a try get
+// Get the data from the hash if it exists, or return NULL
 void* hash_get(hash_t* self, char* key)
 {
     //Get the hash
@@ -151,6 +166,28 @@ void* hash_get(hash_t* self, char* key)
 
     //Search the bucket list for a match, will return a NULL if nothing has been found
     return bucket_find(current_bucket, key)->user_data;
+}
+
+// Try to get the data, if it doesn't exist return false. Data contains the data if it exists
+bool hash_try_get(hash_t* self, char* key, void** data)
+{
+    //Get the hash
+    uint32_t hash_val = hash(key) % self->size;
+    
+    //Get the current content of hash cell
+    bucket_t* current_bucket = self->buckets[hash_val];
+
+    //Hash to an empty slot then the key doesn't exist
+    if(current_bucket == NULL)
+        return false;
+
+    //Search the bucket list for a match, will return a NULL if nothing has been found
+    bucket_t* bucket = bucket_find(current_bucket, key);
+    if(bucket == NULL)
+        return false;
+
+    *data = bucket->user_data;
+    return true;
 }
 
 bool hash_check_key(hash_t* self, char* key)
@@ -191,6 +228,17 @@ bucket_t** hash_serialise(hash_t* self)
     }
 
     return serialised_data;
+}
+
+// Dealocate all buckets and the hash table
+void hash_free(hash_t* self)
+{
+    for(int i = 0; i < self->size; i++)
+    {
+        if(self->buckets[i])
+            bucket_free(self->buckets[i]);
+    }
+    free(self);
 }
 
 /********************************************************/
