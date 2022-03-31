@@ -56,7 +56,6 @@ int main(int argc, char **argv)
     char *file_list[argc];
     int file_count = 0;
     int opt;
-
     bool supressed = false;
 
     // Parse options
@@ -175,7 +174,8 @@ int main(int argc, char **argv)
     generator_set_file_descriptor(fd);
     generate(fd);
     fclose(fd);
-
+    
+    // Check for previous errors and exit if an error occured during generation
     if (fail_get_error_count() != 0)
     {
         fail_error("Failure during output file generation. Exiting.");
