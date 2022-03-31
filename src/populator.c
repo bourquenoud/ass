@@ -17,6 +17,7 @@ void generate(FILE *fd)
 
     function_table = hash_init(64);
 
+    register_function(default_macros);
     register_function(custom_outputs_selection);
     register_function(custom_outputs_switch);
     register_function(outputs_enum);

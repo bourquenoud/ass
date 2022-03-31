@@ -29,6 +29,7 @@
 /***************** enums, defines and consts *****************/
 
 #define ASS_SYMBOL_HASH_SIZE 1024
+#define ASS_MACRO_HASH_SIZE 1024
 
 enum
 {
@@ -96,6 +97,13 @@ typedef struct
     char *name;
 } ASS_const_t;
 
+typedef struct
+{
+    char *name;
+    char *content;
+} ASS_macro_t;
+
+
 /********************* general globals *********************/
 char *ASS_text = NULL;
 int ASS_current_address = 0;
@@ -105,8 +113,10 @@ char const *ASS_output_file = NULL;
 char const **ASS_input_files = NULL;
 size_t ASS_input_files_count = 0;
 int ASS_output_format = ASS_OUT_UNKNOWN;
-
-ASS_symbol_t ASS_symbol_hash[ASS_SYMBOL_HASH_SIZE];
+bool ASS_option_colour = true;
+bool ASS_in_macro = false;
+char *ASS_macro_content = NULL;
+int ASS_macro_ptr = 0;
 
 /********************* log system *********************/
 #define ASS_INFO_COLOUR 94
@@ -175,6 +185,14 @@ int ASS_const_stack_ptr = 0;
 void ASS_const_stack_push(ASS_const_t);
 ASS_const_t ASS_const_stack_pop(void);
 
+/********************* hash tables *********************/
+ASS_symbol_t ASS_symbol_hash[ASS_SYMBOL_HASH_SIZE];
+ASS_macro_t ASS_macro_hash[ASS_MACRO_HASH_SIZE];
+void ASS_insert_symbol(ASS_symbol_t symbol);
+ASS_symbol_t *ASS_get_symbol(char const *name);
+void ASS_insert_macro(ASS_macro_t macro);
+ASS_macro_t *ASS_get_macro(char const *name);
+
 /********************* lexer *********************/
 
 int ASS_lexer_state = 0;
@@ -209,8 +227,6 @@ void ASS_sort_opcodes();
 FILE *ASS_open_file(const char *filename, const char *mode);
 int ASS_get_extension(char const *filename);
 char const *ASS_output_format_to_string(int format);
-void ASS_insert_symbol(ASS_symbol_t symbol);
-ASS_symbol_t *ASS_get_symbol(char const *name);
 
 /***********************************************************************************************************/
 /*                                                CUSTOM CODE                                              */
@@ -471,6 +487,8 @@ int main(int argc, char const *argv[])
     // Very first thing is calling the startup function, which is empty by default
     ASS_startup();
 
+    /*!! default_macros !!*/
+
     // Parse the arguments
     ASS_parse_arguments(argc, argv);
 
@@ -549,6 +567,7 @@ int main(int argc, char const *argv[])
 /*                                                 OUTPUT                                                  */
 /***********************************************************************************************************/
 
+// Output the binary data in Intel HEX format
 void ASS_output_hex(FILE *fd)
 {
     for (size_t i = 0; i < ASS_binary_stack_ptr; i++)
@@ -563,6 +582,7 @@ void ASS_output_hex(FILE *fd)
     fprintf(fd, ":00000001FF\n");
 }
 
+// Output the binary data in COE format
 void ASS_output_coe(FILE *fd)
 {
     if ((ASS_P_address_stop - ASS_P_address_start) * ASS_P_memory_width / 8 > 1024LLU * 1024LLU * 1024LLU)
@@ -589,6 +609,7 @@ void ASS_output_coe(FILE *fd)
     fputc(';', fd);
 }
 
+// Output the binary data in VHDL format
 void ASS_output_vhdl(FILE *fd)
 {
     if ((ASS_P_address_stop - ASS_P_address_start) * ASS_P_memory_width / 8 > 1024LLU * 1024LLU * 1024LLU)
@@ -630,14 +651,17 @@ void ASS_log_info(const char *format, ...)
 
     va_list args;
     va_start(args, format);
-    fprintf(stderr, "\033[%im", ASS_INFO_COLOUR);
+    if (ASS_option_colour)
+        fprintf(stderr, "\033[%im", ASS_INFO_COLOUR);
 
     if (ASS_show_loc)
         fprintf(stderr, "INFO line %i : ", ASS_loc.first_line);
     else
         fprintf(stderr, "INFO : ");
     vfprintf(stderr, format, args);
-    fputs("\033[0m\n", stderr);
+    if (ASS_option_colour)
+        fputs("\033[0m", stderr);
+    fputc('\n', stderr);
     va_end(args);
 
     ASS_show_line(ASS_INFO_COLOUR);
@@ -650,7 +674,8 @@ void ASS_log_warning(const char *format, ...)
 
     va_list args;
     va_start(args, format);
-    fprintf(stderr, "\033[%im", ASS_WARN_COLOUR);
+    if (ASS_option_colour)
+        fprintf(stderr, "\033[%im", ASS_WARN_COLOUR);
 
     if (ASS_show_loc)
         fprintf(stderr, "WARNING line %i : ", ASS_loc.first_line);
@@ -658,7 +683,9 @@ void ASS_log_warning(const char *format, ...)
         fprintf(stderr, "WARNING : ");
 
     vfprintf(stderr, format, args);
-    fputs("\033[0m\n", stderr);
+    if (ASS_option_colour)
+        fputs("\033[0m", stderr);
+    fputc('\n', stderr);
     va_end(args);
 
     ASS_show_line(ASS_WARN_COLOUR);
@@ -672,7 +699,8 @@ void ASS_log_error(const char *format, ...)
 
     va_list args;
     va_start(args, format);
-    fprintf(stderr, "\033[%im", ASS_ERRO_COLOUR);
+    if (ASS_option_colour)
+        fprintf(stderr, "\033[%im", ASS_ERRO_COLOUR);
 
     if (ASS_show_loc)
         fprintf(stderr, "ERROR line %i : ", ASS_loc.first_line);
@@ -680,7 +708,9 @@ void ASS_log_error(const char *format, ...)
         fprintf(stderr, "ERROR : ");
 
     vfprintf(stderr, format, args);
-    fputs("\033[0m\n\n", stderr);
+    if (ASS_option_colour)
+        fputs("\033[0m", stderr);
+    fputc('\n', stderr);
     va_end(args);
 
     ASS_show_line(ASS_ERRO_COLOUR);
@@ -702,12 +732,14 @@ void ASS_show_line(int colourCode)
     {
         fputc(ASS_line[i], stderr);
     }
-    fprintf(stderr, "\033[%im", colourCode);
+    if (ASS_option_colour)
+        fprintf(stderr, "\033[%im", colourCode);
     for (i = ASS_loc.first_column; i < ASS_loc.last_column + 1 && ASS_line[i] && ASS_line[i] != '\n' && ASS_line[i] != '\r'; i++)
     {
         fputc(ASS_line[i], stderr);
     }
-    fputs("\033[0m", stderr);
+    if (ASS_option_colour)
+        fputs("\033[0m", stderr);
     while (ASS_line[i] != '\n' && ASS_line[i] != '\r' && ASS_line[i] != '\0')
     {
         fputc(ASS_line[i++], stderr);
@@ -718,7 +750,8 @@ void ASS_show_line(int colourCode)
     {
         fputc(' ', stderr);
     }
-    fprintf(stderr, "\033[%im", colourCode);
+    if (ASS_option_colour)
+        fprintf(stderr, "\033[%im", colourCode);
     for (i = ASS_loc.first_column; i < ASS_loc.last_column + 1; i++)
     {
         if (i == ASS_loc.first_column)
@@ -726,7 +759,9 @@ void ASS_show_line(int colourCode)
         else
             fputc('~', stderr);
     }
-    fputs("\033[0m\n", stderr);
+    if (ASS_option_colour)
+        fputs("\033[0m", stderr);
+    fputc('\n', stderr);
 }
 
 /***********************************************************************************************************/
@@ -801,6 +836,9 @@ void ASS_parse_arguments(int argc, char const **argv)
                     exit(EXIT_SUCCESS);
                 case 'v': // Enable verbose mode
                     ASS_option_verbose = true;
+                    break;
+                case 'c': // Disable colour mode
+                    ASS_option_colour = false;
                     break;
                 case '-': // Stop parsing
                     if (j != 1)
@@ -887,10 +925,7 @@ void ASS_parse_arguments(int argc, char const **argv)
 
 void ASS_parse(FILE *fd)
 {
-    // Set to true if expending a macro
-    bool expanding_macro = false;
-    char *macro_content = NULL;
-    int ASS_macro_ptr = 0;
+    bool was_in_macro = false;
 
     // Load the first line
     ASS_line_ptr = 0;
@@ -921,23 +956,43 @@ void ASS_parse(FILE *fd)
         }
         else
         {
-            // Read the next character
-            ASS_lexer_token = ASS_line[ASS_line_ptr++];
+            // If we are not in a macro, then get the next char from the line, otherwise get the next char from the macro content
+            if (!ASS_in_macro)
+            {
+                ASS_lexer_token = ASS_line[ASS_line_ptr++];
+            }
+            else
+            {
+                ASS_lexer_token = ASS_macro_content[ASS_macro_ptr++];
+            }
 
             // Load the next line
             if (ASS_lexer_token == '\0')
             {
-                ASS_line_ptr = 0;
 
-                // Try to load the next line, stop when no more data is available
-                if (fgets(ASS_line, ASS_MAX_LINE_LENGTH, fd) == NULL)
+                // If we are not in a macro, then get the next line, otherwise exit the macro
+                if (!ASS_in_macro)
                 {
-                    // HACK: Push a bunch of linefeed character before feeding the EOF and then closing
-                    ASS_lexer_token = '\n';
-                    last_newline = 3;
+                    ASS_line_ptr = 0;
+
+                    if (fgets(ASS_line, ASS_MAX_LINE_LENGTH, fd) == NULL)
+                    {
+                        // HACK: Push a bunch of linefeed character before feeding the EOF and then closing
+                        ASS_lexer_token = '\n';
+                        last_newline = 3;
+                    }
+                    else
+                        continue;
                 }
                 else
+                {
+                    ASS_line_ptr --;
+                    was_in_macro = false;
+                    ASS_in_macro = false;
+                    ASS_macro_content = NULL;
+                    ASS_macro_ptr = 0;
                     continue;
+                }
             }
         }
 
@@ -953,9 +1008,29 @@ void ASS_parse(FILE *fd)
             // Run the parser if the lexer has matched a token
             if (ASS_lexer_output_ready)
             {
+
+                // If the token is an identifier, then check if it is a macro
+                if (ASS_lexer_output == ASS_T_IDENTIFIER)
+                {
+                    ASS_macro_t *macro = ASS_get_macro(ASS_text);
+                    // If it is a macro, enter it and drop the current token
+                    if (macro != NULL)
+                    {
+                        ASS_in_macro = true;
+                        ASS_macro_content = macro->content;
+                        ASS_macro_ptr = 0;
+                        was_in_macro = true;
+                        ASS_log_info("Entering macro '%s', expending to '%s'", macro->name, macro->content);
+                        break;
+                    }
+                }
+
                 // Save the token's end position
                 ASS_loc.last_line = ASS_line_pos - 1;
                 ASS_loc.last_column = ASS_col_pos - 1;
+
+                // Print the token
+                ASS_log_info("%s", ASS_token_names[ASS_lexer_output]);
 
                 // Process any non-whitespace token
                 if (ASS_lexer_output != ASS_T_WHITESPACE)
@@ -983,16 +1058,17 @@ void ASS_parse(FILE *fd)
         }
 
         // Keep track of the position
-        if (ASS_lexer_token == '\n')
+        if (ASS_lexer_token == '\n' && !ASS_in_macro)
         {
             ASS_col_pos = -1;
             ASS_line_pos++;
         }
-        else if (ASS_lexer_token == '\r') // Because windows, I guess...
+        else if (ASS_lexer_token == '\r' && !ASS_in_macro) // Because windows, I guess...
         {
             ASS_col_pos = -1;
         }
-        ASS_col_pos++;
+        if (!ASS_in_macro)
+            ASS_col_pos++;
     }
 }
 
@@ -1004,7 +1080,7 @@ void ASS_resolve_ref()
 
         // Get the symbol
         uint64_t address = ASS_get_symbol(ref->symbol_name)->value;
-        
+
         uint64_t mask;
         ASS_opcode_t *opcode = ASS_binary_stack + ref->index;
         mask = (0xFFFFFFFFFFFFFFFFLLU << (ref->bit_width + ref->bit_offset));
@@ -1128,6 +1204,13 @@ ASS_symbol_t *ASS_get_symbol(char const *name)
             return &(ASS_symbol_hash[index]);
 
         index = (++index) % ASS_SYMBOL_HASH_SIZE;
+
+        // If we have looped through the whole table, the symbol is not found
+        if (index == (hash % ASS_SYMBOL_HASH_SIZE))
+        {
+            ASS_log_error("Symbol '%s' not found", name);
+            return NULL;
+        }
     }
 
     // Symbol not found
@@ -1163,4 +1246,57 @@ void ASS_insert_symbol(ASS_symbol_t symbol)
 
     // Insert the symbol
     ASS_symbol_hash[index] = symbol;
+}
+
+// Get the macro from the hash table. Return null if the macro is not found.
+ASS_macro_t *ASS_get_macro(char const *name)
+{
+    uint32_t hash = ASS_hash_string(name);
+    uint32_t index = hash % ASS_MACRO_HASH_SIZE;
+
+    // Search for the macro
+    while (ASS_macro_hash[index].name != NULL)
+    {
+        if (strcmp(name, ASS_macro_hash[index].name) == 0)
+            return &(ASS_macro_hash[index]);
+
+        index = (++index) % ASS_MACRO_HASH_SIZE;
+
+        // If we have looped through the whole table, the macro is not found
+        if (index == hash % ASS_MACRO_HASH_SIZE)
+            return NULL;
+    }
+
+    // Macro not found
+    return NULL;
+}
+
+// Insert the macro into the hash table. Throw an error if the macro already exists.
+// Use the linear probing, and throw an error if the hash table is full.
+void ASS_insert_macro(ASS_macro_t macro)
+{
+    uint32_t hash = ASS_hash_string(macro.name);
+    uint32_t index = hash % ASS_MACRO_HASH_SIZE;
+
+    // Search for the macro
+    while (ASS_macro_hash[index].name != NULL)
+    {
+        if (strcmp(macro.name, ASS_macro_hash[index].name) == 0)
+        {
+            ASS_log_error("Macro '%s' already exists", macro.name);
+            return;
+        }
+
+        index = (++index) % ASS_MACRO_HASH_SIZE;
+
+        // Hash table is full
+        if (index == hash % ASS_MACRO_HASH_SIZE)
+        {
+            ASS_log_error("Macro hash table is full");
+            return;
+        }
+    }
+
+    // Insert the macro
+    ASS_macro_hash[index] = macro;
 }
