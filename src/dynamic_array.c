@@ -98,3 +98,10 @@ void darray_empty(darray_t **array)
     darray_resize(array, DEFAULT_DARRAY_SIZE);
     (*array)->count = 0;
 }
+
+// Deallocate the array
+void darray_free(darray_t **array)
+{
+    free(*array);
+    *array = NULL;
+}
