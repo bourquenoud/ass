@@ -27,6 +27,13 @@ char *action_parse_str =
     "    data.type = ASS_DT_STRING;\n"
     "    strcpy(data.sVal, ASS_text);\n"
     "    return data;";
+    
+char *action_parse_id =
+    "    ASS_data_t data;\n"
+    "    data.sVal = malloc(strlen(ASS_text) + 1);\n"
+    "    data.type = ASS_DT_STRING;\n"
+    "    strcpy(data.sVal, ASS_text);\n"
+    "    return data;";
 
 // Token id lookup
 int token_id_lookup[] =
@@ -41,6 +48,7 @@ int token_id_lookup[] =
         [eT_IMMEDIATE_CHAR] = -1,
         [eT_IDENTIFIER] = -1,
         [eT_CONSTANT_DIR] = -1,
+        [eT_MACRO_DIR] = -1,
 };
 
 darray_t *tokens;
@@ -120,6 +128,7 @@ void lexer_generate()
     darray_add(&tokens, new_token);
 
     // TODO: make pattern a parameter
+    // Address token
     token_id_lookup[eT_ADDRESS] = id;
     new_token = (token_def_t){.name = "ADDRESS", .id = id++, .pattern = xmalloc(strlen("0x[0-9a-fA-F]+:")), .action = action_parse_uint};
     strcpy(new_token.pattern, "0x[0-9a-fA-F]+:");
@@ -139,16 +148,23 @@ void lexer_generate()
     new_token = (token_def_t){.name = "IMMEDIATE_INT", .id = id++, .pattern = "0x[0-9a-fA-F]+", .action = action_parse_int};
     darray_add(&tokens, new_token);
 
+    // character token
     token_id_lookup[eT_IMMEDIATE_CHAR] = id;
     new_token = (token_def_t){.name = "IMMEDIATE_CHAR", .id = id++, .pattern = "'[ -~]'", .action = action_parse_char};
     darray_add(&tokens, new_token);
 
+    // constant directive token
     token_id_lookup[eT_CONSTANT_DIR] = id;
     new_token = (token_def_t){.name = "CONSTANT_DIR", .id = id++, .pattern = parameters.constant_dir, .action = NULL};
     darray_add(&tokens, new_token);
 
+    // macro directive token
+    token_id_lookup[eT_MACRO_DIR] = id;
+    new_token = (token_def_t){.name = "MACRO_DIR", .id = id++, .pattern = parameters.macro_dir, .action = NULL};
+    darray_add(&tokens, new_token);
+
     token_id_lookup[eT_IDENTIFIER] = id;
-    new_token = (token_def_t){.name = "IDENTIFIER", .id = id++, .pattern = "[a-zA-Z_][a-zA-Z0-9_]*", .action = action_parse_str};
+    new_token = (token_def_t){.name = "IDENTIFIER", .id = id++, .pattern = "[a-zA-Z_][a-zA-Z0-9_]*", .action = action_parse_id};
     darray_add(&tokens, new_token);
 
     fail_detail("****Tokens****");
