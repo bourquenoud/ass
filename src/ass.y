@@ -78,6 +78,7 @@
 %token T_CODE
 %token T_OUTPUT
 %token T_OVERRIDE
+%token T_MACRO
 %token T_UNKNOWN_CMD
 
 /* Constant */
@@ -193,18 +194,6 @@ bit_elem:             T_BIT_LIT         {$$ = list_init(YYSYMBOL_T_BIT_LIT, bit_
                     | T_ELIPSIS         {$$ = list_init(YYSYMBOL_T_IDENTIFIER, bit_elem_init(eBP_ELLIPSIS, 0, NULL), eBIT_ELEM);}
 ;
 
-command:              param
-                    | constant
-                    | enum
-                    | pattern
-                    | order
-                    | opcode
-                    | format
-                    | code
-                    | override
-                    | output
-;
-
 code:                 T_CODE T_C_BLOCK endline    { fail_set_loc(@$); fail_show_loc(true); command_code($2); }
 ;
 
@@ -214,6 +203,21 @@ output:               T_OUTPUT T_IDENTIFIER T_STRING T_C_BLOCK endline  { fail_s
 override:             T_OVERRIDE T_IDENTIFIER T_C_BLOCK endline { fail_set_loc(@$); fail_show_loc(true); command_override($2,$3); }
 ;
 
+macro:                T_MACRO T_STRING T_STRING endline { fail_set_loc(@$); fail_show_loc(true); command_macro($2,$3); }
+;
+
+command:              param
+                    | constant
+                    | enum
+                    | pattern
+                    | order
+                    | opcode
+                    | format
+                    | code
+                    | override
+                    | macro
+                    | output
+;
 
 page:                 %empty
                     | page command

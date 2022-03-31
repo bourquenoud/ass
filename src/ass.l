@@ -53,6 +53,7 @@ L_OPCODE                "%opcode"
 L_CODE                  "%code"
 L_OUTPUT                "%output"
 L_OVERRIDE              "%override"
+L_MACRO                 "%macro"
 L_UNKNOWN_CMD           %[a-zA-Z0-9_]*
 
 /* Constant */
@@ -106,6 +107,7 @@ L_MODULO                "%"
 {L_CODE}                                        { return T_CODE; }
 {L_OUTPUT}                                      { return T_OUTPUT; }
 {L_OVERRIDE}                                    { return T_OVERRIDE; }
+{L_MACRO}                                       { return T_MACRO; }
 {L_UNKNOWN_CMD}                                 { return T_UNKNOWN_CMD; }
 
 {L_INTEGER}                                     { yylval.dVal = get_int(yytext); return T_INTEGER; }
