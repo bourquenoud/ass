@@ -13,6 +13,7 @@ hash_t *int_const_array;
 hash_t *str_const_array;
 hash_t *enum_array;
 hash_t *format_array;
+hash_t *macro_array;
 
 darray_t *opcode_array;
 
@@ -30,6 +31,7 @@ void command_init()
     int_const_array = hash_init(TABLE_SIZE);
     str_const_array = hash_init(TABLE_SIZE);
     format_array = hash_init(TABLE_SIZE);
+    macro_array = hash_init(TABLE_SIZE);
     opcode_array = darray_init(sizeof(opcode_t));
     custom_output_array = darray_init(sizeof(custom_output_t));
 }
@@ -42,6 +44,8 @@ void check_any(char *key)
         fail_error("'%s'  already declared as an enum. You can not declare an enum or a constant twice.", key);
     if (hash_check_key(format_array, key))
         fail_error("'%s'  already declared as an opcode format.", key);
+    if (hash_check_key(macro_array, key))
+        fail_error("'%s'  already declared as a macro.", key);
 }
 
 int command_bit_const(data_t *id, data_t *value)
@@ -457,6 +461,7 @@ int command_override(data_t *target_name, data_t *in_code)
     // Copy the code if first command invocation
     if (override_code[0] == NULL)
     {
+        // Allocate the memory
         xmalloc_set_handler(xmalloc_callback);
         override_code[0] = xmalloc(strlen(in_code->strVal) + 1);
         strcpy(override_code[0], in_code->strVal);
@@ -464,9 +469,26 @@ int command_override(data_t *target_name, data_t *in_code)
     // Otherwise append it
     else
     {
+        // Realloc the code
         override_code[0] = realloc(override_code[0], strlen(override_code[0]) + strlen(in_code->strVal) + 1);
         strcat(override_code[0], in_code->strVal);
     }
+}
+
+int command_macro(data_t *name, data_t *content)
+{
+    // Check if it already exists in any of the arrays
+    check_any(name->strVal);
+
+    // Create the macro
+    xmalloc_set_handler(xmalloc_callback);
+    macro_t* new_macro = xmalloc(sizeof(macro_t));
+    new_macro->name = name->strVal;
+    new_macro->content = content->strVal;
+
+    // Add it to the array
+    hash_add(macro_array, name->strVal, (void *)new_macro);
+    return 0;
 }
 
 /********************************************************/
