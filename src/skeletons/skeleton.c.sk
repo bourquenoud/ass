@@ -570,6 +570,21 @@ int main(int argc, char const *argv[])
 // Output the binary data in Intel HEX format
 void ASS_output_hex(FILE *fd)
 {
+    // TODO: make it work for all formats
+    if(ASS_P_opcode_width > 16 || ASS_P_memory_width > 16 || ASS_P_alignment != 16 || ASS_P_address_width > 16)
+    {
+        ASS_log_error(
+            "Incompatible format\n"
+            "      The Intel HEX file format is not fully implemented and can only handle\n"
+            "      an alignment of 16 bits, with opcodes of 16 bits or less. This not a\n"
+            "      runtime error. If you are the developper, you can implement your own\n"
+            "      funtion. Please refer to the API guide in the github repository at\n"
+            "      (https://github.com/bourquenoud/ass)\n"
+            "      This will be fixed in the near future."
+            );
+        exit(EXIT_FAILURE);
+    } 
+
     for (size_t i = 0; i < ASS_binary_stack_ptr; i++)
     {
         uint8_t msb, lsb;
@@ -579,7 +594,7 @@ void ASS_output_hex(FILE *fd)
         chksum = 2 + ((ASS_binary_stack[i].address * 2) & 0xFF) + (((ASS_binary_stack[i].address * 2) >> 8) & 0xFF) + lsb + msb;
         fprintf(fd, ":02%04X00%02X%02X%02X\n", ASS_binary_stack[i].address * 2, lsb, msb, (-chksum) & 0xFF);
     }
-    fprintf(fd, ":00000001FF\n");
+    fprintf(fd, ":00000001FF\n"); //End of file
 }
 
 // Output the binary data in COE format
