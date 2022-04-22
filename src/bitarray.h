@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#define BITARRAY_WIDTH 1024
+#define BITARRAY_WIDTH 4096
 
 typedef struct
 {

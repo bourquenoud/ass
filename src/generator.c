@@ -151,7 +151,7 @@ char *generator_generate_opcode_action(opcode_t opcode)
                     bprintf(buff, "    new_ref.symbol_name = ASS_parser_stack[%i].sVal;", bit_elem->index_mnemonic);
                     bprintf(buff, "    new_ref.index = ASS_binary_stack_ptr;");
                     bprintf(buff, "    new_ref.bit_offset = %i;", offset);
-                    bprintf(buff, "    new_ref.bit_width = %i;", bit_elem->width + offset);
+                    bprintf(buff, "    new_ref.bit_width = %i;", bit_elem->width);
                     bprintf(buff, "    ASS_ref_stack_push(new_ref);");
                     break;
                 case eBP_LABEL_REL:
@@ -160,7 +160,7 @@ char *generator_generate_opcode_action(opcode_t opcode)
                     bprintf(buff, "    new_ref.symbol_name = ASS_parser_stack[%i].sVal;", bit_elem->index_mnemonic);
                     bprintf(buff, "    new_ref.index =  ASS_binary_stack_ptr;");
                     bprintf(buff, "    new_ref.bit_offset = %i;", offset);
-                    bprintf(buff, "    new_ref.bit_width = %i;", bit_elem->width + offset);
+                    bprintf(buff, "    new_ref.bit_width = %i;", bit_elem->width);
                     bprintf(buff, "    ASS_ref_stack_push(new_ref);");
                 case eBP_ENUM:
                     bprintf(buff, "    /**eBP_ENUM**/");
