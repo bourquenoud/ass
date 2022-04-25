@@ -52,6 +52,10 @@ state_t *state_machine_add_state(state_machine_t *state_machine, int end_state)
             break;
     }
 
+    //Log an error if the number if the new id is outside the allowed numer of states
+    if(new_id >= MAX_STATE)
+        fail_error("Failed to generated the FSM, too many states.");
+
     // Create a new state with the corresponding ID and add it to the state machine
     state_t new_state = state_init_state(new_id);
     new_state.end_state = end_state;
@@ -431,7 +435,7 @@ state_machine_t state_machine_make_deterministic(state_machine_t *nfa)
                     // Extract the index
                     state_t *state_ptr = state_machine_get_by_id(nfa, current_transition_array[k].next_state_id);
                     int index = state_ptr - (state_t *)darray_get_ptr(&(nfa->states_tstate), 0);
-                    index / sizeof(state_t);
+                    index = index / sizeof(state_t);
                     bitarray_set(&new_state_combination, index, true);
                 }
             }
