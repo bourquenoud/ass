@@ -4,7 +4,7 @@
 
 #include "failure.h"
 
-#define MAX_STATE 1024
+#define MAX_STATE 8192
 
 static void xmalloc_callback(int err);
 
@@ -435,7 +435,7 @@ state_machine_t state_machine_make_deterministic(state_machine_t *nfa)
                     // Extract the index
                     state_t *state_ptr = state_machine_get_by_id(nfa, current_transition_array[k].next_state_id);
                     int index = state_ptr - (state_t *)darray_get_ptr(&(nfa->states_tstate), 0);
-                    index = index / sizeof(state_t);
+                    //index = index / sizeof(state_t);
                     bitarray_set(&new_state_combination, index, true);
                 }
             }
