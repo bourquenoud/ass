@@ -155,7 +155,7 @@ void parser_generate()
 
     new_rule = xmalloc(sizeof(rule_def_t) + 11 * sizeof(int));
     new_rule->id = opcode_count + x;
-    new_rule->count = 8;
+    new_rule->count = 11;
     new_rule->name = "constant";
     new_rule->action = action_constant;
     new_rule->tokens[0] = token_id_lookup[eT_CONSTANT_DIR];
