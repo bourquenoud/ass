@@ -312,14 +312,24 @@ int command_opcode(data_t *id, data_t *pattern, data_t *opcode_id, bool is_const
             fail_info(
                 "The width of the id of the opcode \"%s\" is smaller than the expected width. Automatically zero-padded to %i bits.",
                 pattern->strVal,
-                resolved_opcode_id->width);
+                id_bit_elem->width);
+            resolved_opcode_id->width = id_bit_elem->width;
         }
-        else if (resolved_opcode_id->width > id_bit_elem->width)
+        else if (resolved_opcode_id->width > id_bit_elem->width && (resolved_opcode_id->width & id_bit_elem->width) == 0)
         {
             fail_info(
                 "The width of the id of the opcode \"%s\" is greater than the expected width. Automatically trucated to %i bits.",
                 pattern->strVal,
-                resolved_opcode_id->width);
+                id_bit_elem->width);
+            resolved_opcode_id->width = id_bit_elem->width;
+        }
+        else if(resolved_opcode_id->width > id_bit_elem->width && (resolved_opcode_id->width & id_bit_elem->width) != 0)
+        {
+            fail_warning(
+                "The width of the id of the opcode \"%s\" is greater than the expected width. Automatically trucated to %i bits. Some bits have been lost.",
+                pattern->strVal,
+                id_bit_elem->width);
+            resolved_opcode_id->width = id_bit_elem->width;
         }
     }
 

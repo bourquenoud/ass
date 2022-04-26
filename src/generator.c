@@ -1,4 +1,5 @@
 #include "generator.h"
+#include "failure.h"
 
 /*********************************************************************/
 
@@ -101,6 +102,8 @@ char *generator_generate_opcode_action(opcode_t opcode)
     darray_t **buff = alloca(sizeof(sizeof(darray_t *)));
     *buff = darray_init(1);
 
+    fail_detail("Generating opcode action for opcode \"%s\"", opcode.text_pattern);
+
     // Because of the way "darray_add" is implemented, we can't pass it rvalues
     char tmp = '\0';
     darray_add(buff, tmp); // Start the buffer as an empty string
@@ -129,10 +132,12 @@ char *generator_generate_opcode_action(opcode_t opcode)
 
             if (bit_elem->index_opcode == i)
             {
-                // Compute mask
-                uint64_t mask;
-                mask = mask = (0xFFFFFFFFFFFFFFFFLLU << (bit_elem->width + offset));
-                mask |= ~(0xFFFFFFFFFFFFFFFFLLU << offset);
+                //Compute the bit mask
+                uint64_t mask = (0xFFFFFFFFFFFFFFFFLLU << offset);
+                mask &= ~(0xFFFFFFFFFFFFFFFFLLU << (offset + bit_elem->width));
+
+                //Compute the value (for literals)
+                uint64_t val = (((bit_const_t *)(bit_elem->data))->val << offset) & mask;
 
                 switch (bit_elem->type)
                 {
@@ -142,8 +147,8 @@ char *generator_generate_opcode_action(opcode_t opcode)
                     bprintf(buff, "        data = ASS_resolve_const(ASS_parser_stack[%i].sVal);", bit_elem->index_mnemonic);
                     bprintf(buff, "    else");
                     bprintf(buff, "        data = ASS_parser_stack[%i].iVal;", bit_elem->index_mnemonic);
-                    bprintf(buff, "    opcode.data &= 0x%llXLLU;", mask);
-                    bprintf(buff, "    opcode.data |= (0x%llXLLU & (data << %u));", ~mask, offset);
+                    //bprintf(buff, "    opcode.data &= 0x%llXLLU;", ~mask);
+                    bprintf(buff, "    opcode.data |= (0x%llXLLU & (data << %u));", mask, offset);
                     break;
                 case eBP_LABEL_ABS:
                     bprintf(buff, "    /**eBP_LABEL_ABS**/");
@@ -165,8 +170,8 @@ char *generator_generate_opcode_action(opcode_t opcode)
                 case eBP_ENUM:
                     bprintf(buff, "    /**eBP_ENUM**/");
                     bprintf(buff, "    data = ASS_parser_stack[%i].iVal;", bit_elem->index_mnemonic);
-                    bprintf(buff, "    opcode.data &= 0x%llXLLU;", mask);
-                    bprintf(buff, "    opcode.data |= (0x%llXLLU & (data << %u));", ~mask, offset);
+                    //bprintf(buff, "    opcode.data &= 0x%llXLLU;", ~mask);
+                    bprintf(buff, "    opcode.data |= (0x%llXLLU & (data << %u));", mask, offset);
                     break;
                 case eBP_ID:
                     fprintf(stderr, "Unresolved ID\n");
@@ -175,18 +180,20 @@ char *generator_generate_opcode_action(opcode_t opcode)
                 case eBP_BIT_CONST:
                 case eBP_BIT_LIT:
                     bprintf(buff, "    /**eBP_BIT_LIT**/");
-                    bprintf(buff, "    opcode.data &= 0x%llXLLU;", mask);
-                    bprintf(buff, "    opcode.data |= (0x%llXLLU & (0x%XLLU << %u));", ~mask, ((bit_const_t *)(bit_elem->data))->val, offset);
+                    //bprintf(buff, "    opcode.data &= 0x%llXLLU;", ~mask);
+                    bprintf(buff, "    opcode.data |= (0x%llXLLU);", val);
                     break;
                 case eBP_ELLIPSIS:
                     bprintf(buff, "    /**eBP_ELLIPSIS**/");
-                    bprintf(buff, "    opcode.data &= 0x%llXLLU;", mask);
+                    //bprintf(buff, "    opcode.data &= 0x%llXLLU;", ~mask);
                     break;
                 default:
-                    fprintf(stderr, "Unknown bit_elem type\n");
-                    abort();
+                    fail_error("Unknown bit pattern type");
+                    exit(EXIT_FAILURE);
                     break;
                 }
+
+                fail_detail("Element %i (%s) offset %u width %u", i, name_BPTYPE[bit_elem->type], offset, bit_elem->width);
 
                 // Keep track of the offset
                 offset += bit_elem->width;
@@ -204,6 +211,11 @@ char *generator_generate_opcode_action(opcode_t opcode)
     xmalloc_set_handler(xmalloc_callback);
     char *result = xmalloc((*buff)->count);
     strcpy(result, (char *)((*buff)->element_list));
+
+    // Log the written string
+    fail_detail("Action : \"%s\"", result);
+
+    return result;
 }
 
 /**************************************************/
