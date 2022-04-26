@@ -370,7 +370,7 @@ state_machine_t state_machine_make_deterministic(state_machine_t *nfa)
                     if (output != -1 && nfa_state_array[j].output != output)
                     {
                         // Log the conflict as detail.
-                        fail_detail("Tokens (ID %i) and (ID %i) conflict. Priority given to the lowest ID.",
+                        fail_debug("Tokens (ID %i) and (ID %i) conflict. Priority given to the lowest ID.",
                                     output,
                                     nfa_state_array[j].output);
 

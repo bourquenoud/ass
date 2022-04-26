@@ -102,7 +102,7 @@ char *generator_generate_opcode_action(opcode_t opcode)
     darray_t **buff = alloca(sizeof(sizeof(darray_t *)));
     *buff = darray_init(1);
 
-    fail_detail("Generating opcode action for opcode \"%s\"", opcode.text_pattern);
+    fail_debug("Generating opcode action for opcode \"%s\"", opcode.text_pattern);
 
     // Because of the way "darray_add" is implemented, we can't pass it rvalues
     char tmp = '\0';
@@ -193,7 +193,7 @@ char *generator_generate_opcode_action(opcode_t opcode)
                     break;
                 }
 
-                fail_detail("Element %i (%s) offset %u width %u", i, name_BPTYPE[bit_elem->type], offset, bit_elem->width);
+                fail_debug("Element %i (%s) offset %u width %u", i, name_BPTYPE[bit_elem->type], offset, bit_elem->width);
 
                 // Keep track of the offset
                 offset += bit_elem->width;
@@ -213,7 +213,7 @@ char *generator_generate_opcode_action(opcode_t opcode)
     strcpy(result, (char *)((*buff)->element_list));
 
     // Log the written string
-    fail_detail("Action : \"%s\"", result);
+    fail_debug("Action : \"%s\"", result);
 
     return result;
 }

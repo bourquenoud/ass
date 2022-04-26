@@ -240,7 +240,7 @@ int yywrap()
     if(currentFileIndex < totalFiles && !readFromStdin)
     {
         fail_show_loc(false);
-        fail_detail("Reading file '%s'", files[currentFileIndex]);
+        fail_debug("Reading file '%s'", files[currentFileIndex]);
         yyin = fopen(files[currentFileIndex], "r" );
         currentFileIndex++;
         if(yyin == NULL)

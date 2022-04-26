@@ -94,7 +94,7 @@ int main(int argc, char **argv)
             if (output_file != NULL)
                 fail_warning("Output file path overriden.");
             output_file = optarg;
-            fail_detail("Output file is %s", output_file);
+            fail_debug("Output file is %s", output_file);
             break;
         case ':':
             fail_error("Option '%c' expects an argument", optopt);
@@ -139,7 +139,7 @@ int main(int argc, char **argv)
     param_init();
 
     // Parse the file and generate all data
-    fail_detail("Parsing the file%s", file_count == 1 ? "" : "s");
+    fail_debug("Parsing the file%s", file_count == 1 ? "" : "s");
     parse_file(file_count, file_list);
 
     // Check for previous errors and exit if an error occured during parsing
@@ -154,12 +154,12 @@ int main(int argc, char **argv)
     param_fill_unset();
 
     // Generate the lexer
-    fail_detail("Generating the lexer");
+    fail_debug("Generating the lexer");
     lexer_init();
     lexer_generate();
 
     // Generate the parser
-    fail_detail("Generating the parser");
+    fail_debug("Generating the parser");
     parser_init();
     parser_generate();
 

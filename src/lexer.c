@@ -167,13 +167,13 @@ void lexer_generate()
     new_token = (token_def_t){.name = "IDENTIFIER", .id = id++, .pattern = "[a-zA-Z_][a-zA-Z0-9_]*", .action = action_parse_id};
     darray_add(&tokens, new_token);
 
-    fail_detail("****Tokens****");
+    fail_debug("****Tokens****");
     for (size_t i = 0; i < tokens->count; i++)
     {
         new_token = *((token_def_t *)darray_get_ptr(&tokens, i));
-        fail_detail("  Name : %s | Id : %i | Pattern : %s", new_token.name, new_token.id, new_token.pattern);
+        fail_debug("  Name : %s | Id : %i | Pattern : %s", new_token.name, new_token.id, new_token.pattern);
     }
-    fail_detail("**************");
+    fail_debug("**************");
 
     generator_generate_lexer(tokens->count, (token_def_t *)tokens->element_list);
 }

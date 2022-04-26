@@ -15,4 +15,4 @@ int fail_get_error_count(void);
 void fail_error(const char *, ...);
 void fail_warning(const char *, ...);
 void fail_info(const char *, ...);
-void fail_detail(const char *, ...);
+void fail_debug(const char *, ...);

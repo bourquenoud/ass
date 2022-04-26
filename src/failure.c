@@ -79,7 +79,7 @@ void fail_show_colour(int _showColour)
 
 static void set_colour(int colour);
 
-void fail_detail(const char *format, ...)
+void fail_debug(const char *format, ...)
 {
     info_count++;
 
@@ -91,9 +91,9 @@ void fail_detail(const char *format, ...)
     set_colour(DETA_COLOUR);
 
     if (showLoc)
-        fprintf(stderr, "DETAIL line %i : ", loc.first_line);
+        fprintf(stderr, "DEBUG line %i : ", loc.first_line);
     else
-        fprintf(stderr, "DETAIL : ");
+        fprintf(stderr, "DEBUG : ");
 
     vfprintf(stderr, format, args);
     set_colour(RESET_COLOUR);
