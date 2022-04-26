@@ -62,17 +62,12 @@ void lexer_init()
 
 void lexer_generate()
 {
-    int id = 0;
+    int id = 1; //Start at 1, 0 is reserved for the comment rule
     token_def_t new_token;
 
     //Serialise the opcodes
     int count = opcode_array->count;
     opcode_t *opcodes = darray_get_ptr(&opcode_array, 0);
-
-    // Comments have priority over any token
-    token_id_lookup[eT_COMMENT] = id;
-    new_token = (token_def_t){.name = "COMMENT", .id = id++, .pattern = ";[\\t -~]*", .action = NULL};
-    darray_add(&tokens, new_token);
 
     // Mnemonic tokens
     int opcode_count = opcode_array->count;
@@ -113,6 +108,11 @@ void lexer_generate()
     }
 
     // Standard tokens
+
+    token_id_lookup[eT_COMMENT] = 0; // Comments have priority over everything else
+    new_token = (token_def_t){.name = "COMMENT", .id = id++, .pattern = ";[\\t -~]*", .action = NULL};
+    darray_add(&tokens, new_token);
+
     token_id_lookup[eT_ARG_SEPARATOR] = id;
     new_token = (token_def_t){.name = "ARG_SEPARATOR", .id = id++, .pattern = xmalloc(2), .action = NULL};
     new_token.pattern[0] = parameters.args_separator;
