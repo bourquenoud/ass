@@ -9,6 +9,8 @@ Please note that this software is licensed under the GPLv3. As the generated fil
 
 # Getting started
 
+***DISCLAIMER*** *: This software is in alpha stage and is not guaranteed to work.*
+
 ***DISCLAIMER*** *: It has only been tested on Linux. As it requires POSIX and GNU libraries it probably won't compile for MacOS, and certainly won't for Windows. However, the generated code is portable across all three OSs.*
 
 ## Build and install
