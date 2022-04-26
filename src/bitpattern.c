@@ -2,6 +2,18 @@
 
 #include "failure.h"
 
+const char *name_BPTYPE[] = {
+    "UNDEF",
+    "ID",
+    "IMMEDIATE",
+    "LABEL_ABS",
+    "LABEL_REL",
+    "ENUM",
+    "BIT_CONST",
+    "BIT_LIT",
+    "ELLIPSIS",
+};
+
 static void xmalloc_callback(int err);
 
 bit_elem_t *bit_elem_init(BPTYPE_t type, size_t width, void *data)

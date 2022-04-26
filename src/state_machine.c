@@ -52,10 +52,6 @@ state_t *state_machine_add_state(state_machine_t *state_machine, int end_state)
             break;
     }
 
-    //Log an error if the number if the new id is outside the allowed numer of states
-    if(new_id >= MAX_STATE)
-        fail_error("Failed to generated the FSM, too many states.");
-
     // Create a new state with the corresponding ID and add it to the state machine
     state_t new_state = state_init_state(new_id);
     new_state.end_state = end_state;
@@ -335,6 +331,9 @@ state_machine_t state_machine_make_deterministic(state_machine_t *nfa)
     bitarray_set(&current_state_combination, 0, true);
     darray_add(&generated_state_table, current_state_combination);
 
+    //Contains the id of all output values that had conflicts
+    darray_t *conflict_output_table = darray_init(sizeof(int));
+
     // Generate all states until there are no more new state
     for (size_t i = 0; i < generated_state_table->count; i++)
     {
@@ -367,16 +366,19 @@ state_machine_t state_machine_make_deterministic(state_machine_t *nfa)
                 darray_add(&current_states, nfa_state_array[j]);
                 if (nfa_state_array[j].output != -1)
                 {
-                    // Priority to the lowest id
+                    // If we have a conflict, resolve it. Priority is given to the lowest id
                     if (output != -1 && nfa_state_array[j].output != output)
                     {
-                        last_id, nfa_state_array[j].id;
-
-                        // TODO: show token name
+                        // Log the conflict as detail.
                         fail_detail("Tokens (ID %i) and (ID %i) conflict. Priority given to the lowest ID.",
                                     output,
                                     nfa_state_array[j].output);
+
+                        // Keep the lowest id
                         output = (output < nfa_state_array[j].output) ? output : nfa_state_array[j].output;
+
+                        // Store the output value that had a conflict and hasn't been kept
+                        darray_add(&conflict_output_table, nfa_state_array[j].output);
                     }
                     else
                     {
@@ -435,7 +437,7 @@ state_machine_t state_machine_make_deterministic(state_machine_t *nfa)
                     // Extract the index
                     state_t *state_ptr = state_machine_get_by_id(nfa, current_transition_array[k].next_state_id);
                     int index = state_ptr - (state_t *)darray_get_ptr(&(nfa->states_tstate), 0);
-                    //index = index / sizeof(state_t);
+                    // index = index / sizeof(state_t);
                     bitarray_set(&new_state_combination, index, true);
                 }
             }
@@ -493,27 +495,29 @@ state_machine_t state_machine_make_deterministic(state_machine_t *nfa)
         }
     }
 
-#ifdef DEBUG
-    fputs("Generated array :\n\t", stdout);
-    for (size_t i = 0; i < generated_state_table->count; i++)
+    // Get the conflict output table
+    int *conflict_output_table_array = darray_get_ptr(&conflict_output_table, 0);
+
+    //Log a warning if one or more output from the conflict table is not present in the end state table
+    for (size_t i = 0; i < conflict_output_table->count; i++)
     {
-        fprintf(stdout, "(%4i) ", i);
-        for (size_t j = 0; j < MAX_STATE; j++)
+        bool found = false;
+        for (size_t j = 0; j < end_state_ids->count; j++)
         {
-            if (bitarray_get((bitarray_t *)darray_get_ptr(&generated_state_table, i), j))
+            //Get the output of the end state from its id
+            state_t *end_state = ((state_t *)darray_get_ptr(&(dfa.states_tstate), end_state_ids_array[j]));
+
+            if (conflict_output_table_array[i] ==end_state->output)
             {
-                putc('1', stdout);
+                found = true;
+                break;
             }
-            else
-            {
-                putc('0', stdout);
-            }
-            if (j % 4 == 3 && j != MAX_STATE - 1)
-                putc('\'', stdout);
         }
-        fputs(";\n\t", stdout);
-    }
-#endif // DEBUG
+        if (!found)
+        {
+            fail_warning("Output %i is not present in the end state table", conflict_output_table_array[i]);
+        }
+    }    
 
     // Reduction pass
     state_machine_reduce(&dfa);
@@ -557,7 +561,7 @@ bool state_compare_states(state_t *s1, state_t *s2)
     return true;
 }
 
-// return true if identique, false otherwise
+// return true if identic, false otherwise
 bool state_compare_transitions(transistion_t *t1, transistion_t *t2)
 {
     return (t1->condition == t2->condition && t1->next_state_id == t2->next_state_id);

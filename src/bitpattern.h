@@ -23,6 +23,8 @@ typedef enum
     eBP_ELLIPSIS,
 } BPTYPE_t;
 
+extern const char *name_BPTYPE[];
+
 
 typedef struct bit_elem_s
 {

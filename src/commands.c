@@ -96,6 +96,8 @@ int command_enum(data_t *id, data_t *value)
 
 int command_format(data_t *id, linked_list_t *list)
 {
+    fail_detail("Computing opcode format \"%s\"", id->strVal);
+
     // Check if the constant already exists
     check_any(id->strVal);
 
@@ -147,6 +149,10 @@ int command_format(data_t *id, linked_list_t *list)
             has_id = true;
         }
 
+        //Log a details message specifing the width and the type of the element
+        fail_detail("Element %d: %d bits, type %s", index_opcode, ((bit_elem_t*)(current->user_data))->width,
+                    name_BPTYPE[((bit_elem_t*)(current->user_data))->type]);
+
         current = current->next;
     }
 
@@ -166,6 +172,8 @@ int command_format(data_t *id, linked_list_t *list)
         // Set the ellipsis size
         if (ellipsis != NULL)
         {
+            //Log the ellipsis width
+            fail_detail("Ellipsis width: %i", expected_width - width);
             ellipsis->width = expected_width - width;
         }
         else
