@@ -212,9 +212,6 @@ char *generator_generate_opcode_action(opcode_t opcode)
     char *result = xmalloc((*buff)->count);
     strcpy(result, (char *)((*buff)->element_list));
 
-    // Log the written string
-    fail_debug("Action : \"%s\"", result);
-
     return result;
 }
 

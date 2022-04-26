@@ -145,9 +145,10 @@ void parser_generate()
         new_rule->id = i;
         new_rule->count = rule_list_tint->count;
         new_rule->action = generator_generate_opcode_action(opcodes[i]);
-        new_rule->name = ((token_def_t *)darray_get_ptr(&tokens, i))->name;
+        new_rule->name = ((token_def_t *)darray_get_ptr(&tokens, i + 1))->name; //+1 because the first rule is the comment rule
         memcpy(&(new_rule->tokens), darray_get_ptr(&rule_list_tint, 0), rule_list_tint->count * rule_list_tint->element_size);
         rules[i] = new_rule;
+        fail_debug("Generated rule for '%s' with %i tokens. Action rule : \n%s", new_rule->name, new_rule->count, new_rule->action);
     }
 
     int x = 0;
