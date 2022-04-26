@@ -74,7 +74,10 @@ void parser_generate()
                         // Open a set
                         token_id = -(int)'[';
                         darray_add(&rule_list_tint, token_id);
-                        darray_add(&rule_list_tint, token_id_lookup[eT_IMMEDIATE_INT]);
+                        darray_add(&rule_list_tint, token_id_lookup[eT_IMMEDIATE_HEX]);
+                        darray_add(&rule_list_tint, token_id_lookup[eT_IMMEDIATE_DEC]);
+                        darray_add(&rule_list_tint, token_id_lookup[eT_IMMEDIATE_OCT]);
+                        darray_add(&rule_list_tint, token_id_lookup[eT_IMMEDIATE_BIN]);
                         darray_add(&rule_list_tint, token_id_lookup[eT_IMMEDIATE_CHAR]);
                         darray_add(&rule_list_tint, token_id_lookup[eT_IDENTIFIER]);
                         // Close the set
@@ -154,22 +157,25 @@ void parser_generate()
     int x = 0;
     rule_def_t *new_rule;
 
-    new_rule = xmalloc(sizeof(rule_def_t) + 11 * sizeof(int));
+    new_rule = xmalloc(sizeof(rule_def_t) + 14 * sizeof(int));
     new_rule->id = opcode_count + x;
-    new_rule->count = 11;
+    new_rule->count = 14;
     new_rule->name = "constant";
     new_rule->action = action_constant;
     new_rule->tokens[0] = token_id_lookup[eT_CONSTANT_DIR];
     new_rule->tokens[1] = token_id_lookup[eT_IDENTIFIER];
     new_rule->tokens[2] = token_id_lookup[eT_ARG_SEPARATOR];
     new_rule->tokens[3] = -(int)'['; //Open a set
-    new_rule->tokens[4] = token_id_lookup[eT_IMMEDIATE_CHAR];
-    new_rule->tokens[5] = token_id_lookup[eT_IMMEDIATE_INT];
-    new_rule->tokens[6] = -(int)']'; //Close the set
-    new_rule->tokens[7] = -(int)'['; //Open a set
-    new_rule->tokens[8] = token_id_lookup[eT_NEWLINE];
-    new_rule->tokens[9] = token_id_lookup[eT_COMMENT];
-    new_rule->tokens[10] = -(int)']'; //Close the set
+    new_rule->tokens[4] = token_id_lookup[eT_IMMEDIATE_HEX];
+    new_rule->tokens[5] = token_id_lookup[eT_IMMEDIATE_DEC];
+    new_rule->tokens[6] = token_id_lookup[eT_IMMEDIATE_OCT];
+    new_rule->tokens[7] = token_id_lookup[eT_IMMEDIATE_BIN];
+    new_rule->tokens[8] = token_id_lookup[eT_IMMEDIATE_CHAR];
+    new_rule->tokens[9] = -(int)']'; //Close the set
+    new_rule->tokens[10] = -(int)'['; //Open a set
+    new_rule->tokens[11] = token_id_lookup[eT_NEWLINE];
+    new_rule->tokens[12] = token_id_lookup[eT_COMMENT];
+    new_rule->tokens[13] = -(int)']'; //Close the set
     rules[opcode_count + x] = new_rule;
     x++;
 

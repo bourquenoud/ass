@@ -44,7 +44,10 @@ int token_id_lookup[] =
         [eT_WHITESPACE] = -1,
         [eT_ADDRESS] = -1,
         [eT_LABEL] = -1,
-        [eT_IMMEDIATE_INT] = -1,
+        [eT_IMMEDIATE_HEX] = -1,
+        [eT_IMMEDIATE_DEC] = -1,
+        [eT_IMMEDIATE_OCT] = -1,
+        [eT_IMMEDIATE_BIN] = -1,
         [eT_IMMEDIATE_CHAR] = -1,
         [eT_IDENTIFIER] = -1,
         [eT_CONSTANT_DIR] = -1,
@@ -144,8 +147,20 @@ void lexer_generate()
 
     // TODO: add signed numbers support
     // FIXME : only matches hex numbers, should match anything strtoull can parse
-    token_id_lookup[eT_IMMEDIATE_INT] = id;
-    new_token = (token_def_t){.name = "IMMEDIATE_INT", .id = id++, .pattern = "0x[0-9a-fA-F]+", .action = action_parse_int};
+    token_id_lookup[eT_IMMEDIATE_HEX] = id;
+    new_token = (token_def_t){.name = "IMMEDIATE_HEX", .id = id++, .pattern = "0x[0-9a-fA-F]+", .action = action_parse_int};
+    darray_add(&tokens, new_token);
+
+    token_id_lookup[eT_IMMEDIATE_DEC] = id;
+    new_token = (token_def_t){.name = "IMMEDIATE_DEC", .id = id++, .pattern = "\\-?[1-9][0-9]*", .action = action_parse_int};
+    darray_add(&tokens, new_token);
+
+    token_id_lookup[eT_IMMEDIATE_OCT] = id;
+    new_token = (token_def_t){.name = "IMMEDIATE_OCT", .id = id++, .pattern = "0[0-7]*", .action = action_parse_int};
+    darray_add(&tokens, new_token);
+
+    token_id_lookup[eT_IMMEDIATE_BIN] = id;
+    new_token = (token_def_t){.name = "IMMEDIATE_BIN", .id = id++, .pattern = "0b[01]+", .action = action_parse_int};
     darray_add(&tokens, new_token);
 
     // character token
