@@ -62,7 +62,7 @@ void lexer_init()
 
 void lexer_generate()
 {
-    int id = 1; //Start at 1, 0 is reserved for the comment rule
+    int id = 1; //Start at 1, 0 is reserved for the comment token
     token_def_t new_token;
 
     //Serialise the opcodes
@@ -110,7 +110,7 @@ void lexer_generate()
     // Standard tokens
 
     token_id_lookup[eT_COMMENT] = 0; // Comments have priority over everything else
-    new_token = (token_def_t){.name = "COMMENT", .id = id++, .pattern = ";[\\t -~]*", .action = NULL};
+    new_token = (token_def_t){.name = "COMMENT", .id = 0, .pattern = ";[\\t -~]*", .action = NULL};
     darray_add(&tokens, new_token);
 
     token_id_lookup[eT_ARG_SEPARATOR] = id;
