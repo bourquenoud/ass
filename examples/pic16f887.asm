@@ -1,8 +1,8 @@
 ;Memory address declaration
-.constant       porta,  0x05
-.constant       tx_reg, 0x19
-.constant       status, 0x83
-.constant       var,    0x50 ;Variable address to store the current data
+.constant       porta   0x05
+.constant       tx_reg  0x19
+.constant       status  0x83
+.constant       var     0x50 ;Variable address to store the current data
 
 0x0:    GOTO    main 
 
