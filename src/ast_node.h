@@ -12,7 +12,6 @@ typedef struct
     uint8_t width;
 } bit_const_t;
 
-
 typedef union
 {
     char *strVal;
@@ -23,7 +22,7 @@ typedef union
 } data_t;
 
 typedef struct node_s node_t;
-//Create the node structure for the AST
+// Create the node structure for the AST
 struct node_s
 {
     int type;
@@ -35,7 +34,7 @@ struct node_s
     node_t *child_3;
 };
 
-//Tree is build bottom-up
+// Tree is build bottom-up
 node_t *node_init(int type, data_t value, node_t *child_1, node_t *child_2, node_t *child_3);
 void node_destroy(node_t *self);
 node_t *node_clone(node_t *self);

@@ -16,12 +16,12 @@
  *          are 2's complement of the regex control characters.
  *          Backslash doesn't escape the next character. -1 is
  *          the only negative value token, and is used as EOF.
- * 
+ *
  * @remark  Function is reentrant
- *  
+ *
  * @param count Length of the sequence
  * @param sequence The sequence of characters
  * @param output The output value at terminal states
- * @return state_machine_t 
+ * @return state_machine_t
  */
-state_machine_t pattern_compiler(size_t count, const int* sequence, int output);
+state_machine_t pattern_compiler(size_t count, const int *sequence, int output);

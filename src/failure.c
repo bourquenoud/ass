@@ -54,6 +54,12 @@ void fail_set_verbose(int _verbositiy)
     verbositiy = _verbositiy;
 }
 
+// Encaplsulated to have a more realiable error system
+int fail_get_verbose()
+{
+    return verbositiy;
+}
+
 void fail_inc_verbose()
 {
     verbositiy = verbositiy >= 4 ? 4 : verbositiy + 1;

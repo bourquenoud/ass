@@ -26,6 +26,7 @@ char const *const help_message =
     "Usage: %s [OPTION]... -o OUTPUT_FILE INTPUT_FILES\n"
     "This tool can generate an assembler in C\n"
     "based on simple opcode and mnemonics descriptions.\n"
+    "It is part of the muonium uEngine project.\n"
     "\n"
     "Options:\n"
     "  -o <FILE>   set the output file\n"
@@ -41,7 +42,7 @@ char const *const version_message =
     "ass (Assembly Syntax Synthesiser) %i.%i.%i, build %i-%i\n"
     "Written by Mathieu Bourquenoud.\n"
     "\n"
-    "Copyright (C) 2022 Mathieu Bourquenoud.\n"
+    "Copyright (C) 2023 Mathieu Bourquenoud.\n"
     "This program comes with ABSOLUTELY NO WARRANTY; not even for\n"
     "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n"
     "This is free software, and you are welcome to redistribute it\n"
@@ -174,7 +175,7 @@ int main(int argc, char **argv)
     generator_set_file_descriptor(fd);
     generate(fd);
     fclose(fd);
-    
+
     // Check for previous errors and exit if an error occured during generation
     if (fail_get_error_count() != 0)
     {

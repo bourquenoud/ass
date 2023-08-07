@@ -31,15 +31,6 @@ void iprintf(size_t indentation, const char *format, ...);
  */
 void generator_dfa_switch(int indent, state_machine_t *state_machine, char *name);
 
-/**
- * @brief Print to a dynamic array
- *
- * @param array Pointer to the dynamic array
- * @param format printf-like format string
- * @param ... Arguments
- */
-void bprintf(darray_t **array, const char *format, ...);
-
 // Handle an xmalloc error
 static void xmalloc_callback(int err);
 
@@ -65,6 +56,8 @@ void generator_generate_lexer(int count, const token_def_t *_tokens)
 
 void generator_generate_parser(int count, const rule_def_t **_rules)
 {
+    fail_debug("Generating %i parser rules", count);
+
     rule_count = count;
     rules = _rules;
     xmalloc_set_handler(xmalloc_callback);
@@ -87,10 +80,10 @@ char *generator_generate_pattern_action(pattern_t *pattern)
     darray_add(buff, tmp); // Start the buffer as an empty string
 
     // TODO: free the dynamic array. Make "darray_destroy" first
-    bprintf(buff, "    ASS_data_t data;");
-    bprintf(buff, "    data.type = ASS_DT_SIGNED;");
-    bprintf(buff, "    data.iVal = 0x%X;", pattern->bit_const.val);
-    bprintf(buff, "    return data;");
+    bprintf(buff, "    ASS_data_t data;\n\n");
+    bprintf(buff, "    data.type = ASS_DT_SIGNED;\n\n");
+    bprintf(buff, "    data.iVal = 0x%X;\n\n", pattern->bit_const.val);
+    bprintf(buff, "    return data;\n\n");
     xmalloc_set_handler(xmalloc_callback);
     char *result = xmalloc((*buff)->count);
     strcpy(result, (char *)((*buff)->element_list));
@@ -108,16 +101,16 @@ char *generator_generate_opcode_action(opcode_t opcode)
     char tmp = '\0';
     darray_add(buff, tmp); // Start the buffer as an empty string
 
-    bprintf(buff, "    ASS_opcode_t opcode =");
-    bprintf(buff, "    {");
-    bprintf(buff, "        .address = ASS_current_address,");
-    bprintf(buff, "        .data = 0LLU");
-    bprintf(buff, "    };");
-    bprintf(buff, "");
-    bprintf(buff, "    uint64_t data = 0;");
-    bprintf(buff, "    uint64_t mask = 0;");
-    bprintf(buff, "    ASS_ref_t new_ref;");
-    bprintf(buff, "");
+    bprintf(buff, "    ASS_opcode_t opcode =\n");
+    bprintf(buff, "    {\n");
+    bprintf(buff, "        .address = ASS_current_address,\n");
+    bprintf(buff, "        .data = 0LLU\n");
+    bprintf(buff, "    };\n");
+    bprintf(buff, "\n");
+    bprintf(buff, "    uint64_t data = 0;\n");
+    bprintf(buff, "    uint64_t mask = 0;\n");
+    bprintf(buff, "    ASS_ref_t new_ref;\n");
+    bprintf(buff, "\n");
 
     // Process each element in the opcode reverse order
     //  doing it in reverse allow use to keep track of the
@@ -132,46 +125,46 @@ char *generator_generate_opcode_action(opcode_t opcode)
 
             if (bit_elem->index_opcode == i)
             {
-                //Compute the bit mask
+                // Compute the bit mask
                 uint64_t mask = (0xFFFFFFFFFFFFFFFFLLU << offset);
                 mask &= ~(0xFFFFFFFFFFFFFFFFLLU << (offset + bit_elem->width));
 
-                //Compute the value (for literals)
+                // Compute the value (for literals)
                 uint64_t val = (((bit_const_t *)(bit_elem->data))->val << offset) & mask;
 
                 switch (bit_elem->type)
                 {
                 case eBP_IMMEDIATE:
-                    bprintf(buff, "    /**eBP_IMMEDIATE**/");
-                    bprintf(buff, "    if (ASS_parser_stack[%i].type == ASS_DT_STRING)", bit_elem->index_mnemonic);
-                    bprintf(buff, "        data = ASS_resolve_const(ASS_parser_stack[%i].sVal);", bit_elem->index_mnemonic);
-                    bprintf(buff, "    else");
-                    bprintf(buff, "        data = ASS_parser_stack[%i].iVal;", bit_elem->index_mnemonic);
-                    //bprintf(buff, "    opcode.data &= 0x%llXLLU;", ~mask);
-                    bprintf(buff, "    opcode.data |= (0x%llXLLU & (data << %u));", mask, offset);
+                    bprintf(buff, "    /**eBP_IMMEDIATE**/\n");
+                    bprintf(buff, "    if (ASS_parser_stack[%i].type == ASS_DT_STRING)\n", bit_elem->index_mnemonic);
+                    bprintf(buff, "        data = ASS_resolve_const(ASS_parser_stack[%i].sVal);\n", bit_elem->index_mnemonic);
+                    bprintf(buff, "    else\n");
+                    bprintf(buff, "        data = ASS_parser_stack[%i].iVal;\n", bit_elem->index_mnemonic);
+                    // bprintf(buff, "    opcode.data &= 0x%llXLLU;\n", ~mask);
+                    bprintf(buff, "    opcode.data |= (0x%llXLLU & (data << %u));\n", mask, offset);
                     break;
                 case eBP_LABEL_ABS:
-                    bprintf(buff, "    /**eBP_LABEL_ABS**/");
-                    bprintf(buff, "    new_ref.absolute = true;");
-                    bprintf(buff, "    new_ref.symbol_name = ASS_parser_stack[%i].sVal;", bit_elem->index_mnemonic);
-                    bprintf(buff, "    new_ref.index = ASS_binary_stack_ptr;");
-                    bprintf(buff, "    new_ref.bit_offset = %i;", offset);
-                    bprintf(buff, "    new_ref.bit_width = %i;", bit_elem->width);
-                    bprintf(buff, "    ASS_ref_stack_push(new_ref);");
+                    bprintf(buff, "    /**eBP_LABEL_ABS**/\n");
+                    bprintf(buff, "    new_ref.absolute = true;\n");
+                    bprintf(buff, "    new_ref.symbol_name = ASS_parser_stack[%i].sVal;\n", bit_elem->index_mnemonic);
+                    bprintf(buff, "    new_ref.index = ASS_binary_stack_ptr;\n");
+                    bprintf(buff, "    new_ref.bit_offset = %i;\n", offset);
+                    bprintf(buff, "    new_ref.bit_width = %i;\n", bit_elem->width);
+                    bprintf(buff, "    ASS_ref_stack_push(new_ref);\n");
                     break;
                 case eBP_LABEL_REL:
-                    bprintf(buff, "    /**eBP_LABEL_REL**/");
-                    bprintf(buff, "    new_ref.absolute = false;");
-                    bprintf(buff, "    new_ref.symbol_name = ASS_parser_stack[%i].sVal;", bit_elem->index_mnemonic);
-                    bprintf(buff, "    new_ref.index =  ASS_binary_stack_ptr;");
-                    bprintf(buff, "    new_ref.bit_offset = %i;", offset);
-                    bprintf(buff, "    new_ref.bit_width = %i;", bit_elem->width);
-                    bprintf(buff, "    ASS_ref_stack_push(new_ref);");
+                    bprintf(buff, "    /**eBP_LABEL_REL**/\n");
+                    bprintf(buff, "    new_ref.absolute = false;\n");
+                    bprintf(buff, "    new_ref.symbol_name = ASS_parser_stack[%i].sVal;\n", bit_elem->index_mnemonic);
+                    bprintf(buff, "    new_ref.index =  ASS_binary_stack_ptr;\n");
+                    bprintf(buff, "    new_ref.bit_offset = %i;\n", offset);
+                    bprintf(buff, "    new_ref.bit_width = %i;\n", bit_elem->width);
+                    bprintf(buff, "    ASS_ref_stack_push(new_ref);\n");
                 case eBP_ENUM:
-                    bprintf(buff, "    /**eBP_ENUM**/");
-                    bprintf(buff, "    data = ASS_parser_stack[%i].iVal;", bit_elem->index_mnemonic);
-                    //bprintf(buff, "    opcode.data &= 0x%llXLLU;", ~mask);
-                    bprintf(buff, "    opcode.data |= (0x%llXLLU & (data << %u));", mask, offset);
+                    bprintf(buff, "    /**eBP_ENUM**/\n");
+                    bprintf(buff, "    data = ASS_parser_stack[%i].iVal;\n", bit_elem->index_mnemonic);
+                    // bprintf(buff, "    opcode.data &= 0x%llXLLU;\n", ~mask);
+                    bprintf(buff, "    opcode.data |= (0x%llXLLU & (data << %u));\n", mask, offset);
                     break;
                 case eBP_ID:
                     fprintf(stderr, "Unresolved ID\n");
@@ -179,13 +172,13 @@ char *generator_generate_opcode_action(opcode_t opcode)
                     break;
                 case eBP_BIT_CONST:
                 case eBP_BIT_LIT:
-                    bprintf(buff, "    /**eBP_BIT_LIT**/");
-                    //bprintf(buff, "    opcode.data &= 0x%llXLLU;", ~mask);
-                    bprintf(buff, "    opcode.data |= (0x%llXLLU);", val);
+                    bprintf(buff, "    /**eBP_BIT_LIT**/\n");
+                    // bprintf(buff, "    opcode.data &= 0x%llXLLU;\n", ~mask);
+                    bprintf(buff, "    opcode.data |= (0x%llXLLU);\n", val);
                     break;
                 case eBP_ELLIPSIS:
-                    bprintf(buff, "    /**eBP_ELLIPSIS**/");
-                    //bprintf(buff, "    opcode.data &= 0x%llXLLU;", ~mask);
+                    bprintf(buff, "    /**eBP_ELLIPSIS**/\n");
+                    // bprintf(buff, "    opcode.data &= 0x%llXLLU;\n", ~mask);
                     break;
                 default:
                     fail_error("Unknown bit pattern type");
@@ -205,9 +198,9 @@ char *generator_generate_opcode_action(opcode_t opcode)
     }
 
     // TODO: free the dynamic array. Make "darray_destroy" first
-    bprintf(buff, "");
-    bprintf(buff, "    ASS_binary_stack_push(opcode);");
-    bprintf(buff, "    ASS_current_address++;");
+    bprintf(buff, "\n");
+    bprintf(buff, "    ASS_binary_stack_push(opcode);\n");
+    bprintf(buff, "    ASS_current_address++;\n");
     xmalloc_set_handler(xmalloc_callback);
     char *result = xmalloc((*buff)->count);
     strcpy(result, (char *)((*buff)->element_list));
@@ -233,7 +226,6 @@ void generator_default_macros(int indent)
 
         iprintf(0 + indent, "ASS_insert_macro((ASS_macro_t){.name = \"%s\", .content = \"%s\"});", macro_elem->name, macro_elem->content);
     }
-
 }
 
 void generator_custom_outputs_selection(int indent)
@@ -244,7 +236,7 @@ void generator_custom_outputs_selection(int indent)
     {
         iprintf(0 + indent, "else if (strcmp(argv[i], \"%s\") == 0)", array[i].name);
         iprintf(0 + indent, "{");
-        iprintf(0 + indent, "    output_format = ASS_OUT_%s;", array[i].name);
+        iprintf(0 + indent, "    ASS_output_format = ASS_OUT_%s;", array[i].name);
         iprintf(0 + indent, "}");
     }
 }
@@ -268,6 +260,7 @@ void generator_outputs_enum(int indent)
     iprintf(1 + indent, "ASS_OUT_UNKNOWN,");
     iprintf(1 + indent, "ASS_OUT_HEX,");
     iprintf(1 + indent, "ASS_OUT_COE,");
+    iprintf(1 + indent, "ASS_OUT_BIT,");
     iprintf(1 + indent, "ASS_OUT_VHDL,");
 
     custom_output_t *array = darray_get_ptr(&custom_output_array, 0);
@@ -331,6 +324,7 @@ void generator_help_message(int indent)
     iprintf(1 + indent, "\"  hex          Intel HEX (default)\\n\"");
     iprintf(1 + indent, "\"  coe          Xilinx COE\\n\"");
     iprintf(1 + indent, "\"  vhdl         VHDL data array\\n\"");
+    iprintf(1 + indent, "\"  bit          Raw data\\n\"");
 
     // Display help for custom output formats
     custom_output_t *array = darray_get_ptr(&custom_output_array, 0);
@@ -605,15 +599,26 @@ void generator_dfa_switch(int indent, state_machine_t *state_machine, char *name
 
     for (size_t i = 0; i < state_machine->states_tstate->count; i++)
     {
+        transistion_t default_transition = {.condition = -1, .next_state_id = -1};
         state_t *state = darray_get_ptr(&(state_machine->states_tstate), i);
 
         iprintf(0 + indent, "case %i:", state->id);
+
         iprintf(1 + indent, "switch (ASS_%s_token)", name);
         iprintf(1 + indent, "{");
 
         for (size_t j = 0; j < state->transitions_ttrans->count; j++)
         {
             transistion_t *transition = darray_get_ptr(&(state->transitions_ttrans), j);
+
+            if (transition->condition == CONDITION_ANY) // default_transition (any token)
+            {
+                if (default_transition.next_state_id >= 0)
+                    fail_error("A state has multiple default transitions");
+                default_transition = *transition;
+                continue;
+            }
+
             iprintf(1 + indent, "case %i:", transition->condition);
             if (j >= state->transitions_ttrans->count || transition->next_state_id != (transition + 1)->next_state_id)
             {
@@ -625,10 +630,23 @@ void generator_dfa_switch(int indent, state_machine_t *state_machine, char *name
         }
 
         iprintf(1 + indent, "default:");
-        iprintf(2 + indent, "if(ASS_%s_valid)", name);
-        iprintf(3 + indent, "ASS_%s_exit_point();", name);
-        iprintf(2 + indent, "else");
-        iprintf(3 + indent, "ASS_%s_invalid_token();", name);
+        if (default_transition.next_state_id >= 0)
+        {
+            // Default transition
+            fail_debug("next_state_id : %i", default_transition.next_state_id);
+            iprintf(2 + indent, "//Default transition");
+            iprintf(2 + indent, "ASS_%s_state = %i;", name, default_transition.next_state_id);
+            iprintf(2 + indent, "ASS_%s_valid = %s;", name, state_machine_get_by_id(state_machine, default_transition.next_state_id)->end_state ? "true" : "false");
+            iprintf(2 + indent, "ASS_%s_output = %i;", name, state_machine_get_by_id(state_machine, default_transition.next_state_id)->output);
+        }
+        else
+        {
+            // No default transition
+            iprintf(2 + indent, "if(ASS_%s_valid)", name);
+            iprintf(3 + indent, "ASS_%s_exit_point();", name);
+            iprintf(2 + indent, "else");
+            iprintf(3 + indent, "ASS_%s_invalid_token();", name);
+        }
         iprintf(2 + indent, "break;");
         iprintf(1 + indent, "}");
         iprintf(1 + indent, "break;");
@@ -641,35 +659,6 @@ void generator_dfa_switch(int indent, state_machine_t *state_machine, char *name
 }
 
 /*********************************************************************/
-
-// Print to a dynamic array buffer
-void bprintf(darray_t **array, const char *format, ...)
-{
-    int len;
-    char buff[1024];
-    char tmp;
-
-    // Print to the buffer
-    va_list args;
-    va_start(args, format);
-    len = vsnprintf(buff, 1024, format, args);
-    va_end(args);
-
-    // Remove that last character of the string in the
-    //  array, as it is normally a NULL
-    darray_remove(array, 1);
-
-    // Skip the NULL
-    // NOTE: Inefficient
-    for (int i = 0; i < len; i++)
-    {
-        darray_add(array, buff[i]);
-    }
-    tmp = '\n';
-    darray_add(array, tmp);
-    tmp = '\0';
-    darray_add(array, tmp);
-}
 
 void iprintf(size_t indentation, const char *format, ...)
 {

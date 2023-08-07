@@ -93,6 +93,10 @@ state_machine_t pattern_compiler(size_t count, const int *sequence, int output)
 
                 if (sequence[i + 1] == '^')
                 {
+                    // TODO: implement negative set
+                    fail_error("Unimplemented feature. Please refer to the documentation.");
+                    exit(EXIT_FAILURE);
+
                     i++;
                     negative_set = true;
                     parsing_set = true;
@@ -144,6 +148,15 @@ state_machine_t pattern_compiler(size_t count, const int *sequence, int output)
                 {
                     darray_add(&set, j);
                 }
+                break;
+            case '.': // Any
+                if (parsing_set)
+                {
+                    fail_error("Unexpected '%c' at position %i of pattern %i", (char)(-sequence[i]), i, output);
+                    exit(EXIT_FAILURE);
+                }
+                fail_debug("Detected an \"any\" pattern");
+                darray_add(&set, (int){CONDITION_ANY});
                 break;
 
             // TODO: implement group and or

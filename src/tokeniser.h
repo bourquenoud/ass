@@ -19,7 +19,7 @@ typedef struct
 
 /**
  * @brief Generate an nfa from an array of token definitions
- * 
+ *
  * @param count The number of tokens definitions
  * @param tokens_array The array of tokens definitions
  * @return state_machine_t The nfa
@@ -28,7 +28,7 @@ state_machine_t tokeniser_array_to_nfa(int count, const token_def_t *tokens_arra
 
 /**
  * @brief Generate an nfa from a token definition
- * 
+ *
  * @param token The token definition
  * @return state_machine_t The nfa
  */

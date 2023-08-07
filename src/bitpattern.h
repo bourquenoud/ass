@@ -25,7 +25,6 @@ typedef enum
 
 extern const char *name_BPTYPE[];
 
-
 typedef struct bit_elem_s
 {
     BPTYPE_t type;
@@ -33,12 +32,12 @@ typedef struct bit_elem_s
     int index_opcode;
     int index_mnemonic;
     size_t data_len;
-    uint8_t data[]; //Hold the data 
+    uint8_t data[]; // Hold the data
 } bit_elem_t;
 
 /**
  * @brief Create the corresponding bitpattern element
- * 
+ *
  * @param type The type of the bitpattern element
  * @param width The width in bits
  * @param data The corresponding data

@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <string.h>
+#include <stdarg.h>
 #include "macro.h"
 
 typedef struct
@@ -102,3 +103,19 @@ void darray_resize(darray_t **array, int size);
  *
  */
 void darray_empty(darray_t **array);
+
+/**
+ * @brief Delete an array
+ *
+ * @param array Pointer to the array to delete
+ */
+void darray_free(darray_t **array);
+
+/**
+ * @brief Print to a dynamic array
+ *
+ * @param array Pointer to a dynamic array to print to
+ * @param format printf style format
+ * @param ... arguments
+ */
+void bprintf(darray_t **array, const char *format, ...);

@@ -4,6 +4,7 @@
 
 void fail_set_verbose(int);
 void fail_inc_verbose();
+int fail_get_verbose();
 void fail_set_loc(YYLTYPE);
 void fail_show_loc(int);
 void fail_show_colour(int);

@@ -11,7 +11,7 @@
 
 /**
  * @brief Generate the file
- * 
+ *
  * @param fd The file descriptor to write to
  */
-void generate(FILE* fd);
+void generate(FILE *fd);

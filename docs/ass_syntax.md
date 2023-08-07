@@ -155,29 +155,31 @@ Example :
 
 ## Function override
 
-You can override some C functions to modify the behaviour of the assembler program. Overriding them will override their **content**, effectively replacing everything that inside the function's body. The `ASS_` prefix should not be specified in the function name.
+You can override some C functions to modify the behaviour of the assembler program. Overriding them will override their **content**, effectively replacing everything that's inside the function's body. The `ASS_` prefix should not be specified in the function name.
 
 Usage : `%override <function_name> %{<custom code>%}`
 
 Example :
 ```C
 %override startup %{
-    printf("Hello !\n"); // "Hello !" will be printed every time the program is run
+    printf("Hello world!\n"); // "Hello world!" will be printed every time the program is run
 %}
 ```
 
 ## Custom output format
 
-It is possible to specifiy a custom output format using the `%output` command. The process is relatively complex and involves coding in C. A detailed tutorial is ~available~ on its way. It is recommended for the format name to be in lowercase and shorter than 12 character.
+It is possible to specifiy a custom output format using the `%output` command. The process is relatively complex and involves coding in C. It is recommended for the format name to be in lowercase and shorter than 12 character.
 
-Usage : `%output <format_name> %{<code>%}`
+The function receive `FILE* fd` as its single argument. I should only write to it. The file is closed automatically.
+
+Usage : `%output <format_name> <description_string> %{<code>%}`
 
 Example :
 ```C
-%output raw %{
+%output raw "Output an <address>:<data> format" %{
     for(int i = 0; i < ASS_binary_stack_ptr; i++)
     {
-        printf("%X:%X\n", ASS_binary_stack[i].address, ASS_binary_stack[i].data);
+        fprintf(fd, "%X:%X\n", ASS_binary_stack[i].address, ASS_binary_stack[i].data);
     }
 %}
 ```
@@ -188,8 +190,6 @@ Example :
  - `LABEL_ABS` Substituted for the address of label, extended/trucated to width. Expects a label.
  - `LABEL_REL` Substituted for a relative jump from a label in 2's complement. 0 jump means stay where it is. Sign extended/trucated to width. Expects a label.
  - `IMMEDIATE` Substituted for an immediate value, extended/trucated to width. Expects a value which can be an hexadecimal by prefixing it with `0x`, a decimal value by default, an octal value by prefixing it with `0`(zero), a binary value by prefixing with `0b`, or a ASCII char by enclosing it in quotes `'`
-
-***BUG*** *: IMMEDIATE will only accept hexadecimal values.*
 
 # Parameters list
 
@@ -217,3 +217,11 @@ List of parameters :
 |    NO     | `version <assembler_version>`  | assembler_version (string)       | Set the assembler's version. Diplayed in the version message.|
 |    NO     | `description <description>`    | description (string)             | Set the assembler's description. Displayed in the help message.|
 |    NO     | `copyright <copyright>`        | copyright (string)               | Set the assembler's copyright string, ("2022 - Mathieu Bourquenoud" for example). Displayed in the version message.|
+
+# Override functions list
+
+| Empty by default| Name              | Argument              | Description                    |
+| :-------------: | ----------------- | --------------------- | ------------------------------ |
+| YES             | `startup`         | None                  | Executed at the start. |
+
+***NOTE*** *: This list will be extended in the near future.*

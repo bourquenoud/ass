@@ -216,6 +216,7 @@ bool ASS_parser_output_ready = false;
 void ASS_output_hex(FILE *fd);
 void ASS_output_coe(FILE *fd);
 void ASS_output_vhdl(FILE *fd);
+void ASS_output_bit(FILE *fd);
 
 /******************** helpers ********************/
 
@@ -541,6 +542,9 @@ int main(int argc, char const *argv[])
         case ASS_OUT_VHDL:
             ASS_output_vhdl(fd);
             break;
+        case ASS_OUT_BIT:
+            ASS_output_bit(fd);
+            break;
         /*!! custom_outputs_switch !!*/
         default:
             ASS_log_error("Output format file error.");
@@ -577,9 +581,9 @@ void ASS_output_hex(FILE *fd)
             "Incompatible format\n"
             "      The Intel HEX file format is not fully implemented and can only handle\n"
             "      an alignment of 16 bits, with opcodes of 16 bits or less. This not a\n"
-            "      runtime error. If you are the developper, you can implement your own\n"
-            "      funtion. Please refer to the API guide in the github repository at\n"
-            "      (https://github.com/bourquenoud/ass)\n"
+            "      runtime error. If you are the developper of this assembler, you can\n"
+            "      implement your own funtion. Please refer to the API guide in the github\n"
+            "      repository at\n (https://github.com/bourquenoud/ass)\n"
             "      This will be fixed in the near future."
             );
         exit(EXIT_FAILURE);
@@ -613,12 +617,12 @@ void ASS_output_coe(FILE *fd)
             fputc(',', fd);
         if (ASS_binary_stack[instruction_index].address == i && instruction_index < ASS_binary_stack_ptr)
         {
-            fprintf(fd, "\n%llX", ASS_binary_stack[instruction_index].data);
+            fprintf(fd, "\n%lX", ASS_binary_stack[instruction_index].data);
             instruction_index++;
         }
         else
         {
-            fprintf(fd, "\n0", ASS_binary_stack[instruction_index].data);
+            fprintf(fd, "\n0");
         }
     }
     fputc(';', fd);
@@ -650,7 +654,47 @@ void ASS_output_vhdl(FILE *fd)
     fprintf(fd, "\"\n);\n");
 }
 
-// TODO: Add support for custom output format
+// Output the binary data in BIT (raw) format (little endian)
+void ASS_output_bit(FILE *fd)
+{
+    if ((ASS_P_address_stop - ASS_P_address_start) * ASS_P_memory_width / 8 > 1024LLU * 1024LLU * 1024LLU)
+        ASS_log_warning("Very large memory is being written as serialised data (>1GiB)");
+
+    if(ASS_P_alignment % 8 != 0)
+    {
+        ASS_log_error(
+            "Incompatible format\n"
+            "      The BIT/RAW file format is not fully implemented and can only handle\n"
+            "      an alignment of a multiple of 8 bits. This not a runtime error. If\n"
+            "      you are the developper of this assembler, you can implement your own\n"
+            "      funtion. Please refer to the API guide in the github repository at\n"
+            "      (https://github.com/bourquenoud/ass)\n"
+            "      This will be fixed in the near future."
+            );
+        exit(EXIT_FAILURE);
+    }
+
+    int instruction_index = 0;
+    for (uint64_t i = ASS_P_address_start; i <= ASS_P_address_stop; i++)
+    {
+        if (ASS_binary_stack[instruction_index].address == i && instruction_index < ASS_binary_stack_ptr)
+        {
+            for (size_t j = 0; j < ASS_P_alignment / 8; j++)
+            {
+                uint8_t byte = (ASS_binary_stack[instruction_index].data >> (j * 8)) & 0xFF;
+                fputc(byte, fd);
+            }
+            instruction_index++;
+        }
+        else
+        {
+            for (size_t j = 0; j < ASS_P_alignment / 8; j++)
+            {
+                fputc(0, fd);
+            }
+        }
+    }
+}
 
 /***********************************************************************************************************/
 /*                                                LOG SYSTEM                                               */
@@ -800,7 +844,7 @@ void print_bits(FILE *fd, size_t const size, void const *const ptr)
     }
 }
 
-// TODO: improve this, its really bad
+// TODO: improve this, it's really bad
 char const *ASS_parse_argument(size_t len, size_t *i, size_t index, int argc, char const **argv)
 {
     char const *argument;
@@ -891,6 +935,10 @@ void ASS_parse_arguments(int argc, char const **argv)
                     {
                         ASS_output_format = ASS_OUT_VHDL;
                     }
+                    else if (strcmp(argument, "bit") == 0)
+                    {
+                        ASS_output_format = ASS_OUT_BIT;
+                    }
                     /*!! custom_outputs_selection !!*/
                     else
                     {
@@ -950,7 +998,9 @@ void ASS_parse(FILE *fd)
         return;
     }
 
-    // TODO : make it not need multiple newlines at the end
+    // TODO : make it not need multiple newlines at the end. This is caused by the fact that
+    // there are no look ahead tokens, and the parser depends only on the tokens already
+    // parsed.
     int last_newline = 0;
     bool run = true;
     while (run)
@@ -1157,6 +1207,7 @@ FILE *ASS_open_file(const char *filename, const char *mode)
 // - .vhd
 // - .vhdl
 // - .coe
+// - .bit //Raw data
 int ASS_get_extension(char const *filename)
 {
     char *extension = strrchr(filename, '.');
@@ -1174,6 +1225,8 @@ int ASS_get_extension(char const *filename)
         return ASS_OUT_VHDL;
     else if (strcmp(extension, ".coe") == 0)
         return ASS_OUT_COE;
+    else if(strcmp(extension, ".bit") == 0)
+        return ASS_OUT_BIT;
     else
         return ASS_OUT_UNKNOWN;
 }
@@ -1189,6 +1242,8 @@ char const *ASS_output_format_to_string(int format)
         return "VHDL";
     case ASS_OUT_COE:
         return "COE";
+    case ASS_OUT_BIT:
+        return "BIT";
     default:
         return "UNKNOWN";
     }

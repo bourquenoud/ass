@@ -32,6 +32,7 @@ const parameters_t start_parameters =
         .args_separator = '\0',
         .label_postfix = '\0',
         .constant_dir = NULL,
+        .end_macro_dir = NULL,
         .macro_dir = NULL,
         .author = NULL,
         .version = NULL,
@@ -60,12 +61,12 @@ const parameters_t default_parameters =
         .label_postfix = ':',
         .constant_dir = "\\.constant",
         .macro_dir = "\\.macro",
+        .end_macro_dir = "\\.endmacro",
         .author = "[NOT SET]",
         .version = "[NOT SET]",
         .name = "[NOT SET]",
         .copyright = "[NOT SET]",
-        .description = "Assembler generated using the Assembly Syntax Sythesiser."
-};
+        .description = "Assembler generated using the Assembly Syntax Sythesiser."};
 
 static const char *const param_names[] =
     {
@@ -80,6 +81,7 @@ static const char *const param_names[] =
         [ePARAM_LABEL_POSTFIX] = "label_postfix",
         [ePARAM_CONSTANT_DIRECTIVE] = "constant_directive",
         [ePARAM_MACRO_DIRECTIVE] = "macro_directive",
+        [ePARAM_END_MACRO_DIRECTIVE] = "end_macro_directive",
         [ePARAM_AUTHOR] = "author",
         [ePARAM_NAME] = "name",
         [ePARAM_VERSION] = "version",
@@ -137,6 +139,11 @@ void param_fill_unset()
     {
         fail_info("macro_directive never set, falling back to default ('%s')", default_parameters.macro_dir);
         parameters.macro_dir = default_parameters.macro_dir;
+    }
+    if (parameters.end_macro_dir == NULL)
+    {
+        fail_info("end_macro_directive never set, falling back to default ('%s')", default_parameters.end_macro_dir);
+        parameters.end_macro_dir = default_parameters.end_macro_dir;
     }
     if (parameters.author == NULL)
     {
@@ -467,7 +474,7 @@ int command_param(linked_list_t *args)
             fail_warning("Parameter '%s' set more than once.", param_name);
 
         parameters.description = str; // Passed by ref, may need to be copied for stability
-        return 0;                   // Success
+        return 0;                     // Success
         break;
 
     default:

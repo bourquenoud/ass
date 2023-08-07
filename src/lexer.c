@@ -27,7 +27,7 @@ char *action_parse_str =
     "    data.type = ASS_DT_STRING;\n"
     "    strcpy(data.sVal, ASS_text);\n"
     "    return data;";
-    
+
 char *action_parse_id =
     "    ASS_data_t data;\n"
     "    data.sVal = malloc(strlen(ASS_text) + 1);\n"
@@ -52,6 +52,7 @@ int token_id_lookup[] =
         [eT_IDENTIFIER] = -1,
         [eT_CONSTANT_DIR] = -1,
         [eT_MACRO_DIR] = -1,
+        [eT_END_MACRO_DIR] = -1,
 };
 
 darray_t *tokens;
@@ -65,10 +66,10 @@ void lexer_init()
 
 void lexer_generate()
 {
-    int id = 1; //Start at 1, 0 is reserved for the comment token
+    int id = 1; // Start at 1, 0 is reserved for the comment token
     token_def_t new_token;
 
-    //Serialise the opcodes
+    // Serialise the opcodes
     int count = opcode_array->count;
     opcode_t *opcodes = darray_get_ptr(&opcode_array, 0);
 
@@ -145,7 +146,7 @@ void lexer_generate()
     new_token.pattern[strlen(new_token.pattern) - 1] = parameters.label_postfix;
     darray_add(&tokens, new_token);
 
-    //Integer tokens
+    // Integer tokens
     token_id_lookup[eT_IMMEDIATE_HEX] = id;
     new_token = (token_def_t){.name = "IMMEDIATE_HEX", .id = id++, .pattern = "0x[0-9a-fA-F]+", .action = action_parse_int};
     darray_add(&tokens, new_token);
@@ -175,6 +176,10 @@ void lexer_generate()
     // macro directive token
     token_id_lookup[eT_MACRO_DIR] = id;
     new_token = (token_def_t){.name = "MACRO_DIR", .id = id++, .pattern = parameters.macro_dir, .action = NULL};
+    darray_add(&tokens, new_token);
+
+    token_id_lookup[eT_END_MACRO_DIR] = id;
+    new_token = (token_def_t){.name = "END_MACRO_DIR", .id = id++, .pattern = parameters.end_macro_dir, .action = NULL};
     darray_add(&tokens, new_token);
 
     token_id_lookup[eT_IDENTIFIER] = id;

@@ -11,7 +11,7 @@ Please note that this software is licensed under the GPLv3. As the generated fil
 
 ***DISCLAIMER*** *: This software is in alpha stage and is not guaranteed to work.*
 
-***DISCLAIMER*** *: It has only been tested on Linux. As it requires POSIX and GNU libraries it probably won't compile for MacOS, and certainly won't for Windows. However, the generated code is portable across all three OSs.*
+***DISCLAIMER*** *: It has only been tested on Linux. As it requires POSIX and GNU libraries it probably won't compile for MacOS or Windows. However, the generated code is expected portable across all three OSs.*
 
 ## Build and install
 
@@ -36,7 +36,7 @@ cd ~/ass
 make
 ```
 
-You can also install it, but it is not required.
+You can also install it, but this is not required.
 
 ```bash
 cd ~/ass
@@ -47,7 +47,7 @@ sudo make install
 
 ***INFO*** *: The following commands assume you have installed `ass`.*
 
-Once `ass` has been built you can generate an assembler C project from an example. Create a directory for your assembler project, this will contain the source file of the generated assembler. We then call `ass`.
+Once `ass` has been built you can generate an assembler C file from an example. Create a directory for your assembler project, this will contain the source file of the generated assembler. We then call `ass`.
 
 ```bash
 cd ~
@@ -57,7 +57,7 @@ ass -o myfirstassembler/simple_assembler.c ass/examples/pic16f887.ass
 
 We can then compile the generated file. It only requires the standard libraries.
 
-Here we use `gcc` but you can use any standard compliant C compiler (C11 standard or later).
+Here we use `gcc` but you can use any standard compliant C compiler (C11 or later).
 
 ```bash
 cd ~/myfirstassembler/

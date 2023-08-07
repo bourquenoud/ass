@@ -331,7 +331,7 @@ state_machine_t state_machine_make_deterministic(state_machine_t *nfa)
     bitarray_set(&current_state_combination, 0, true);
     darray_add(&generated_state_table, current_state_combination);
 
-    //Contains the id of all output values that had conflicts
+    // Contains the id of all output values that had conflicts
     darray_t *conflict_output_table = darray_init(sizeof(int));
 
     // Generate all states until there are no more new state
@@ -371,8 +371,8 @@ state_machine_t state_machine_make_deterministic(state_machine_t *nfa)
                     {
                         // Log the conflict as detail.
                         fail_debug("Tokens (ID %i) and (ID %i) conflict. Priority given to the lowest ID.",
-                                    output,
-                                    nfa_state_array[j].output);
+                                   output,
+                                   nfa_state_array[j].output);
 
                         // Keep the lowest id
                         output = (output < nfa_state_array[j].output) ? output : nfa_state_array[j].output;
@@ -498,16 +498,16 @@ state_machine_t state_machine_make_deterministic(state_machine_t *nfa)
     // Get the conflict output table
     int *conflict_output_table_array = darray_get_ptr(&conflict_output_table, 0);
 
-    //Log a warning if one or more output from the conflict table is not present in the end state table
+    // Log a warning if one or more output from the conflict table is not present in the end state table
     for (size_t i = 0; i < conflict_output_table->count; i++)
     {
         bool found = false;
         for (size_t j = 0; j < end_state_ids->count; j++)
         {
-            //Get the output of the end state from its id
+            // Get the output of the end state from its id
             state_t *end_state = ((state_t *)darray_get_ptr(&(dfa.states_tstate), end_state_ids_array[j]));
 
-            if (conflict_output_table_array[i] ==end_state->output)
+            if (conflict_output_table_array[i] == end_state->output)
             {
                 found = true;
                 break;
@@ -517,7 +517,7 @@ state_machine_t state_machine_make_deterministic(state_machine_t *nfa)
         {
             fail_warning("Output %i is not present in the end state table", conflict_output_table_array[i]);
         }
-    }    
+    }
 
     // Reduction pass
     state_machine_reduce(&dfa);

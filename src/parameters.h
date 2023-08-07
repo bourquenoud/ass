@@ -19,6 +19,7 @@ enum
     ePARAM_LABEL_POSTFIX,
     ePARAM_CONSTANT_DIRECTIVE,
     ePARAM_MACRO_DIRECTIVE,
+    ePARAM_END_MACRO_DIRECTIVE,
     ePARAM_AUTHOR,
     ePARAM_NAME,
     ePARAM_VERSION,
@@ -47,37 +48,38 @@ typedef struct
 
     // Syntax parameters, all optional with default values
     char args_separator; // The character used to separate the arguments of a mnemonic
-    char label_postfix; // The character at the end of a label declaration (':' by default)
-    char* constant_dir; // Directive for constant declaration
-    char* macro_dir;    // Directive for macro declaration
+    char label_postfix;  // The character at the end of a label declaration (':' by default)
+    char *constant_dir;  // Directive for constant declaration
+    char *macro_dir;     // Directive for macro declaration
+    char *end_macro_dir; // Directive for end of macro declaration
 
     // Version parameters, all optional
-    char* author;
-    char* version;
-    char* name;
-    char* copyright;
-    char* description;
+    char *author;
+    char *version;
+    char *name;
+    char *copyright;
+    char *description;
 } parameters_t;
 
 extern parameters_t parameters;
 
 /**
  * @brief Initialise the parameters
- * 
+ *
  */
 void param_init();
 
 /**
  * @brief Fill the parameters that has not been set with default values
- * 
+ *
  */
 void param_fill_unset();
 
-//Return negative value on error, positive on warnigs and 0 on success
+// Return negative value on error, positive on warnigs and 0 on success
 
 /**
  * @brief Process the command "%const" for bit constants
- * 
+ *
  * @param args The arguments of the command
  */
-int command_param(linked_list_t* args);
+int command_param(linked_list_t *args);

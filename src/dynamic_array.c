@@ -105,3 +105,32 @@ void darray_free(darray_t **array)
     free(*array);
     *array = NULL;
 }
+
+// Print to a dynamic array buffer
+void bprintf(darray_t **array, const char *format, ...)
+{
+    int len;
+    char buff[1024];
+    char tmp;
+
+    // Print to the buffer
+    va_list args;
+    va_start(args, format);
+    len = vsnprintf(buff, 1024, format, args);
+    va_end(args);
+
+    // Remove that last character of the string in the
+    //  array, as it is normally a NULL
+    darray_remove(array, 1);
+
+    // Skip the NULL
+    // NOTE: Inefficient
+    for (int i = 0; i < len; i++)
+    {
+        darray_add(array, buff[i]);
+    }
+    // tmp = '\n';
+    // darray_add(array, tmp);
+    tmp = '\0';
+    darray_add(array, tmp);
+}

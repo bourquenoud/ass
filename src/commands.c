@@ -149,9 +149,9 @@ int command_format(data_t *id, linked_list_t *list)
             has_id = true;
         }
 
-        //Log a details message specifing the width and the type of the element
-        fail_debug("Element %d: %d bits, type %s", index_opcode, ((bit_elem_t*)(current->user_data))->width,
-                    name_BPTYPE[((bit_elem_t*)(current->user_data))->type]);
+        // Log a details message specifing the width and the type of the element
+        fail_debug("Element %d: %d bits, type %s", index_opcode, ((bit_elem_t *)(current->user_data))->width,
+                   name_BPTYPE[((bit_elem_t *)(current->user_data))->type]);
 
         current = current->next;
     }
@@ -172,7 +172,7 @@ int command_format(data_t *id, linked_list_t *list)
         // Set the ellipsis size
         if (ellipsis != NULL)
         {
-            //Log the ellipsis width
+            // Log the ellipsis width
             fail_debug("Ellipsis width: %i", expected_width - width);
             ellipsis->width = expected_width - width;
         }
@@ -323,7 +323,7 @@ int command_opcode(data_t *id, data_t *pattern, data_t *opcode_id, bool is_const
                 id_bit_elem->width);
             resolved_opcode_id->width = id_bit_elem->width;
         }
-        else if(resolved_opcode_id->width > id_bit_elem->width && (resolved_opcode_id->width & id_bit_elem->width) != 0)
+        else if (resolved_opcode_id->width > id_bit_elem->width && (resolved_opcode_id->width & id_bit_elem->width) != 0)
         {
             fail_warning(
                 "The width of the id of the opcode \"%s\" is greater than the expected width. Automatically trucated to %i bits. Some bits have been lost.",
@@ -454,10 +454,10 @@ int command_output(data_t *name, data_t *description, data_t *in_code)
     };
 
     // Check if it already exists
-    custom_output_t* array = darray_get_ptr(&custom_output_array, 0);
-    for(int i = 0; i < custom_output_array->count; i++)
+    custom_output_t *array = darray_get_ptr(&custom_output_array, 0);
+    for (int i = 0; i < custom_output_array->count; i++)
     {
-        if(strcmp(array[i].name, new_custom_output.name) == 0)
+        if (strcmp(array[i].name, new_custom_output.name) == 0)
         {
             fail_error("'%s' is already defined as a custom output type.");
             return 1;
@@ -472,7 +472,7 @@ int command_override(data_t *target_name, data_t *in_code)
 {
     if (strcmp(target_name->strVal, "startup") != 0)
     {
-        fail_error("Unknown target '%s'", target_name->strVal);
+        fail_error("Unknown override target '%s'", target_name->strVal);
         return 1;
     }
 
@@ -500,7 +500,7 @@ int command_macro(data_t *name, data_t *content)
 
     // Create the macro
     xmalloc_set_handler(xmalloc_callback);
-    macro_t* new_macro = xmalloc(sizeof(macro_t));
+    macro_t *new_macro = xmalloc(sizeof(macro_t));
     new_macro->name = name->strVal;
     new_macro->content = content->strVal;
 

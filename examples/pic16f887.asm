@@ -4,11 +4,11 @@
 .constant       status  0x83
 .constant       var     0x50 ;Variable address to store the current data
 
-0x0:    GOTO    main 
+0x00:    GOTO    main 
 
-0x10: ;;Comment
+0x10:  ; Place following instructions at 0x10 
 main:
-press: BTFSS   porta,b0
+press:  BTFSS   porta,b0
         GOTO    press
 relea:  BTFSC   porta,b0
         GOTO    relea

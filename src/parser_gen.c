@@ -20,7 +20,7 @@ char *action_address =
     "    ASS_current_address = (int)ASS_parser_stack_pop().uVal;\n"
     "    return (ASS_data_t){ASS_DT_NULL, (uint64_t)0};";
 
-char *action_constant = 
+char *action_constant =
     "    ASS_const_t new_const;\n"
     "    new_const.val = ASS_parser_stack_pop().uVal;\n"
     "    char* str = ASS_parser_stack_pop().sVal;\n"
@@ -29,6 +29,9 @@ char *action_constant =
     "    strcpy(new_const.name, str);\n"
     "    ASS_const_stack_push(new_const);\n"
     "    return (ASS_data_t){ASS_DT_NULL, (uint64_t)0};";
+
+char *action_macro =
+    "    ASS_log_warning(\"Macro are not fully implement and trying to expand one will crash the program\");";
 
 darray_t *rule_list_tint;
 
@@ -39,7 +42,7 @@ void parser_init()
 
 void parser_generate()
 {
-    int n_rules = opcode_array->count + 5;
+    int n_rules = opcode_array->count + 6;
 
     // Generate the rules for the parser
     int opcode_count = opcode_array->count;
@@ -125,7 +128,7 @@ void parser_generate()
 
         // Remove all trailing argument separator
         // HACK: Find a better solution
-        // 
+        //
         int last_token;
         do
         {
@@ -164,17 +167,17 @@ void parser_generate()
     new_rule->action = action_constant;
     new_rule->tokens[0] = token_id_lookup[eT_CONSTANT_DIR];
     new_rule->tokens[1] = token_id_lookup[eT_IDENTIFIER];
-    new_rule->tokens[2] = -(int)'['; //Open a set
+    new_rule->tokens[2] = -(int)'['; // Open a set
     new_rule->tokens[3] = token_id_lookup[eT_IMMEDIATE_HEX];
     new_rule->tokens[4] = token_id_lookup[eT_IMMEDIATE_DEC];
     new_rule->tokens[5] = token_id_lookup[eT_IMMEDIATE_OCT];
     new_rule->tokens[6] = token_id_lookup[eT_IMMEDIATE_BIN];
     new_rule->tokens[7] = token_id_lookup[eT_IMMEDIATE_CHAR];
-    new_rule->tokens[8] = -(int)']'; //Close the set
-    new_rule->tokens[9] = -(int)'['; //Open a set
+    new_rule->tokens[8] = -(int)']'; // Close the set
+    new_rule->tokens[9] = -(int)'['; // Open a set
     new_rule->tokens[10] = token_id_lookup[eT_NEWLINE];
     new_rule->tokens[11] = token_id_lookup[eT_COMMENT];
-    new_rule->tokens[12] = -(int)']'; //Close the set
+    new_rule->tokens[12] = -(int)']'; // Close the set
     rules[opcode_count + x] = new_rule;
     x++;
 
@@ -205,12 +208,25 @@ void parser_generate()
     rules[opcode_count + x] = new_rule;
     x++;
 
-    new_rule = xmalloc(sizeof(rule_def_t) + 1);
+    new_rule = xmalloc(sizeof(rule_def_t) + 1 * sizeof(int));
     new_rule->id = opcode_count + x;
     new_rule->count = 1;
     new_rule->name = "address";
     new_rule->action = action_address;
     new_rule->tokens[0] = token_id_lookup[eT_ADDRESS];
+    rules[opcode_count + x] = new_rule;
+    x++;
+
+    new_rule = xmalloc(sizeof(rule_def_t) + 5 * sizeof(int));
+    new_rule->id = opcode_count + x;
+    new_rule->count = 5;
+    new_rule->name = "macro";
+    new_rule->action = action_macro;
+    new_rule->tokens[0] = token_id_lookup[eT_MACRO_DIR];
+    new_rule->tokens[1] = token_id_lookup[eT_IDENTIFIER];
+    new_rule->tokens[2] = -(int)'.'; // Any token
+    new_rule->tokens[3] = -(int)'+'; // Repeat the set
+    new_rule->tokens[4] = token_id_lookup[eT_END_MACRO_DIR];
     rules[opcode_count + x] = new_rule;
     x++;
 

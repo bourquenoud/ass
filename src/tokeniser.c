@@ -24,7 +24,7 @@ state_machine_t tokeniser_array_to_nfa(int count, const token_def_t *tokens_arra
 // Generate a state machine matching the provided string
 state_machine_t tokeniser_token_to_nfa(const token_def_t token)
 {
-    darray_t* sequence = darray_init(sizeof(int));
+    darray_t *sequence = darray_init(sizeof(int));
     int processed_char;
 
     // Get the string lenght and scan for illegal characters
@@ -51,9 +51,9 @@ state_machine_t tokeniser_token_to_nfa(const token_def_t token)
             char *new_ptr;
             switch (string[i])
             {
-            case '`':  //GNU's POSIX extension for EOF
+            case '`': // GNU's POSIX extension for EOF
             case '\'':
-                processed_char = -1; //EOF
+                processed_char = -1; // EOF
                 break;
             case 'a':
                 processed_char = '\a';
@@ -80,7 +80,7 @@ state_machine_t tokeniser_token_to_nfa(const token_def_t token)
                 processed_char = strtoul(string + i + 1, &new_ptr, 16);
                 i = (int)((ptrdiff_t)new_ptr - (ptrdiff_t)string) - 1;
                 break;
-            case '0':// Enter octal escape sequence
+            case '0': // Enter octal escape sequence
             case '1':
             case '2':
             case '3':
@@ -114,6 +114,9 @@ state_machine_t tokeniser_token_to_nfa(const token_def_t token)
             case '-':
                 processed_char = '-';
                 break;
+            case '\\':
+                processed_char = '\\';
+                break;
             default:
                 fail_error("Invalid escape sequence. (\\%c)", string[i]);
                 break;
@@ -124,35 +127,20 @@ state_machine_t tokeniser_token_to_nfa(const token_def_t token)
         {
             switch (string[i])
             {
-            case '\\': //Enter an escape sequence
+            case '\\': // Enter an escape sequence
                 escaped = true;
-                continue; //Don't add the escape character to the sequence
+                continue; // Don't add the escape character to the sequence
             case '+':
-                processed_char = -(int)'+';
-                break;
             case '*':
-                processed_char = -(int)'*';
-                break;
             case '?':
-                processed_char = -(int)'*';
-                break;
             case '-':
-                processed_char = -(int)'-';
-                break;
             case '[':
-                processed_char = -(int)'[';
-                break;
             case ']':
-                processed_char = -(int)']';
-                break;
             case '(':
-                processed_char = -(int)'(';
-                break;
             case ')':
-                processed_char = -(int)')';
-                break;
             case '|':
-                processed_char = -(int)'|';
+            case '.':
+                processed_char = -(int)string[i];
                 break;
             default:
                 processed_char = string[i];
@@ -161,5 +149,5 @@ state_machine_t tokeniser_token_to_nfa(const token_def_t token)
         }
         darray_add(&sequence, processed_char);
     }
-    return pattern_compiler(sequence->count, (int*)darray_get_ptr(&sequence, 0), token.id);
+    return pattern_compiler(sequence->count, (int *)darray_get_ptr(&sequence, 0), token.id);
 }

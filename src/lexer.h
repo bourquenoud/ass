@@ -25,20 +25,21 @@ enum
     eT_IDENTIFIER,
     eT_CONSTANT_DIR,
     eT_MACRO_DIR,
+    eT_END_MACRO_DIR,
 };
 
 int extern token_id_lookup[];
 
-extern darray_t* tokens;
+extern darray_t *tokens;
 
 /**
  * @brief Init the token array
- * 
+ *
  */
 void lexer_init();
 
 /**
  * @brief Generate the the lexer from the list of tokens
- * 
+ *
  */
 void lexer_generate();
